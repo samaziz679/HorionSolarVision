@@ -1,79 +1,114 @@
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { fetchCardData } from "@/lib/data/dashboard"
-import { DollarSign, ShoppingCart, Package } from "lucide-react"
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from "@/components/ui/breadcrumb"
-import Link from "next/link"
-import { createClient } from "@/lib/supabase/server"
-import { formatMoney } from "@/lib/currency"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { DollarSign, Users, CreditCard, Activity } from "lucide-react"
 
-function toIntSafe(value: unknown) {
-  const n = Number(value)
-  return Number.isFinite(n) ? Math.trunc(n) : 0
-}
-
-export default async function DashboardPage() {
-  const supabase = createClient()
-  let userEmail: string | null = null
-
-  try {
-    const { data, error } = await supabase.auth.getUser()
-    if (!error && data?.user) userEmail = data.user.email ?? null
-  } catch (e) {
-    console.error("dashboard: auth.getUser failed", e)
-  }
-
-  const { totalSales, totalExpenses, totalProducts } = await fetchCardData()
-
+export default function DashboardPage() {
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <p className="text-sm text-muted-foreground">{userEmail ? `Signed in as ${userEmail}` : "Not signed in"}</p>
-      </div>
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/dashboard">Dashboard</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <>
+      <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatMoney(totalSales)}</div>
-            <p className="text-xs text-muted-foreground">Total revenue from all sales</p>
+            <div className="text-2xl font-bold">$45,231.89</div>
+            <p className="text-xs text-muted-foreground">+20.1% from last month</p>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Expenses</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Subscriptions</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatMoney(totalExpenses)}</div>
-            <p className="text-xs text-muted-foreground">Total amount spent on expenses</p>
+            <div className="text-2xl font-bold">+2350</div>
+            <p className="text-xs text-muted-foreground">+180.1% from last month</p>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Products in Stock</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Sales</CardTitle>
+            <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{toIntSafe(totalProducts)}</div>
-            <p className="text-xs text-muted-foreground">Sum of all product quantities</p>
+            <div className="text-2xl font-bold">+12,234</div>
+            <p className="text-xs text-muted-foreground">+19% from last month</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Active Now</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+573</div>
+            <p className="text-xs text-muted-foreground">+201 since last hour</p>
           </CardContent>
         </Card>
       </div>
-    </main>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Recent Sales</CardTitle>
+            <CardDescription>You made 265 sales this month.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow>
+                  <TableCell>
+                    <div className="font-medium">Liam Johnson</div>
+                    <div className="hidden text-sm text-muted-foreground md:inline">liam@example.com</div>
+                  </TableCell>
+                  <TableCell>Sale</TableCell>
+                  <TableCell>
+                    <Badge className="text-xs" variant="outline">
+                      Approved
+                    </Badge>
+                  </TableCell>
+                  <TableCell>2023-06-23</TableCell>
+                  <TableCell className="text-right">$250.00</TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>Top Products</CardTitle>
+            <CardDescription>Your best-selling products.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-8">
+              <div className="flex items-center gap-4">
+                <div className="grid gap-1">
+                  <p className="text-sm font-medium leading-none">Solar Panel 300W</p>
+                  <p className="text-sm text-muted-foreground">High-efficiency monocrystalline</p>
+                </div>
+                <div className="ml-auto font-medium">+$1,999.00</div>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="grid gap-1">
+                  <p className="text-sm font-medium leading-none">Inverter 5kW</p>
+                  <p className="text-sm text-muted-foreground">Pure sine wave inverter</p>
+                </div>
+                <div className="ml-auto font-medium">+$39.00</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   )
 }

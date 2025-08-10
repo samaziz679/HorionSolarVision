@@ -1,30 +1,17 @@
 import type React from "react"
-import { getAuthUser } from "@/lib/auth"
-import { createClient } from "@/lib/supabase/server"
-import { redirect } from "next/navigation"
 import Sidebar from "@/components/layout/sidebar"
+import Header from "@/components/layout/header"
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  // You can keep both getAuthUser and the explicit Supabase check for clarity
-  const user = await getAuthUser()
-  const supabase = createClient()
-
-  const {
-    data: { user: authUser },
-  } = await supabase.auth.getUser()
-
-  if (!authUser) {
-    redirect("/login")
-  }
-
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="grid min-h-screen w-full md:grid-cols-[220px_1fr] lg:grid-cols-[280px_1fr]">
       <Sidebar />
-      <div className="flex flex-1 flex-col">{children}</div>
+      <div className="flex flex-col">
+        <Header />
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-gray-100/40 dark:bg-gray-800/40">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

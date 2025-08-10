@@ -1,72 +1,85 @@
-'use client'
+import Link from "next/link"
+import { Home, LineChart, Package, Package2, ShoppingCart, Users, DollarSign, Banknote, Truck } from "lucide-react"
+import UserButton from "@/components/auth/user-button"
 
-import Link from 'next/link'
-import { usePathname } from 'next/navigation'
-import { BanknoteIcon, CreditCardIcon, HomeIcon, PackageIcon, ShoppingCartIcon, UsersIcon, LogOutIcon, DollarSignIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useRouter } from 'next/navigation'
-import { toast } from 'sonner'
-
-export function Sidebar() {
-  const pathname = usePathname()
-  const router = useRouter()
-  const supabase = createClientComponentClient()
-
-  const handleSignOut = async () => {
-    const { error } = await supabase.auth.signOut()
-    if (error) {
-      toast.error(error.message)
-    } else {
-      toast.success('Logged out successfully!')
-      router.push('/login')
-      router.refresh()
-    }
-  }
-
-  const navItems = [
-    { href: '/dashboard', icon: HomeIcon, label: 'Dashboard' },
-    { href: '/clients', icon: UsersIcon, label: 'Clients' },
-    { href: '/inventory', icon: PackageIcon, label: 'Inventory' },
-    { href: '/sales', icon: ShoppingCartIcon, label: 'Sales' },
-    { href: '/purchases', icon: CreditCardIcon, label: 'Purchases' },
-    { href: '/expenses', icon: DollarSignIcon, label: 'Expenses' },
-    { href: '/banking', icon: BanknoteIcon, label: 'Banking' },
-    { href: '/suppliers', icon: UsersIcon, label: 'Suppliers' }, // Reusing UsersIcon for Suppliers
-  ]
-
+export default function Sidebar() {
   return (
-    <div className="flex h-screen w-64 flex-col border-r bg-gray-100/40 dark:bg-gray-800/40">
-      <div className="flex h-[60px] items-center border-b px-6">
-        <Link className="flex items-center gap-2 font-semibold" href="/dashboard">
-          <img src="/placeholder-logo.svg" alt="Solar Vision ERP Logo" className="h-6 w-6" />
-          <span className="">Solar Vision ERP</span>
-        </Link>
-      </div>
-      <div className="flex-1 overflow-auto py-2">
-        <nav className="grid items-start px-4 text-sm font-medium">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`)
-            return (
-              <Link
-                key={item.href}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-gray-900 dark:hover:text-gray-50 ${
-                  isActive ? 'bg-gray-200 text-gray-900 dark:bg-gray-700 dark:text-gray-50' : 'text-gray-500 dark:text-gray-400'
-                }`}
-                href={item.href}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            )
-          })}
-        </nav>
-      </div>
-      <div className="mt-auto p-4 border-t">
-        <Button variant="ghost" className="w-full justify-start" onClick={handleSignOut}>
-          <LogOutIcon className="mr-3 h-4 w-4" />
-          Logout
-        </Button>
+    <div className="hidden border-r bg-muted/40 md:block">
+      <div className="flex h-full max-h-screen flex-col gap-2">
+        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <Package2 className="h-6 w-6" />
+            <span className="">Solar Vision ERP</span>
+          </Link>
+          <UserButton />
+        </div>
+        <div className="flex-1">
+          <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            >
+              <Home className="h-4 w-4" />
+              Dashboard
+            </Link>
+            <Link
+              href="/inventory"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            >
+              <Package className="h-4 w-4" />
+              Inventory
+            </Link>
+            <Link
+              href="/sales"
+              className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
+            >
+              <ShoppingCart className="h-4 w-4" />
+              Sales
+            </Link>
+            <Link
+              href="/purchases"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            >
+              <Truck className="h-4 w-4" />
+              Purchases
+            </Link>
+            <Link
+              href="/clients"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            >
+              <Users className="h-4 w-4" />
+              Clients
+            </Link>
+            <Link
+              href="/suppliers"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            >
+              <Users className="h-4 w-4" />
+              Suppliers
+            </Link>
+            <Link
+              href="/expenses"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            >
+              <DollarSign className="h-4 w-4" />
+              Expenses
+            </Link>
+            <Link
+              href="/banking"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            >
+              <Banknote className="h-4 w-4" />
+              Banking
+            </Link>
+            <Link
+              href="/reports"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+            >
+              <LineChart className="h-4 w-4" />
+              Reports
+            </Link>
+          </nav>
+        </div>
       </div>
     </div>
   )

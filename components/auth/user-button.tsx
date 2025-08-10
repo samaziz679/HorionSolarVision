@@ -1,6 +1,6 @@
 "use client"
-import { createClient } from "@supabase/supabase-js"
-import { Button } from "@/components/ui/button"
+
+import { createClient } from "@/lib/supabase/client"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,74 +9,67 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { LogOut, User } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
+import type { User as SupabaseUser } from "@supabase/supabase-js"
 
-// Make the user prop optional to avoid type errors when no user is passed.
-type User = {
-  email?: string | null
-  user_metadata?: {
-    name?: string | null
-    avatar_url?: string | null
-  } | null
-}
+export default function UserButton() {
+  const router = useRouter()
+  const [user, setUser] = useState<SupabaseUser | null>(null)
+  const supabase = createClient()
 
-type Props = {
-  user?: User | null
-}
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      setUser(user)
+    }
+    fetchUser()
+  }, [supabase.auth])
 
-// Create a browser Supabase client using NEXT_PUBLIC env vars.
-// These are available on the client and are already present in your project.
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL as string,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string,
-)
-
-async function handleSignOut() {
-  try {
+  const handleSignOut = async () => {
     await supabase.auth.signOut()
-  } finally {
-    // Redirect to login (or home) after signing out.
-    window.location.href = "/login"
-  }
-}
-
-export default function UserButton({ user }: Props) {
-  // If user isn't available, show a Sign in button.
-  if (!user) {
-    return (
-      <Button asChild size="sm" variant="default">
-        <a href="/login">Sign in</a>
-      </Button>
-    )
+    router.push("/login")
+    router.refresh() // Force a refresh to clear any cached user data
   }
 
-  const name = (user.user_metadata?.name?.trim() || undefined) ?? (user.email || undefined) ?? "User"
-  const avatarUrl = user.user_metadata?.avatar_url || undefined
-  const initials = name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase()
+  const getInitials = (email: string | undefined) => {
+    if (!email) return "U"
+    return email.substring(0, 2).toUpperCase()
+  }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="h-9 px-2 gap-2">
-          <Avatar className="h-6 w-6">
-            <AvatarImage src={avatarUrl || "/placeholder.svg"} alt="Profile" />
-            <AvatarFallback>{initials || "U"}</AvatarFallback>
+        <Button variant="secondary" size="icon" className="rounded-full ml-auto">
+          <Avatar>
+            <AvatarImage src={user?.user_metadata.avatar_url || "/placeholder.svg"} alt={user?.email} />
+            <AvatarFallback>{getInitials(user?.email)}</AvatarFallback>
           </Avatar>
-          <span className="hidden sm:inline text-sm">{name}</span>
+          <span className="sr-only">Toggle user menu</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
-        <DropdownMenuLabel>Account</DropdownMenuLabel>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>
+          <div className="flex flex-col space-y-1">
+            <p className="text-sm font-medium leading-none">My Account</p>
+            <p className="text-xs leading-none text-muted-foreground">{user?.email}</p>
+          </div>
+        </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <a href="/dashboard">Dashboard</a>
+        <DropdownMenuItem>
+          <User className="mr-2 h-4 w-4" />
+          <span>Profile</span>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={handleSignOut}>Sign out</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSignOut}>
+          <LogOut className="mr-2 h-4 w-4" />
+          <span>Log out</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
