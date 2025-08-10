@@ -7,11 +7,18 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
 
-export default async function EditClientPage({ params }) {
+type EditClientPageProps = {
+  params: {
+    id: string
+  }
+}
+
+export default async function EditClientPage({ params }: EditClientPageProps) {
   const id = params.id
   const client = await fetchClientById(id)
 
@@ -36,7 +43,7 @@ export default async function EditClientPage({ params }) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>Edit Client</BreadcrumbLink>
+            <BreadcrumbPage>Edit Client</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
