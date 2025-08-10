@@ -1,69 +1,42 @@
 "use client"
 
 import type { BankAccount } from "@/lib/supabase/types"
-import { DataTable } from "@/components/ui/data-table"
-import type { ColumnDef } from "@tanstack/react-table"
-import { format } from "date-fns"
-import { formatCurrency } from "@/lib/currency"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal } from "lucide-react"
 import Link from "next/link"
+import { formatCurrency } from "@/lib/utils"
 import DeleteBankingDialog from "./delete-banking-dialog"
 
-interface BankingListProps {
-  accounts: BankAccount[]
-}
-
-export default function BankAccountList({ accounts }: BankingListProps) {
-  const columns: ColumnDef<BankAccount>[] = [
-    {
-      accessorKey: "account_name",
-      header: "Account Name",
-    },
-    {
-      accessorKey: "bank_name",
-      header: "Bank Name",
-    },
-    {
-      accessorKey: "account_type",
-      header: "Type",
-    },
-    {
-      accessorKey: "balance",
-      header: "Balance",
-      cell: ({ row }) => formatCurrency(row.original.balance),
-    },
-    {
-      accessorKey: "created_at",
-      header: "Date Added",
-      cell: ({ row }) => format(new Date(row.original.created_at), "PPP"),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const account = row.original
-        return (
-          <div className="text-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem asChild>
+export default function BankingList({ bankAccounts }: { bankAccounts: BankAccount[] }) {
+  return (
+    <div className="rounded-lg border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Account Name</TableHead>
+            <TableHead>Bank Name</TableHead>
+            <TableHead>Account Number</TableHead>
+            <TableHead className="text-right">Balance</TableHead>
+            <TableHead className="w-[100px]">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {bankAccounts.map((account) => (
+            <TableRow key={account.id}>
+              <TableCell>{account.account_name}</TableCell>
+              <TableCell>{account.bank_name}</TableCell>
+              <TableCell>****{account.account_number.slice(-4)}</TableCell>
+              <TableCell className="text-right">{formatCurrency(account.initial_balance)}</TableCell>
+              <TableCell className="flex gap-2">
+                <Button asChild variant="outline" size="sm">
                   <Link href={`/banking/${account.id}/edit`}>Edit</Link>
-                </DropdownMenuItem>
-                <DeleteBankingDialog accountId={account.id} />
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        )
-      },
-    },
-  ]
-
-  return <DataTable columns={columns} data={accounts} />
+                </Button>
+                <DeleteBankingDialog bankAccountId={account.id} />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  )
 }

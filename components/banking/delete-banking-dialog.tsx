@@ -11,40 +11,40 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 import { deleteBankAccount } from "@/app/banking/actions"
-import { toast } from "sonner"
+import { useTransition } from "react"
 
-interface DeleteBankingDialogProps {
-  accountId: string
-}
+export default function DeleteBankingDialog({ bankAccountId }: { bankAccountId: string }) {
+  const [isPending, startTransition] = useTransition()
 
-export default function DeleteBankingDialog({ accountId }: DeleteBankingDialogProps) {
-  const handleDelete = async () => {
-    const result = await deleteBankAccount(accountId)
-    if (result.success) {
-      toast.success(result.message)
-    } else {
-      toast.error(result.message)
-    }
+  const handleDelete = () => {
+    startTransition(async () => {
+      const result = await deleteBankAccount(bankAccountId)
+      if (result?.message) {
+        alert(result.message)
+      }
+    })
   }
 
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Delete</DropdownMenuItem>
+        <Button variant="destructive" size="sm">
+          Delete
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the bank account.
+            This action cannot be undone. This will permanently delete the bank account record.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
-            Delete
+          <AlertDialogAction onClick={handleDelete} disabled={isPending}>
+            {isPending ? "Deleting..." : "Continue"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
