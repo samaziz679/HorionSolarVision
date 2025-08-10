@@ -1,13 +1,7 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { fetchCardData } from "@/lib/data/dashboard"
 import { DollarSign, ShoppingCart, Package } from "lucide-react"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList } from "@/components/ui/breadcrumb"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/server"
 import { formatMoney } from "@/lib/currency"
@@ -28,25 +22,20 @@ export default async function DashboardPage() {
     console.error("dashboard: auth.getUser failed", e)
   }
 
-  // Resilient: returns zeros on failure; never throws
   const { totalSales, totalExpenses, totalProducts } = await fetchCardData()
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
-      <p className="mt-2 text-muted-foreground">
-        {userEmail ? `Signed in as ${userEmail}` : "No user session detected."}
-      </p>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Dashboard</h1>
+        <p className="text-sm text-muted-foreground">{userEmail ? `Signed in as ${userEmail}` : "Not signed in"}</p>
+      </div>
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
               <Link href="/dashboard">Dashboard</Link>
             </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink>Overview</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>

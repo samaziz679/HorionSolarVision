@@ -1,23 +1,29 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useFormState, useFormStatus } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createSale } from "@/app/sales/actions"
-import { useEffect, useState } from "react"
 import { toast } from "sonner"
-import type { ProductOption } from "@/lib/data/products"
-import type { ClientOption } from "@/lib/data/clients"
 
-type SaleFormProps = {
-  products: ProductOption[]
-  clients: ClientOption[]
+const initialState = {
+  message: null,
+  errors: {},
 }
 
-export function SaleForm({ products, clients }: SaleFormProps) {
-  const initialState = { message: null, errors: {} }
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <Button type="submit" disabled={pending} className="w-full">
+      {pending ? "Creating Sale..." : "Create Sale"}
+    </Button>
+  )
+}
+
+export function SaleForm({ products, clients }) {
   const [state, dispatch] = useFormState(createSale, initialState)
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
   const [priceType, setPriceType] = useState<"detail" | "gros">("detail")
@@ -80,7 +86,7 @@ export function SaleForm({ products, clients }: SaleFormProps) {
 
         <div className="grid gap-2">
           <Label>Price Type</Label>
-          <Select onValueChange={(value: "detail" | "gros") => setPriceType(value)} defaultValue="detail">
+          <Select onValueChange={(value) => setPriceType(value)} defaultValue="detail">
             <SelectTrigger>
               <SelectValue placeholder="Select price type" />
             </SelectTrigger>
@@ -115,14 +121,5 @@ export function SaleForm({ products, clients }: SaleFormProps) {
         <SubmitButton />
       </div>
     </form>
-  )
-}
-
-function SubmitButton() {
-  const { pending } = useFormStatus()
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? "Creating Sale..." : "Create Sale"}
-    </Button>
   )
 }

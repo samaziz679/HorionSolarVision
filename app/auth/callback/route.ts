@@ -1,16 +1,12 @@
-import { cookies } from 'next/headers'
-import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
+import { cookies } from "next/headers"
+import { NextResponse } from "next/server"
+import { createServerClient } from "@supabase/ssr"
 
-/**
- * Exchanges the OAuth code for a session and redirects to a safe page.
- * Uses ONLY getAll/setAll cookie bridge per @supabase/ssr guidance.
- */
 export async function GET(request: Request) {
-  const url = new URL(request.url)
-  const code = url.searchParams.get('code')
-  const redirectedFrom = url.searchParams.get('redirectedFrom')
-  const nextPath = redirectedFrom || '/dashboard'
+  const { searchParams, origin } = new URL(request.url)
+  const code = searchParams.get("code")
+  // if "next" is in param, use it as the redirect URL
+  const next = searchParams.get("next") ?? "/dashboard"
 
   if (code) {
     const cookieStore = cookies()
@@ -28,11 +24,14 @@ export async function GET(request: Request) {
             })
           },
         },
-      }
+      },
     )
-
-    await supabase.auth.exchangeCodeForSession(code)
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (!error) {
+      return NextResponse.redirect(`${origin}${next}`)
+    }
   }
 
-  return NextResponse.redirect(new URL(nextPath, url.origin))
+  // return the user to an error page with instructions
+  return NextResponse.redirect(`${origin}/auth/auth-code-error`)
 }

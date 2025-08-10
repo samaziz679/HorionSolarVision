@@ -4,7 +4,7 @@
  * - XOF is formatted with 0 fraction digits; CNY with 2.
  */
 
-export type SupportedCurrency = "XOF" | "CNY"
+export type SupportedCurrency = "XOF" | "CNY" | "USD"
 
 export function getActiveCurrency(): SupportedCurrency {
   const v = (process.env.NEXT_PUBLIC_CURRENCY || "").toUpperCase()
@@ -23,8 +23,7 @@ function formatterFor(currency: SupportedCurrency) {
   if (currency === "XOF") {
     base.minimumFractionDigits = 0
     base.maximumFractionDigits = 0
-  } else {
-    // CNY
+  } else if (currency === "CNY") {
     base.minimumFractionDigits = 2
     base.maximumFractionDigits = 2
   }
@@ -46,7 +45,12 @@ export function formatMoney(
 /**
  * Alias used in some files.
  */
-export const formatCurrency = formatMoney
+export const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: process.env.NEXT_PUBLIC_CURRENCY || "USD",
+  }).format(amount)
+}
 
 /**
  * Formats without the currency symbol (just the number with proper fraction digits).

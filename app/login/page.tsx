@@ -1,26 +1,12 @@
-import { redirect } from 'next/navigation'
-import LoginForm from '@/components/auth/login-form'
-import { createClient } from '@/lib/supabase/server'
+import LoginForm from "@/components/auth/login-form"
 
-export default async function LoginPage({
-  searchParams,
-}: {
-  searchParams?: { redirectedFrom?: string }
-}) {
-  const supabase = createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (user) {
-    redirect('/dashboard')
-  }
-
-  const redirectedFrom = searchParams?.redirectedFrom ?? '/dashboard'
-
+export default function LoginPage() {
   return (
-    <main className="min-h-[80vh] flex items-center justify-center p-4">
-      <LoginForm redirectedFrom={redirectedFrom} />
-    </main>
+    <div className="flex min-h-screen items-center justify-center bg-gray-100 dark:bg-gray-900">
+      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg dark:bg-gray-800">
+        <h1 className="mb-6 text-center text-2xl font-bold text-gray-900 dark:text-gray-100">Solar Vision ERP Login</h1>
+        <LoginForm />
+      </div>
+    </div>
   )
 }
