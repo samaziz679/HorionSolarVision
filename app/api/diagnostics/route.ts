@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { getAdminClient } from "@/lib/supabase/admin"
+import { supabaseAdmin } from "@/lib/supabase/admin"
 
 type CheckResult<T = unknown> = {
   ok: boolean
@@ -31,7 +31,7 @@ async function checkView(supabase: SupabaseClient<any>, view: string): Promise<C
 }
 
 export async function GET() {
-  const supabase = getAdminClient() as SupabaseClient<any>
+  const supabase = supabaseAdmin as SupabaseClient<any>
 
   const [products, purchases, sales, expenses, bankEntries, bankingAccounts] = await Promise.all([
     checkTable(supabase, "products"),
