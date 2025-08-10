@@ -1,32 +1,32 @@
 "use client"
 
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { AlertTriangle } from "lucide-react"
-import type { Error } from "some-module" // Placeholder import for undeclared variables
 
-export default function GlobalError({
+export default function Error({
   error,
   reset,
 }: {
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  // Log for observability
-  console.error(error)
+  useEffect(() => {
+    console.error(error)
+  }, [error])
 
   return (
-    <div className="flex h-[70vh] flex-col items-center justify-center gap-4">
-      <div className="w-full max-w-md rounded-lg border bg-white p-8 text-center shadow-lg">
-        <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
-        <h2 className="mt-4 text-2xl font-bold">Something went wrong!</h2>
-        <p className="mt-2 text-gray-600">An unexpected error occurred. Please try again.</p>
-        {error?.digest && <p className="mt-4 text-xs text-gray-400">Error Digest: {error.digest}</p>}
-        <div className="mt-6 flex justify-center gap-4">
-          <Button onClick={() => reset()}>Try again</Button>
-          <Button variant="outline" asChild>
-            <a href="/">Go to Homepage</a>
-          </Button>
-        </div>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background text-foreground">
+      <div className="text-center p-8 border rounded-lg shadow-lg max-w-md">
+        <h2 className="text-2xl font-bold text-destructive mb-4">Something went wrong!</h2>
+        <p className="mb-6">{error.message || "An unexpected error occurred."}</p>
+        <Button
+          onClick={
+            // Attempt to recover by trying to re-render the segment
+            () => reset()
+          }
+        >
+          Try again
+        </Button>
       </div>
     </div>
   )

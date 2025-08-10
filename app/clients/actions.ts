@@ -1,147 +1,150 @@
-'use server';
+// v2.0 Final
+"use server"
 
-import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import { getAuthUser } from '@/lib/auth';
+import { z } from "zod"
+import { createClient } from "@/lib/supabase/server"
+import { revalidatePath } from "next/cache"
+import { redirect } from "next/navigation"
+import { getAuthUser } from "@/lib/auth"
+\
+const FormSchema = z.object(\{
+  id: z.string(),
+  first_name: z.string().min(1, 'First name is required.'),
+  last_name: z.string().min(1, 'Last name is required.'),
+  email: z.string().email('Invalid email address.').optional().or(z.literal('')),
+  phone: z.string().optional(),
+  address: z.string().optional(),\
+\})
+\
+const CreateClient = FormSchema.omit(\{ id: true \})
+const UpdateClient = FormSchema
 
-const FormSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1, 'Name is required.'),
-  contact_person: z.string().optional().nullable(),
-  email: z.string().email('Invalid email address.').optional().nullable(),
-  phone_number: z.string().optional().nullable(),
-  address: z.string().optional().nullable(),
-  created_at: z.string().optional(),
-  user_id: z.string().optional(),
-});
+export type State =
+\
+{
+  \
+  errors?: \
+  \
+    first_name?: string[]
+    last_name?: string[]
+    email?: string[]
+    phone?: string[]
+    address?: string[]
+  \
+  \
+  message?: string | null
+  success?: boolean
+\
+}
 
-const CreateClient = FormSchema.omit({ id: true, created_at: true, user_id: true });
-const UpdateClient = FormSchema.omit({ created_at: true, user_id: true });
-
-export type State = {
-  errors?: {
-    name?: string[];
-    contact_person?: string[];
-    email?: string[];
-    phone_number?: string[];
-    address?: string[];
-  };
-  message?: string | null;
-};
-
-export async function createClientAction(prevState: State, formData: FormData) {
-  const validatedFields = CreateClient.safeParse({
-    name: formData.get('name'),
-    contact_person: formData.get('contact_person'),
+export async function createClientAction(prevState: State, formData: FormData)
+\
+{
+  const user = await getAuthUser()
+  if (!user) \\
+    return \
+      message: 'Authentication error. Please sign in.',\
+      success: false,
+    \
+  \
+\
+  const validatedFields = CreateClient.safeParse(\{
+    first_name: formData.get('first_name'),
+    last_name: formData.get('last_name'),
     email: formData.get('email'),
-    phone_number: formData.get('phone_number'),
-    address: formData.get('address'),
-  });
+    phone: formData.get('phone'),
+    address: formData.get('address'),\
+  \})
 
-  if (!validatedFields.success) {
-    return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Create Client.',
-    };
-  }
+  if (!validatedFields.success) \\
+    return \
+      errors: validatedFields.error.flatten().fieldErrors,\
+      message: 'Missing or invalid fields. Failed to create client.',\
+      success: false,
+    \
+  \
+\
+  const \{ first_name, last_name, email, phone, address \} = validatedFields.data;
+  const supabase = createClient()
+\
+  const \{ error \} = await supabase.from('clients\').insert(\{\
+    first_name,\
+    last_name,\
+    email,\
+    phone,\
+    address,\
+    user_id: user.id,\
+  \});
+\
+  if (error) \
+    console.error("Database Error:", error)\
+    return \message: "Database Error: Failed to create client.\", success: false, \}
+  \
 
-  const { name, contact_person, email, phone_number, address } = validatedFields.data;
-  const supabase = createClient();
-  const user = await getAuthUser();
+  revalidatePath("/clients")
+  redirect("/clients")
+\
 
-  try {
-    const { error } = await supabase
-      .from('clients')
-      .insert({
-        name,
-        contact_person,
-        email,
-        phone_number,
-        address,
-        user_id: user.id,
-      });
-
-    if (error) {
-      console.error('Database Error:', error);
-      return { message: 'Database Error: Failed to Create Client.' };
-    }
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { message: 'Unexpected Error: Failed to Create Client.' };
-  }
-
-  revalidatePath('/clients');
-  redirect('/clients');
-}
-
-export async function updateClientAction(id: string, prevState: State, formData: FormData) {
-  const validatedFields = UpdateClient.safeParse({
-    id: formData.get('id'),
-    name: formData.get('name'),
-    contact_person: formData.get('contact_person'),
+export async function updateClientAction(id: string, prevState: State, formData: FormData) \{
+  const user = await getAuthUser()
+  if (!user) \{\
+    return \message: "Authentication error. Please sign in.\", success: false, \}
+  \
+\
+  const validatedFields = UpdateClient.safeParse(\{
+    id,
+    first_name: formData.get('first_name'),
+    last_name: formData.get('last_name'),
     email: formData.get('email'),
-    phone_number: formData.get('phone_number'),
-    address: formData.get('address'),
-  });
+    phone: formData.get('phone'),
+    address: formData.get('address'),\
+  \})
 
-  if (!validatedFields.success) {
-    return {
+  if (!validatedFields.success) \
+    return \
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Update Client.',
-    };
-  }
+      message: 'Missing or invalid fields. Failed to update client.',
+      success: false,
+    \
+  \
 
-  const { name, contact_person, email, phone_number, address } = validatedFields.data;
-  const supabase = createClient();
-  const user = await getAuthUser();
+  const \{ first_name, last_name, email, phone, address \} = validatedFields.data;
+  const supabase = createClient()
 
-  try {
-    const { error } = await supabase
-      .from('clients')
-      .update({
-        name,
-        contact_person,
-        email,
-        phone_number,
-        address,
-      })
-      .eq('id', id)
-      .eq('user_id', user.id);
+  const \{ error \} = await supabase
+    .from('clients')
+    .update(\{ first_name, last_name, email, phone, address \})
+    .eq('id', id)
+    .eq('user_id', user.id);
 
-    if (error) {
-      console.error('Database Error:', error);
-      return { message: 'Database Error: Failed to Update Client.' };
-    }
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { message: 'Unexpected Error: Failed to Update Client.' };
-  }
+  if (error) \
+    console.error("Database Error:", error)
+    return \message: "Database Error: Failed to update client.", success: false, \
+  \
 
-  revalidatePath('/clients');
-  redirect('/clients');
-}
+  revalidatePath("/clients")
+  revalidatePath(`/clients/$\{id\}/edit`)
+  redirect("/clients")
+\}
 
-export async function deleteClientAction(id: string) {
-  const supabase = createClient();
-  const user = await getAuthUser();
+export async function deleteClientAction(id: string) \{
+  const user = await getAuthUser()
+  if (!user) \
+    return \message: "Authentication error. Please sign in.", success: false, \
+  \
 
-  try {
-    const { error } = await supabase
-      .from('clients')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
+  const supabase = createClient()
+  const \{ error \} = await supabase
+    .from('clients')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
 
-    if (error) {
-      console.error('Database Error:', error);
-      return { message: 'Database Error: Failed to Delete Client.' };
-    }
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { message: 'Unexpected Error: Failed to Delete Client.' };
-  }
+  if (error) \
+    console.error("Database Error:", error)
+    return \message: "Database Error: Failed to delete client.", success: false, \
+  \
 
-  revalidatePath('/clients');
-}
+  revalidatePath("/clients")
+  return \message: "Client deleted successfully.", success: true, \
+\}

@@ -1,12 +1,18 @@
 import LoginForm from "@/components/auth/login-form"
+import { createClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
 
-export default function LoginPage() {
+export default async function LoginPage() {
+  const supabase = createClient()
+  const { data } = await supabase.auth.getUser()
+
+  if (data.user) {
+    redirect("/dashboard")
+  }
+
   return (
-    <main className="flex min-h-screen items-center justify-center bg-gray-100 p-4 dark:bg-gray-900">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg dark:bg-gray-800">
-        <h1 className="mb-6 text-center text-2xl font-bold">Solar Vision ERP Login</h1>
-        <LoginForm />
-      </div>
-    </main>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
+      <LoginForm />
+    </div>
   )
 }

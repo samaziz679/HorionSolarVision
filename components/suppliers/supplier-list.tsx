@@ -1,21 +1,18 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { ColumnDef } from '@tanstack/react-table'
-import { Supplier } from '@/lib/supabase/types'
-import { DataTable } from '@/components/ui/data-table'
-import { Button } from '@/components/ui/button'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { MoreHorizontalIcon } from 'lucide-react'
-import { DeleteSupplierDialog } from './delete-supplier-dialog'
+import { useState } from "react"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import type { Supplier } from "@/lib/supabase/types"
+import Link from "next/link"
+import { PencilIcon, TrashIcon } from "lucide-react"
+import DeleteSupplierDialog from "./delete-supplier-dialog"
 
 interface SupplierListProps {
   suppliers: Supplier[]
 }
 
-export function SupplierList({ suppliers }: SupplierListProps) {
-  const router = useRouter()
+export default function SupplierList({ suppliers }: SupplierListProps) {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null)
 
@@ -24,60 +21,50 @@ export function SupplierList({ suppliers }: SupplierListProps) {
     setIsDeleteDialogOpen(true)
   }
 
-  const columns: ColumnDef<Supplier>[] = [
-    {
-      accessorKey: 'name',
-      header: 'Name',
-    },
-    {
-      accessorKey: 'contact_person',
-      header: 'Contact Person',
-    },
-    {
-      accessorKey: 'email',
-      header: 'Email',
-    },
-    {
-      accessorKey: 'phone',
-      header: 'Phone',
-    },
-    {
-      accessorKey: 'address',
-      header: 'Address',
-    },
-    {
-      id: 'actions',
-      cell: ({ row }) => (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontalIcon className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => router.push(`/suppliers/${row.original.id}/edit`)}>
-              Edit
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleDeleteClick(row.original.id)}>
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      ),
-    },
-  ]
+  const handleCloseDialog = () => {
+    setIsDeleteDialogOpen(false)
+    setSelectedSupplierId(null)
+  }
 
   return (
-    <>
-      <DataTable columns={columns} data={suppliers} />
+    <div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Contact Person</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Phone</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {suppliers.map((supplier) => (
+            <TableRow key={supplier.id}>
+              <TableCell className="font-medium">{supplier.name}</TableCell>
+              <TableCell>{supplier.contact_person}</TableCell>
+              <TableCell>{supplier.email}</TableCell>
+              <TableCell>{supplier.phone}</TableCell>
+              <TableCell className="flex justify-end gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/suppliers/${supplier.id}/edit`}>
+                    <PencilIcon className="h-4 w-4" />
+                    <span className="sr-only">Edit</span>
+                  </Link>
+                </Button>
+                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(supplier.id)}>
+                  <TrashIcon className="h-4 w-4" />
+                  <span className="sr-only">Delete</span>
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
       {selectedSupplierId && (
-        <DeleteSupplierDialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-          supplierId={selectedSupplierId}
-        />
+        <DeleteSupplierDialog supplierId={selectedSupplierId} isOpen={isDeleteDialogOpen} onClose={handleCloseDialog} />
       )}
-    </>
+    </div>
   )
 }

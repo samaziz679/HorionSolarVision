@@ -1,96 +1,68 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useEffect } from "react"
+import { useFormState, useFormStatus } from "react-dom"
+import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { createSupplier, updateSupplier } from "@/app/suppliers/actions"
+import { Button } from "@/components/ui/button"
+import { createSupplierAction, updateSupplierAction, type State } from "@/app/suppliers/actions"
 import type { Supplier } from "@/lib/supabase/types"
 
-type Props = {
-  initialData?: Supplier | null
-}
-
-export default function SupplierForm({ initialData = null }: Props) {
-  const [name, setName] = useState(initialData?.name ?? "")
-  const [contactPerson, setContactPerson] = useState(initialData?.contact_person ?? "")
-  const [email, setEmail] = useState(initialData?.email ?? "")
-  const [phoneNumber, setPhoneNumber] = useState(initialData?.phone_number ?? "")
-  const [address, setAddress] = useState(initialData?.address ?? "")
-  const [isPending, setIsPending] = useState(false)
-
-  const formAction = (initialData ? updateSupplier : createSupplier) as unknown as string
-
+function SubmitButton({ isUpdate }: { isUpdate: boolean }) {
+  const { pending } = useFormStatus()
   return (
-    <form action={formAction} onSubmit={() => setIsPending(true)} className="space-y-4">
-      <input type="hidden" name="id" value={initialData?.id ?? ""} />
-
-      <div className="grid gap-2">
-        <Label htmlFor="name">Name</Label>
-        <Input
-          id="name"
-          name="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          placeholder="Acme Supplies Co."
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="contact_person">Contact person</Label>
-        <Input
-          id="contact_person"
-          name="contact_person"
-          value={contactPerson}
-          onChange={(e) => setContactPerson(e.target.value)}
-          placeholder="Jane Doe"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          name="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="supplier@example.com"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="phone_number">Phone number</Label>
-        <Input
-          id="phone_number"
-          name="phone_number"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          placeholder="+226 70 00 00 00"
-        />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="address">Address</Label>
-        <Textarea
-          id="address"
-          name="address"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder="123 Market Street, Ouagadougou"
-        />
-      </div>
-
-      <div className="flex items-center justify-end gap-2">
-        <Button type="submit" disabled={isPending}>
-          {isPending ? "Saving…" : initialData ? "Update Supplier" : "Create Supplier"}
-        </Button>
-      </div>
-    </form>
+    <Button type="submit" disabled={pending} className="w-full">
+      {pending ? (isUpdate ? "Updating..." : "Creating...") : isUpdate ? "Update Supplier" : "Create Supplier"}
+    </Button>
   )
 }
 
-// Also export a named export for backwards-compat imports if any file still uses it.
-export { default as SupplierForm } from "./supplier-form"
+export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
+  const initialState: State = { message: null, errors: {}, success: false }
+  const action = supplier ? updateSupplierAction.bind(null, supplier.id) : createSupplierAction
+  const [state, dispatch] = useFormState(action, initialState)
+
+  useEffect(() => {
+    if (state.message) {
+      if (state.success) {
+        toast.success(state.message)
+      } else {
+        toast.error(state.message, {
+          description: state.errors ? Object.values(state.errors).flat().join("\n") : undefined,
+        })
+      }
+    }
+  }, [state])
+
+  return (
+    <form action={dispatch} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Supplier Name</Label>
+        <Input id="name" name="name" defaultValue={supplier?.name} required />
+        {state.errors?.name && <p className="text-sm text-red-500">{state.errors.name[0]}</p>}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="contact_person">Contact Person</Label>
+        <Input id="contact_person" name="contact_person" defaultValue={supplier?.contact_person ?? ""} />
+        {state.errors?.contact_person && <p className="text-sm text-red-500">{state.errors.contact_person[0]}</p>}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" name="email" type="email" defaultValue={supplier?.email ?? ""} />
+        {state.errors?.email && <p className="text-sm text-red-500">{state.errors.email[0]}</p>}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">Phone</Label>
+        <Input id="phone" name="phone" defaultValue={supplier?.phone ?? ""} />
+        {state.errors?.phone && <p className="text-sm text-red-500">{state.errors.phone[0]}</p>}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="address">Address</Label>
+        <Input id="address" name="address" defaultValue={supplier?.address ?? ""} />
+        {state.errors?.address && <p className="text-sm text-red-500">{state.errors.address[0]}</p>}
+      </div>
+      <SubmitButton isUpdate={!!supplier} />
+    </form>
+  )
+}

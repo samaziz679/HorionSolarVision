@@ -11,11 +11,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
 
-export default async function EditClientPage({
-  params,
-}: {
-  params: { id: string }
-}) {
+export default async function EditClientPage({ params }) {
   const id = params.id
   const client = await fetchClientById(id)
 

@@ -1,5 +1,5 @@
 import { fetchSuppliers } from "@/lib/data/suppliers"
-import { SupplierList } from "@/components/suppliers/supplier-list"
+import SupplierList from "@/components/suppliers/supplier-list"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

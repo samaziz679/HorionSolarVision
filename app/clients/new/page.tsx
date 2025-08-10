@@ -1,6 +1,3 @@
-export const dynamic = "force-dynamic"
-export const revalidate = 0
-
 import ClientForm from "@/components/clients/client-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -34,7 +31,6 @@ export default function NewClientPage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-
       <Card>
         <CardHeader>
           <CardTitle>Add New Client</CardTitle>

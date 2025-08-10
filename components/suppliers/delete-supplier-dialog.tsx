@@ -1,5 +1,7 @@
-'use client'
+"use client"
 
+import { useTransition } from "react"
+import { toast } from "sonner"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -9,45 +11,46 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { deleteSupplier } from '@/app/suppliers/actions'
-import { toast } from 'sonner'
-import { useState } from 'react'
+} from "@/components/ui/alert-dialog"
+import { deleteSupplierAction } from "@/app/suppliers/actions"
 
 interface DeleteSupplierDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
   supplierId: string
+  isOpen: boolean
+  onClose: () => void
 }
 
-export function DeleteSupplierDialog({ open, onOpenChange, supplierId }: DeleteSupplierDialogProps) {
-  const [isDeleting, setIsDeleting] = useState(false)
+export default function DeleteSupplierDialog({ supplierId, isOpen, onClose }: DeleteSupplierDialogProps) {
+  const [isPending, startTransition] = useTransition()
 
-  const handleDelete = async () => {
-    setIsDeleting(true)
-    const result = await deleteSupplier(supplierId)
-    if (result?.message) {
-      toast.error(result.message)
-    } else {
-      toast.success('Supplier deleted successfully!')
-    }
-    setIsDeleting(false)
-    onOpenChange(false)
+  const handleDelete = () => {
+    startTransition(async () => {
+      const result = await deleteSupplierAction(supplierId)
+      if (result.success) {
+        toast.success(result.message)
+        onClose()
+      } else {
+        toast.error(result.message)
+      }
+    })
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
+    <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete this supplier.
+            This action cannot be undone. This will permanently delete the supplier and remove their data from our
+            servers.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
-            {isDeleting ? 'Deleting...' : 'Continue'}
+          <AlertDialogCancel onClick={onClose} disabled={isPending}>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete} disabled={isPending}>
+            {isPending ? "Deleting..." : "Continue"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
