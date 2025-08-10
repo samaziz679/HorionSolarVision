@@ -1,47 +1,73 @@
+import "server-only"
 import { createClient } from "@/lib/supabase/server"
 import { unstable_noStore as noStore } from "next/cache"
 
-export async function fetchFinancialSummary() {
+export async function getDashboardStats() {
   noStore()
   const supabase = createClient()
-  const { data, error } = await supabase.rpc("get_financial_summary")
 
-  if (error) {
-    console.error("Database Error:", error)
-    throw new Error("Failed to fetch financial summary.")
+  const { count: totalSales, error: salesError } = await supabase
+    .from("sales")
+    .select("*", { count: "exact", head: true })
+
+  const { count: totalPurchases, error: purchasesError } = await supabase
+    .from("purchases")
+    .select("*", { count: "exact", head: true })
+
+  const { count: totalClients, error: clientsError } = await supabase
+    .from("clients")
+    .select("*", { count: "exact", head: true })
+
+  const { count: totalProducts, error: productsError } = await supabase
+    .from("products")
+    .select("*", { count: "exact", head: true })
+
+  if (salesError || purchasesError || clientsError || productsError) {
+    console.error("Error fetching dashboard stats:", {
+      salesError,
+      purchasesError,
+      clientsError,
+      productsError,
+    })
+    throw new Error("Could not fetch dashboard statistics.")
   }
-  return data[0]
+
+  return {
+    totalSales: totalSales ?? 0,
+    totalPurchases: totalPurchases ?? 0,
+    totalClients: totalClients ?? 0,
+    totalProducts: totalProducts ?? 0,
+  }
 }
 
-export async function fetchRecentSales() {
+export async function getRecentSales() {
   noStore()
   const supabase = createClient()
+
   const { data, error } = await supabase
     .from("sales")
-    .select(`
+    .select(
+      `
       id,
-      total_amount,
-      sale_date,
-      clients ( name )
-    `)
-    .order("sale_date", { ascending: false })
+      date,
+      total_price,
+      clients (
+        name,
+        email
+      )
+    `,
+    )
+    .order("date", { ascending: false })
     .limit(5)
 
   if (error) {
-    console.error("Database Error:", error)
-    throw new Error("Failed to fetch recent sales.")
+    console.error("Error fetching recent sales:", error)
+    throw new Error("Could not fetch recent sales.")
   }
-  return data
-}
 
-export async function fetchTopSellingProducts() {
-  noStore()
-  const supabase = createClient()
-  const { data, error } = await supabase.rpc("get_top_selling_products")
-
-  if (error) {
-    console.error("Database Error:", error)
-    throw new Error("Failed to fetch top selling products.")
-  }
-  return data
+  return data.map((sale) => ({
+    ...sale,
+    client_name: sale.clients?.name ?? "N/A",
+    client_email: sale.clients?.email ?? "N/A",
+  }))
 }

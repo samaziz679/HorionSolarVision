@@ -42,21 +42,17 @@ export function formatMoney(
   return formatterFor(currency).format(n)
 }
 
+const CURRENCY_CODE = process.env.NEXT_PUBLIC_CURRENCY || "USD"
+
+const formatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: CURRENCY_CODE,
+})
+
 /**
  * Formats a numeric value using a specified currency code.
  */
-export function formatCurrency(amount: number | null | undefined, currencyCode = "XOF"): string {
-  if (amount === null || amount === undefined) {
-    return ""
-  }
-
-  const formatter = new Intl.NumberFormat("fr-FR", {
-    style: "currency",
-    currency: currencyCode,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  })
-
+export function formatCurrency(amount: number): string {
   return formatter.format(amount)
 }
 
