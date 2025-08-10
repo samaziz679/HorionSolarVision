@@ -1,4 +1,4 @@
-'use client';
+"use client"
 
 import {
   AlertDialog,
@@ -9,46 +9,45 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { deleteBankingAccount } from '@/app/banking/actions';
-import { toast } from 'sonner';
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
+import { deleteBankAccount } from "@/app/banking/actions"
+import { useTransition } from "react"
 
-interface DeleteBankingAccountDialogProps {
-  accountId: string;
-  isOpen: boolean;
-  onClose: () => void;
-}
+export default function DeleteBankingDialog({ accountId }: { accountId: string }) {
+  const [isPending, startTransition] = useTransition()
 
-export default function DeleteBankingAccountDialog({
-  accountId,
-  isOpen,
-  onClose,
-}: DeleteBankingAccountDialogProps) {
-  const handleDelete = async () => {
-    const result = await deleteBankingAccount(accountId);
-    if (result?.message) {
-      toast.error(result.message);
-    } else {
-      toast.success('Banking account deleted successfully!');
-    }
-    onClose();
-  };
+  const handleDelete = () => {
+    startTransition(async () => {
+      const result = await deleteBankAccount(accountId)
+      if (result?.message) {
+        alert(result.message)
+      }
+    })
+  }
 
   return (
-    <AlertDialog open={isOpen} onOpenChange={onClose}>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" size="sm">
+          Delete
+        </Button>
+      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your banking account
-            and remove its data from our servers.
+            This action cannot be undone. This will permanently delete the bank account.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete} disabled={isPending}>
+            {isPending ? "Deleting..." : "Continue"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
+  )
 }

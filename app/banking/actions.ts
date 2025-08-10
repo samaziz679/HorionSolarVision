@@ -1,141 +1,84 @@
-'use server';
+"use server"
 
-import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import { getAuthUser } from '@/lib/auth';
+import { createClient } from "@/lib/supabase/server"
+import { revalidatePath } from "next/cache"
+import { z } from "zod"
 
 const FormSchema = z.object({
-  id: z.string().optional(),
-  bank_name: z.string().min(1, 'Bank Name is required.'),
-  account_name: z.string().min(1, 'Account Name is required.'),
-  account_number: z.string().min(1, 'Account Number is required.'),
-  balance: z.coerce.number().gt(0, 'Balance must be greater than 0.'),
-  created_at: z.string().optional(),
-  user_id: z.string().optional(),
-});
+  id: z.string(),
+  account_name: z.string().min(1, "Account name is required."),
+  bank_name: z.string().min(1, "Bank name is required."),
+  account_number: z.string().min(1, "Account number is required."),
+  initial_balance: z.coerce.number(),
+})
 
-const CreateBankingAccount = FormSchema.omit({ id: true, created_at: true, user_id: true });
-const UpdateBankingAccount = FormSchema.omit({ created_at: true, user_id: true });
+const CreateBankAccount = FormSchema.omit({ id: true })
+const UpdateBankAccount = FormSchema.omit({ initial_balance: true }) // Balance updates via transactions
 
 export type State = {
   errors?: {
-    bank_name?: string[];
-    account_name?: string[];
-    account_number?: string[];
-    balance?: string[];
-  };
-  message?: string | null;
-};
+    account_name?: string[]
+    bank_name?: string[]
+    account_number?: string[]
+    initial_balance?: string[]
+  }
+  message?: string | null
+}
 
-export async function createBankingAccount(prevState: State, formData: FormData) {
-  const validatedFields = CreateBankingAccount.safeParse({
-    bank_name: formData.get('bank_name'),
-    account_name: formData.get('account_name'),
-    account_number: formData.get('account_number'),
-    balance: formData.get('balance'),
-  });
+export async function createBankAccount(prevState: State, formData: FormData) {
+  const supabase = createClient()
+  const validatedFields = CreateBankAccount.safeParse(Object.fromEntries(formData.entries()))
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Create Banking Account.',
-    };
-  }
-
-  const { bank_name, account_name, account_number, balance } = validatedFields.data;
-  const supabase = createClient();
-  const user = await getAuthUser();
-
-  try {
-    const { error } = await supabase
-      .from('banking_accounts')
-      .insert({
-        bank_name,
-        account_name,
-        account_number,
-        balance,
-        user_id: user.id,
-      });
-
-    if (error) {
-      console.error('Database Error:', error);
-      return { message: 'Database Error: Failed to Create Banking Account.' };
+      message: "Failed to create bank account. Please check the fields.",
     }
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { message: 'Unexpected Error: Failed to Create Banking Account.' };
   }
 
-  revalidatePath('/banking');
-  redirect('/banking');
+  const { error } = await supabase.from("bank_accounts").insert(validatedFields.data)
+
+  if (error) {
+    return { message: "Database Error: Failed to create bank account." }
+  }
+
+  revalidatePath("/banking")
+  return { message: "Bank account created successfully." }
 }
 
-export async function updateBankingAccount(id: string, prevState: State, formData: FormData) {
-  const validatedFields = UpdateBankingAccount.safeParse({
-    id: formData.get('id'),
-    bank_name: formData.get('bank_name'),
-    account_name: formData.get('account_name'),
-    account_number: formData.get('account_number'),
-    balance: formData.get('balance'),
-  });
+export async function updateBankAccount(id: string, prevState: State, formData: FormData) {
+  const supabase = createClient()
+  const validatedFields = UpdateBankAccount.safeParse({
+    ...Object.fromEntries(formData.entries()),
+    id,
+  })
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Update Banking Account.',
-    };
-  }
-
-  const { bank_name, account_name, account_number, balance } = validatedFields.data;
-  const supabase = createClient();
-  const user = await getAuthUser();
-
-  try {
-    const { error } = await supabase
-      .from('banking_accounts')
-      .update({
-        bank_name,
-        account_name,
-        account_number,
-        balance,
-      })
-      .eq('id', id)
-      .eq('user_id', user.id);
-
-    if (error) {
-      console.error('Database Error:', error);
-      return { message: 'Database Error: Failed to Update Banking Account.' };
+      message: "Failed to update bank account. Please check the fields.",
     }
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { message: 'Unexpected Error: Failed to Update Banking Account.' };
   }
 
-  revalidatePath('/banking');
-  redirect('/banking');
+  const { error } = await supabase.from("bank_accounts").update(validatedFields.data).eq("id", id)
+
+  if (error) {
+    return { message: "Database Error: Failed to update bank account." }
+  }
+
+  revalidatePath("/banking")
+  revalidatePath(`/banking/${id}/edit`)
+  return { message: "Bank account updated successfully." }
 }
 
-export async function deleteBankingAccount(id: string) {
-  const supabase = createClient();
-  const user = await getAuthUser();
+export async function deleteBankAccount(id: string) {
+  const supabase = createClient()
+  const { error } = await supabase.from("bank_accounts").delete().eq("id", id)
 
-  try {
-    const { error } = await supabase
-      .from('banking_accounts')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
-
-    if (error) {
-      console.error('Database Error:', error);
-      return { message: 'Database Error: Failed to Delete Banking Account.' };
-    }
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { message: 'Unexpected Error: Failed to Delete Banking Account.' };
+  if (error) {
+    return { message: "Database Error: Failed to delete bank account." }
   }
 
-  revalidatePath('/banking');
+  revalidatePath("/banking")
+  return { message: "Bank account deleted successfully." }
 }

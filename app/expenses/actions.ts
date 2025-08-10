@@ -1,141 +1,84 @@
-'use server';
+"use server"
 
-import { z } from 'zod';
-import { createClient } from '@/lib/supabase/server';
-import { revalidatePath } from 'next/cache';
-import { redirect } from 'next/navigation';
-import { getAuthUser } from '@/lib/auth';
+import { createClient } from "@/lib/supabase/server"
+import { revalidatePath } from "next/cache"
+import { z } from "zod"
 
 const FormSchema = z.object({
-  id: z.string().optional(),
-  amount: z.coerce.number().gt(0, 'Amount must be greater than 0.'),
-  category: z.string().optional().nullable(),
-  description: z.string().optional().nullable(),
-  date: z.string().min(1, 'Date is required.'),
-  created_at: z.string().optional(),
-  user_id: z.string().optional(),
-});
+  id: z.string(),
+  description: z.string().min(1, "Description is required."),
+  amount: z.coerce.number().gt(0, "Amount must be greater than 0."),
+  expense_date: z.string({ required_error: "Expense date is required." }),
+  category: z.string().min(1, "Category is required."),
+})
 
-const CreateExpense = FormSchema.omit({ id: true, created_at: true, user_id: true });
-const UpdateExpense = FormSchema.omit({ created_at: true, user_id: true });
+const CreateExpense = FormSchema.omit({ id: true })
+const UpdateExpense = FormSchema
 
 export type State = {
   errors?: {
-    amount?: string[];
-    category?: string[];
-    description?: string[];
-    date?: string[];
-  };
-  message?: string | null;
-};
+    description?: string[]
+    amount?: string[]
+    expense_date?: string[]
+    category?: string[]
+  }
+  message?: string | null
+}
 
 export async function createExpense(prevState: State, formData: FormData) {
-  const validatedFields = CreateExpense.safeParse({
-    amount: formData.get('amount'),
-    category: formData.get('category'),
-    description: formData.get('description'),
-    date: formData.get('date'),
-  });
+  const supabase = createClient()
+  const validatedFields = CreateExpense.safeParse(Object.fromEntries(formData.entries()))
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Create Expense.',
-    };
-  }
-
-  const { amount, category, description, date } = validatedFields.data;
-  const supabase = createClient();
-  const user = await getAuthUser();
-
-  try {
-    const { error } = await supabase
-      .from('expenses')
-      .insert({
-        amount,
-        category,
-        description,
-        date,
-        user_id: user.id,
-      });
-
-    if (error) {
-      console.error('Database Error:', error);
-      return { message: 'Database Error: Failed to Create Expense.' };
+      message: "Failed to create expense. Please check the fields.",
     }
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { message: 'Unexpected Error: Failed to Create Expense.' };
   }
 
-  revalidatePath('/expenses');
-  redirect('/expenses');
+  const { error } = await supabase.from("expenses").insert(validatedFields.data)
+
+  if (error) {
+    return { message: "Database Error: Failed to create expense." }
+  }
+
+  revalidatePath("/expenses")
+  return { message: "Expense created successfully." }
 }
 
 export async function updateExpense(id: string, prevState: State, formData: FormData) {
+  const supabase = createClient()
   const validatedFields = UpdateExpense.safeParse({
-    id: formData.get('id'),
-    amount: formData.get('amount'),
-    category: formData.get('category'),
-    description: formData.get('description'),
-    date: formData.get('date'),
-  });
+    ...Object.fromEntries(formData.entries()),
+    id,
+  })
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: 'Missing Fields. Failed to Update Expense.',
-    };
-  }
-
-  const { amount, category, description, date } = validatedFields.data;
-  const supabase = createClient();
-  const user = await getAuthUser();
-
-  try {
-    const { error } = await supabase
-      .from('expenses')
-      .update({
-        amount,
-        category,
-        description,
-        date,
-      })
-      .eq('id', id)
-      .eq('user_id', user.id);
-
-    if (error) {
-      console.error('Database Error:', error);
-      return { message: 'Database Error: Failed to Update Expense.' };
+      message: "Failed to update expense. Please check the fields.",
     }
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { message: 'Unexpected Error: Failed to Update Expense.' };
   }
 
-  revalidatePath('/expenses');
-  redirect('/expenses');
+  const { error } = await supabase.from("expenses").update(validatedFields.data).eq("id", id)
+
+  if (error) {
+    return { message: "Database Error: Failed to update expense." }
+  }
+
+  revalidatePath("/expenses")
+  revalidatePath(`/expenses/${id}/edit`)
+  return { message: "Expense updated successfully." }
 }
 
 export async function deleteExpense(id: string) {
-  const supabase = createClient();
-  const user = await getAuthUser();
+  const supabase = createClient()
+  const { error } = await supabase.from("expenses").delete().eq("id", id)
 
-  try {
-    const { error } = await supabase
-      .from('expenses')
-      .delete()
-      .eq('id', id)
-      .eq('user_id', user.id);
-
-    if (error) {
-      console.error('Database Error:', error);
-      return { message: 'Database Error: Failed to Delete Expense.' };
-    }
-  } catch (error) {
-    console.error('Unexpected Error:', error);
-    return { message: 'Unexpected Error: Failed to Delete Expense.' };
+  if (error) {
+    return { message: "Database Error: Failed to delete expense." }
   }
 
-  revalidatePath('/expenses');
+  revalidatePath("/expenses")
+  return { message: "Expense deleted successfully." }
 }

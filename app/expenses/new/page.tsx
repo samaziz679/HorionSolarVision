@@ -2,7 +2,6 @@ export const dynamic = "force-dynamic"
 export const revalidate = 0
 
 import ExpenseForm from "@/components/expenses/expense-form"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -35,14 +34,10 @@ export default function NewExpensePage() {
         </BreadcrumbList>
       </Breadcrumb>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Add New Expense</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ExpenseForm />
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-semibold">Create New Expense</h1>
+        <ExpenseForm />
+      </div>
     </main>
   )
 }

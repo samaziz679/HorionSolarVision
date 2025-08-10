@@ -1,47 +1,47 @@
 import { createClient } from "@/lib/supabase/server"
 import { unstable_noStore as noStore } from "next/cache"
+import type { Purchase } from "@/lib/supabase/types"
 
-export type PurchaseWithRelations = {
-  id: string
-  quantity: number
-  total_amount: number
-  purchase_date: string
-  created_at: string
-  products: { name: string } | null
-  suppliers: { name: string } | null
-}
-
-export async function fetchPurchases(): Promise<PurchaseWithRelations[]> {
+export async function fetchPurchases() {
   noStore()
   const supabase = createClient()
   const { data, error } = await supabase
     .from("purchases")
-    .select(`
+    .select(
+      `
       id,
-      quantity,
-      total_amount,
       purchase_date,
-      created_at,
-      products(name),
-      suppliers(name)
-    `)
+      total_amount,
+      suppliers ( name ),
+      purchase_items ( quantity, products ( name, price ) )
+    `,
+    )
     .order("purchase_date", { ascending: false })
 
   if (error) {
-    console.error("Database Error:", error)
+    console.error("Error fetching purchases:", error)
     throw new Error("Failed to fetch purchases.")
   }
 
-  return data as PurchaseWithRelations[]
+  return data as unknown as Purchase[]
 }
 
 export async function fetchPurchaseById(id: string) {
   noStore()
   const supabase = createClient()
-  const { data, error } = await supabase.from("purchases").select("*").eq("id", id).single()
+  const { data, error } = await supabase
+    .from("purchases")
+    .select(
+      `
+      *,
+      purchase_items ( id, product_id, quantity, price )
+    `,
+    )
+    .eq("id", id)
+    .single()
 
   if (error) {
-    console.error("Database Error:", error)
+    console.error("Error fetching purchase by ID:", error)
     return null
   }
 

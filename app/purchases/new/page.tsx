@@ -1,7 +1,5 @@
 export const dynamic = "force-dynamic"
 export const revalidate = 0
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,12 +8,13 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
-import { fetchProductOptions } from "@/lib/data/products"
-import { fetchSupplierOptions } from "@/lib/data/suppliers"
-import { PurchaseForm } from "@/components/purchases/purchase-form"
+import PurchaseForm from "@/components/purchases/purchase-form"
+import { createClient } from "@/lib/supabase/server"
 
 export default async function NewPurchasePage() {
-  const [products, suppliers] = await Promise.all([fetchProductOptions(), fetchSupplierOptions()])
+  const supabase = createClient()
+  const { data: products } = await supabase.from("products").select("id, name")
+  const { data: suppliers } = await supabase.from("suppliers").select("id, name")
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
@@ -38,14 +37,10 @@ export default async function NewPurchasePage() {
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <Card>
-        <CardHeader>
-          <CardTitle>Create New Purchase</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PurchaseForm products={products} suppliers={suppliers} />
-        </CardContent>
-      </Card>
+      <div className="space-y-6">
+        <h1 className="text-2xl font-semibold">Create New Purchase</h1>
+        <PurchaseForm products={products || []} suppliers={suppliers || []} />
+      </div>
     </main>
   )
 }

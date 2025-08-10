@@ -1,74 +1,42 @@
-'use client';
+"use client"
 
-import { useState } from 'react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { BankingAccount } from '@/lib/supabase/types';
-import Link from 'next/link';
-import { PencilIcon, TrashIcon } from 'lucide-react';
-import DeleteBankingAccountDialog from './delete-banking-dialog';
+import type { BankAccount } from "@/lib/supabase/types"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { formatCurrency } from "@/lib/utils"
+import DeleteBankingDialog from "./delete-banking-dialog"
 
-interface BankingListProps {
-  bankingAccounts: BankingAccount[];
-}
-
-export default function BankingList({ bankingAccounts }: BankingListProps) {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
-
-  const handleDeleteClick = (id: string) => {
-    setSelectedAccountId(id);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleCloseDialog = () => {
-    setIsDeleteDialogOpen(false);
-    setSelectedAccountId(null);
-  };
-
+export default function BankingList({ accounts }: { accounts: BankAccount[] }) {
   return (
-    <>
+    <div className="rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Bank Name</TableHead>
             <TableHead>Account Name</TableHead>
+            <TableHead>Bank</TableHead>
             <TableHead>Account Number</TableHead>
-            <TableHead>Balance</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
+            <TableHead className="text-right">Balance</TableHead>
+            <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {bankingAccounts.map((account) => (
+          {accounts.map((account) => (
             <TableRow key={account.id}>
-              <TableCell className="font-medium">{account.bank_name}</TableCell>
               <TableCell>{account.account_name}</TableCell>
-              <TableCell>{account.account_number}</TableCell>
-              <TableCell>${account.balance.toFixed(2)}</TableCell>
-              <TableCell className="flex justify-end gap-2">
+              <TableCell>{account.bank_name}</TableCell>
+              <TableCell>****{account.account_number.slice(-4)}</TableCell>
+              <TableCell className="text-right">{formatCurrency(account.initial_balance)}</TableCell>
+              <TableCell className="flex gap-2">
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/banking/${account.id}/edit`}>
-                    <PencilIcon className="h-4 w-4" />
-                    <span className="sr-only">Edit</span>
-                  </Link>
+                  <Link href={`/banking/${account.id}/edit`}>Edit</Link>
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(account.id)}>
-                  <TrashIcon className="h-4 w-4" />
-                  <span className="sr-only">Delete</span>
-                </Button>
+                <DeleteBankingDialog accountId={account.id} />
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-
-      {selectedAccountId && (
-        <DeleteBankingAccountDialog
-          accountId={selectedAccountId}
-          isOpen={isDeleteDialogOpen}
-          onClose={handleCloseDialog}
-        />
-      )}
-    </>
-  );
+    </div>
+  )
 }

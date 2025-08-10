@@ -1,35 +1,26 @@
 import { createClient } from "@/lib/supabase/server"
 import { unstable_noStore as noStore } from "next/cache"
 
-export type BankingAccount = {
-  id: string
-  bank_name: string
-  account_name: string
-  account_number: string
-  balance: number
-  created_at: string
-}
-
-export async function fetchBankingAccounts(): Promise<BankingAccount[]> {
+export async function fetchBankAccounts() {
   noStore()
   const supabase = createClient()
-  const { data, error } = await supabase.from("banking_accounts").select("*").order("bank_name", { ascending: true })
+  const { data, error } = await supabase.from("bank_accounts").select("*").order("account_name", { ascending: true })
 
   if (error) {
-    console.error("Database Error:", error)
-    throw new Error("Failed to fetch banking accounts.")
+    console.error("Error fetching bank accounts:", error)
+    throw new Error("Failed to fetch bank accounts.")
   }
 
-  return data || []
+  return data
 }
 
-export async function fetchBankingAccountById(id: string): Promise<BankingAccount | null> {
+export async function fetchBankAccountById(id: string) {
   noStore()
   const supabase = createClient()
-  const { data, error } = await supabase.from("banking_accounts").select("*").eq("id", id).single()
+  const { data, error } = await supabase.from("bank_accounts").select("*").eq("id", id).single()
 
   if (error) {
-    console.error("Database Error:", error)
+    console.error("Error fetching bank account by ID:", error)
     return null
   }
 

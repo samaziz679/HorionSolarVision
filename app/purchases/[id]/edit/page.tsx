@@ -1,60 +1,24 @@
-export const dynamic = "force-dynamic"
-export const revalidate = 0
-
-import { notFound } from "next/navigation"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import Link from "next/link"
 import { fetchPurchaseById } from "@/lib/data/purchases"
-import { fetchProducts } from "@/lib/data/products"
-import { fetchSuppliers } from "@/lib/data/suppliers"
-import { EditPurchaseForm } from "@/components/purchases/edit-purchase-form"
+import PurchaseForm from "@/components/purchases/purchase-form"
+import { createClient } from "@/lib/supabase/server"
+import { notFound } from "next/navigation"
 
 export default async function EditPurchasePage({ params }: { params: { id: string } }) {
   const id = params.id
-  const [purchase, products, suppliers] = await Promise.all([fetchPurchaseById(id), fetchProducts(), fetchSuppliers()])
+  const purchase = await fetchPurchaseById(id)
 
   if (!purchase) {
     notFound()
   }
 
-  return (
-    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/dashboard">Dashboard</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/purchases">Purchases</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink>Edit Purchase</BreadcrumbLink>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+  const supabase = createClient()
+  const { data: products } = await supabase.from("products").select("id, name")
+  const { data: suppliers } = await supabase.from("suppliers").select("id, name")
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Edit Purchase</CardTitle>
-        </CardHeader>{" "}
-        {/* Close the CardHeader tag */}
-        <CardContent>
-          <EditPurchaseForm purchase={purchase} products={products} suppliers={suppliers} />
-        </CardContent>
-      </Card>
-    </main>
+  return (
+    <div className="space-y-6">
+      <h1 className="text-2xl font-semibold">Edit Purchase</h1>
+      <PurchaseForm purchase={purchase} products={products || []} suppliers={suppliers || []} />
+    </div>
   )
 }

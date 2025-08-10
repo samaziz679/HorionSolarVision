@@ -1,87 +1,42 @@
 "use client"
 
+import type { Purchase } from "@/lib/supabase/types"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { formatMoney } from "@/lib/currency"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { formatCurrency, formatDate } from "@/lib/utils"
+import DeletePurchaseDialog from "./delete-purchase-dialog"
 
-type BasePurchase = {
-  created_at: string
-  id: string
-  product_id: string
-  purchase_date: string
-  quantity: number
-  supplier_id: string
-  total_amount: number
-  user_id: string
-}
-
-// Support either flat aliased fields or joined objects
-type PurchaseJoins = {
-  supplier_name?: string | null
-  product_name?: string | null
-  suppliers?: { id: string; name: string | null } | null
-  products?: { id: string; name: string | null } | null
-}
-
-export type PurchaseRow = BasePurchase & Partial<PurchaseJoins>
-
-type Props = {
-  data?: PurchaseRow[]
-  purchases?: PurchaseRow[]
-}
-
-function formatDate(d: string | Date) {
-  const date = typeof d === "string" ? new Date(d) : d
-  if (Number.isNaN(date.getTime())) return d?.toString() ?? "N/A"
-  return date.toLocaleDateString()
-}
-
-function safeSupplierName(row: PurchaseRow) {
-  return row.supplier_name ?? row.suppliers?.name ?? "N/A"
-}
-
-function safeProductName(row: PurchaseRow) {
-  return row.product_name ?? row.products?.name ?? "N/A"
-}
-
-function PurchaseListComponent({ data, purchases }: Props) {
-  const rows = data ?? purchases ?? []
-
+export default function PurchaseList({ purchases }: { purchases: Purchase[] }) {
   return (
-    <div className="w-full overflow-x-auto">
+    <div className="rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Purchase Date</TableHead>
+            <TableHead>Date</TableHead>
             <TableHead>Supplier</TableHead>
-            <TableHead>Product</TableHead>
-            <TableHead className="text-right">Quantity</TableHead>
-            <TableHead className="text-right">Total</TableHead>
+            <TableHead>Items</TableHead>
+            <TableHead className="text-right">Total Amount</TableHead>
+            <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={5} className="text-center">
-                No purchases found.
+          {purchases.map((purchase) => (
+            <TableRow key={purchase.id}>
+              <TableCell>{formatDate(purchase.purchase_date)}</TableCell>
+              <TableCell>{purchase.suppliers.name}</TableCell>
+              <TableCell>{purchase.purchase_items.reduce((acc, item) => acc + item.quantity, 0)}</TableCell>
+              <TableCell className="text-right">{formatCurrency(purchase.total_amount)}</TableCell>
+              <TableCell className="flex gap-2">
+                <Button asChild variant="outline" size="sm">
+                  <Link href={`/purchases/${purchase.id}/edit`}>Edit</Link>
+                </Button>
+                <DeletePurchaseDialog purchaseId={purchase.id} />
               </TableCell>
             </TableRow>
-          ) : (
-            rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{formatDate(row.purchase_date)}</TableCell>
-                <TableCell>{safeSupplierName(row)}</TableCell>
-                <TableCell>{safeProductName(row)}</TableCell>
-                <TableCell className="text-right">{row.quantity}</TableCell>
-                <TableCell className="text-right">{formatMoney(row.total_amount)}</TableCell>
-              </TableRow>
-            ))
-          )}
+          ))}
         </TableBody>
       </Table>
     </div>
   )
 }
-
-// Export both named and default to be compatible with varying imports
-export { PurchaseListComponent as PurchaseList }
-export default PurchaseListComponent

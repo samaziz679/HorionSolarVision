@@ -1,67 +1,69 @@
+"use client"
+
+import { useFormState, useFormStatus } from "react-dom"
+import { createBankAccount, updateBankAccount, type State } from "@/app/banking/actions"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { createBankingAccount, updateBankingAccount } from "@/app/banking/actions"
-import type { BankingAccount } from "@/lib/supabase/types"
+import type { BankAccount } from "@/lib/supabase/types"
+import { useEffect } from "react"
 
-interface BankingFormProps {
-  bankingAccount?: BankingAccount
-}
+export default function BankingForm({ account }: { account?: BankAccount | null }) {
+  const initialState: State = { message: null, errors: {} }
+  const action = account ? updateBankAccount.bind(null, account.id) : createBankAccount
+  const [state, dispatch] = useFormState(action, initialState)
 
-/**
- * Server Component form that posts to Next.js Server Actions.
- * Note: React 18 types expect `form.action` to be a string. We cast to `any`
- * so TS accepts the function reference while runtime behavior remains correct.
- */
-export default function BankingForm({ bankingAccount }: BankingFormProps) {
-  const formAction = bankingAccount ? updateBankingAccount.bind(null, bankingAccount.id) : createBankingAccount
+  useEffect(() => {
+    if (state.message && !state.errors) {
+      alert(state.message)
+    }
+  }, [state])
 
   return (
-    <form action={formAction as any} className="space-y-4">
-      <input type="hidden" name="id" value={bankingAccount?.id ?? ""} />
-
-      <div className="grid gap-2">
-        <Label htmlFor="bank_name">Bank Name</Label>
-        <Input id="bank_name" name="bank_name" type="text" defaultValue={bankingAccount?.bank_name ?? ""} required />
+    <form action={dispatch} className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div>
+          <Label htmlFor="account_name">Account Name</Label>
+          <Input id="account_name" name="account_name" defaultValue={account?.account_name} required />
+          {state.errors?.account_name && <p className="text-sm text-red-500">{state.errors.account_name}</p>}
+        </div>
+        <div>
+          <Label htmlFor="bank_name">Bank Name</Label>
+          <Input id="bank_name" name="bank_name" defaultValue={account?.bank_name} required />
+          {state.errors?.bank_name && <p className="text-sm text-red-500">{state.errors.bank_name}</p>}
+        </div>
       </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="account_name">Account Name</Label>
-        <Input
-          id="account_name"
-          name="account_name"
-          type="text"
-          defaultValue={bankingAccount?.account_name ?? ""}
-          required
-        />
-      </div>
-
-      <div className="grid gap-2">
+      <div>
         <Label htmlFor="account_number">Account Number</Label>
-        <Input
-          id="account_number"
-          name="account_number"
-          type="text"
-          defaultValue={bankingAccount?.account_number ?? ""}
-          required
-        />
+        <Input id="account_number" name="account_number" defaultValue={account?.account_number} required />
+        {state.errors?.account_number && <p className="text-sm text-red-500">{state.errors.account_number}</p>}
       </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="balance">Balance</Label>
+      <div>
+        <Label htmlFor="initial_balance">Initial Balance</Label>
         <Input
-          id="balance"
-          name="balance"
+          id="initial_balance"
+          name="initial_balance"
           type="number"
           step="0.01"
-          defaultValue={bankingAccount?.balance ?? 0}
+          defaultValue={account?.initial_balance}
           required
+          disabled={!!account} // Disable editing initial balance
         />
+        {state.errors?.initial_balance && <p className="text-sm text-red-500">{state.errors.initial_balance}</p>}
+        {!!account && <p className="text-xs text-gray-500">Initial balance cannot be changed after creation.</p>}
       </div>
-
-      <Button type="submit" className="w-full">
-        {bankingAccount ? "Update Account" : "Create Account"}
-      </Button>
+      <div className="flex justify-end gap-4">
+        <SubmitButton text={account ? "Update Account" : "Create Account"} />
+      </div>
     </form>
+  )
+}
+
+function SubmitButton({ text }: { text: string }) {
+  const { pending } = useFormStatus()
+  return (
+    <Button type="submit" disabled={pending}>
+      {pending ? "Saving..." : text}
+    </Button>
   )
 }
