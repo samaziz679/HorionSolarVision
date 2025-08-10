@@ -1,0 +1,26 @@
+// lib/data/clients.ts
+export type ClientLite = { id: string; name: string };
+
+// app/sales/new/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+// app/purchases/new/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+// app/banking/new/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+// app/clients/new/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+// app/suppliers/new/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+// app/expenses/new/page.tsx
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
