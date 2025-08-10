@@ -1,17 +1,19 @@
-import { fetchBankAccountById } from "@/lib/data/banking"
-import BankingForm from "@/components/banking/banking-form"
 import { notFound } from "next/navigation"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import Link from "next/link"
+import { fetchBankAccountById } from "@/lib/data/banking"
+import EditBankingForm from "@/components/banking/edit-banking-form"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default async function EditBankAccountPage({ params }: { params: { id: string } }) {
-  const id = params.id
+type PageProps = {
+  params: {
+    id: string
+  }
+}
+
+export default async function EditBankingPage({ params }: PageProps) {
+  const id = Number(params.id)
+  if (isNaN(id)) {
+    notFound()
+  }
   const bankAccount = await fetchBankAccountById(id)
 
   if (!bankAccount) {
@@ -19,30 +21,13 @@ export default async function EditBankAccountPage({ params }: { params: { id: st
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
-      <Breadcrumb>
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/dashboard">Dashboard</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink asChild>
-              <Link href="/banking">Banking</Link>
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink>Edit Account</BreadcrumbLink>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
-      <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">Edit Bank Account</h1>
-        <BankingForm bankAccount={bankAccount} />
-      </div>
-    </main>
+    <Card>
+      <CardHeader>
+        <CardTitle>Edit Bank Account</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <EditBankingForm bankAccount={bankAccount} />
+      </CardContent>
+    </Card>
   )
 }

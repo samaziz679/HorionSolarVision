@@ -1,9 +1,19 @@
-import { fetchExpenseById } from "@/lib/data/expenses"
-import ExpenseForm from "@/components/expenses/expense-form"
 import { notFound } from "next/navigation"
+import { fetchExpenseById } from "@/lib/data/expenses"
+import EditExpenseForm from "@/components/expenses/edit-expense-form"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default async function EditExpensePage({ params }: { params: { id: string } }) {
-  const id = params.id
+type PageProps = {
+  params: {
+    id: string
+  }
+}
+
+export default async function EditExpensePage({ params }: PageProps) {
+  const id = Number(params.id)
+  if (isNaN(id)) {
+    notFound()
+  }
   const expense = await fetchExpenseById(id)
 
   if (!expense) {
@@ -11,9 +21,13 @@ export default async function EditExpensePage({ params }: { params: { id: string
   }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-semibold">Edit Expense</h1>
-      <ExpenseForm expense={expense} />
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Edit Expense</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <EditExpenseForm expense={expense} />
+      </CardContent>
+    </Card>
   )
 }
