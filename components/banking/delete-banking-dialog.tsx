@@ -11,40 +11,40 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Button } from "@/components/ui/button"
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { deleteBankAccount } from "@/app/banking/actions"
-import { useTransition } from "react"
+import { toast } from "sonner"
 
-export default function DeleteBankAccountDialog({ accountId }: { accountId: string }) {
-  const [isPending, startTransition] = useTransition()
+interface DeleteBankingDialogProps {
+  accountId: string
+}
 
-  const handleDelete = () => {
-    startTransition(async () => {
-      const result = await deleteBankAccount(accountId)
-      if (result?.message) {
-        alert(result.message)
-      }
-    })
+export default function DeleteBankingDialog({ accountId }: DeleteBankingDialogProps) {
+  const handleDelete = async () => {
+    const result = await deleteBankAccount(accountId)
+    if (result.success) {
+      toast.success(result.message)
+    } else {
+      toast.error(result.message)
+    }
   }
 
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm">
-          Delete
-        </Button>
+        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>Delete</DropdownMenuItem>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete the bank account.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} disabled={isPending}>
-            {isPending ? "Deleting..." : "Continue"}
+          <AlertDialogAction onClick={handleDelete} className="bg-red-500 hover:bg-red-600">
+            Delete
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

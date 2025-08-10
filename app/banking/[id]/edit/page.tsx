@@ -1,5 +1,5 @@
 import { fetchBankAccountById } from "@/lib/data/banking"
-import BankAccountForm from "@/components/banking/banking-form"
+import BankingForm from "@/components/banking/banking-form"
 import { notFound } from "next/navigation"
 import {
   Breadcrumb,
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
 
-export default async function EditBankAccountPage({ params }: { params: { id: string } }) {
+export default async function EditBankingPage({ params }: { params: { id: string } }) {
   const id = params.id
   const account = await fetchBankAccountById(id)
 
@@ -19,7 +19,7 @@ export default async function EditBankAccountPage({ params }: { params: { id: st
   }
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
+    <div className="space-y-6">
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -39,10 +39,8 @@ export default async function EditBankAccountPage({ params }: { params: { id: st
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">Edit Bank Account</h1>
-        <BankAccountForm account={account} />
-      </div>
-    </main>
+      <h1 className="text-2xl font-semibold">Edit Bank Account</h1>
+      <BankingForm account={account} />
+    </div>
   )
 }
