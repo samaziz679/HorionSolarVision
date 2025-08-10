@@ -2,77 +2,61 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { formatMoney } from "@/lib/currency"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+import { Pencil } from "lucide-react"
 
-type BaseSale = {
-  id: string
-  created_at: string
-  product_id: string
-  client_id: string
-  sale_date: string
-  quantity: number
+// This type now matches the exact structure returned by our updated fetchSales function.
+type SaleForList = {
+  id: number
+  date: string
   total_amount: number
-  user_id: string
+  client_name: string // We can rely on this property existing.
 }
 
-// Support either flat aliased fields or joined objects
-type SaleJoins = {
-  client_name?: string | null
-  product_name?: string | null
-  clients?: { id: string; name: string | null } | null
-  products?: { id: string; name: string | null } | null
-}
+export function SalesList({ sales }: { sales: SaleForList[] }) {
+  const router = useRouter()
 
-export type SaleRow = BaseSale & Partial<SaleJoins>
-
-type Props = {
-  data?: SaleRow[]
-  sales?: SaleRow[]
-}
-
-function formatDate(d: string | Date) {
-  const date = typeof d === "string" ? new Date(d) : d
-  if (Number.isNaN(date.getTime())) return d?.toString() ?? "N/A"
-  return date.toLocaleDateString()
-}
-
-function safeClientName(row: SaleRow) {
-  return row.client_name ?? row.clients?.name ?? "N/A"
-}
-
-function safeProductName(row: SaleRow) {
-  return row.product_name ?? row.products?.name ?? "N/A"
-}
-
-function SalesListComponent({ data, sales }: Props) {
-  const rows = data ?? sales ?? []
+  const handleEdit = (id: number) => {
+    router.push(`/sales/${id}/edit`)
+  }
 
   return (
     <div className="w-full overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Sale Date</TableHead>
+            <TableHead>Sale ID</TableHead>
+            <TableHead>Date</TableHead>
             <TableHead>Client</TableHead>
-            <TableHead>Product</TableHead>
-            <TableHead className="text-right">Quantity</TableHead>
-            <TableHead className="text-right">Total</TableHead>
+            <TableHead className="text-right">Total Amount</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.length === 0 ? (
+          {sales.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} className="text-center">
                 No sales found.
               </TableCell>
             </TableRow>
           ) : (
-            rows.map((row) => (
-              <TableRow key={row.id}>
-                <TableCell>{formatDate(row.sale_date)}</TableCell>
-                <TableCell>{safeClientName(row)}</TableCell>
-                <TableCell>{safeProductName(row)}</TableCell>
-                <TableCell className="text-right">{row.quantity}</TableCell>
-                <TableCell className="text-right">{formatMoney(row.total_amount)}</TableCell>
+            sales.map((sale) => (
+              <TableRow key={sale.id}>
+                <TableCell>
+                  <Badge variant="outline">SALE-{sale.id}</Badge>
+                </TableCell>
+                <TableCell>{new Date(sale.date).toLocaleDateString()}</TableCell>
+                {/* This now correctly displays the combined first and last name. */}
+                <TableCell>{sale.client_name}</TableCell>
+                <TableCell className="text-right">{formatMoney(sale.total_amount)}</TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" onClick={() => handleEdit(sale.id)}>
+                    <Pencil className="h-4 w-4" />
+                    <span className="sr-only">Edit Sale</span>
+                  </Button>
+                </TableCell>
               </TableRow>
             ))
           )}
@@ -81,7 +65,3 @@ function SalesListComponent({ data, sales }: Props) {
     </div>
   )
 }
-
-// Export both named and default to be compatible with varying imports
-export { SalesListComponent as SalesList }
-export default SalesListComponent
