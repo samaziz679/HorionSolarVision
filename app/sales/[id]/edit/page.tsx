@@ -5,7 +5,13 @@ import { fetchClients } from "@/lib/data/clients"
 import { EditSaleForm } from "@/components/sales/edit-sale-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
-export default async function EditSalePage({ params }) {
+type PageProps = {
+  params: {
+    id: string
+  }
+}
+
+export default async function EditSalePage({ params }: PageProps) {
   const id = Number(params.id)
   if (isNaN(id)) {
     notFound()
