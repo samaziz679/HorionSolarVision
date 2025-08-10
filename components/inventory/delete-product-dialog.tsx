@@ -1,4 +1,4 @@
-'use client';
+"use client"
 
 import {
   AlertDialog,
@@ -9,46 +9,50 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { deleteProduct } from '@/app/inventory/actions';
-import { toast } from 'sonner';
+} from "@/components/ui/alert-dialog"
+import { deleteProduct } from "@/app/inventory/actions"
+import { useTransition } from "react"
+import { toast } from "sonner"
 
 interface DeleteProductDialogProps {
-  productId: string;
-  isOpen: boolean;
-  onClose: () => void;
+  productId: number
+  isOpen: boolean
+  onClose: () => void
 }
 
-export default function DeleteProductDialog({
-  productId,
-  isOpen,
-  onClose,
-}: DeleteProductDialogProps) {
-  const handleDelete = async () => {
-    const result = await deleteProduct(productId);
-    if (result?.message) {
-      toast.error(result.message);
-    } else {
-      toast.success('Product deleted successfully!');
-    }
-    onClose();
-  };
+export default function DeleteProductDialog({ productId, isOpen, onClose }: DeleteProductDialogProps) {
+  const [isPending, startTransition] = useTransition()
+
+  const handleDelete = () => {
+    startTransition(async () => {
+      const result = await deleteProduct(productId)
+      if (result?.message) {
+        toast.error(result.message)
+      } else {
+        toast.success("Product deleted successfully.")
+        onClose()
+      }
+    })
+  }
 
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete the product
-            and remove its data from our servers.
+            This action cannot be undone. This will permanently delete the product from the inventory.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete}>Continue</AlertDialogAction>
+          <AlertDialogCancel onClick={onClose} disabled={isPending}>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={handleDelete} disabled={isPending}>
+            {isPending ? "Deleting..." : "Delete"}
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
+  )
 }

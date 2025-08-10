@@ -1,143 +1,66 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useFormState, useFormStatus } from "react-dom"
+import { updateProduct } from "@/app/inventory/actions"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { updateProduct } from "@/app/inventory/actions"
-import type { Product } from "@/lib/supabase/types"
-import { toast } from "sonner"
+import type { Product, Supplier } from "@/lib/supabase/types"
 
-type FieldErrors = Partial<Record<"name" | "description" | "price" | "stock_quantity" | "sku", string[]>>
-
-interface EditProductFormProps {
-  product: Product
+function SubmitButton() {
+  const { pending } = useFormStatus()
+  return (
+    <Button type="submit" disabled={pending} className="w-full md:w-auto">
+      {pending ? "Updating..." : "Update Product"}
+    </Button>
+  )
 }
 
-export default function EditProductForm({ product }: EditProductFormProps) {
-  const [errors, setErrors] = useState<FieldErrors>({})
-  const [pending, setPending] = useState(false)
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setPending(true)
-    setErrors({})
-
-    const form = e.currentTarget
-    const formData = new FormData(form)
-    // Ensure id is present
-    formData.set("id", product.id)
-
-    try {
-      // updateProduct was previously used with useFormState via .bind(null, product.id)
-      // Its signature is typically (id, prevState, formData). We pass undefined for prevState.
-      const result = await (updateProduct as unknown as (id: string, _prev: unknown, fd: FormData) => Promise<any>)(
-        product.id,
-        undefined,
-        formData,
-      )
-
-      if (result?.errors) {
-        setErrors(result.errors as FieldErrors)
-        if (result.message) toast.error(result.message)
-      } else if (result?.message) {
-        // Some actions return an error message without field errors
-        toast.error(result.message)
-      } else {
-        toast.success("Product updated successfully!")
-      }
-    } catch (err) {
-      toast.error("Failed to update product.")
-      console.error(err)
-    } finally {
-      setPending(false)
-    }
-  }
+export default function EditProductForm({ product, suppliers }: { product: Product; suppliers: Supplier[] }) {
+  const initialState = { message: null, errors: {} }
+  const updateProductWithId = updateProduct.bind(null, product.id)
+  const [state, dispatch] = useFormState(updateProductWithId, initialState)
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <input type="hidden" name="id" value={product.id} />
-      <div className="grid gap-2">
+    <form action={dispatch} className="space-y-4 max-w-lg">
+      <div>
         <Label htmlFor="name">Product Name</Label>
-        <Input id="name" name="name" type="text" defaultValue={product.name} required aria-describedby="name-error" />
-        {errors.name && (
-          <div id="name-error" aria-live="polite" className="text-sm text-red-500">
-            {errors.name.map((error) => (
-              <p key={error}>{error}</p>
-            ))}
-          </div>
-        )}
+        <Input id="name" name="name" defaultValue={product.name} required />
+        {state.errors?.name && <p className="text-sm text-red-500 mt-1">{state.errors.name[0]}</p>}
       </div>
-      <div className="grid gap-2">
+      <div>
         <Label htmlFor="description">Description</Label>
-        <Textarea
-          id="description"
-          name="description"
-          defaultValue={product.description || ""}
-          aria-describedby="description-error"
-        />
-        {errors.description && (
-          <div id="description-error" aria-live="polite" className="text-sm text-red-500">
-            {errors.description.map((error) => (
-              <p key={error}>{error}</p>
-            ))}
-          </div>
-        )}
+        <Textarea id="description" name="description" defaultValue={product.description ?? ""} />
       </div>
-      <div className="grid gap-2">
+      <div>
         <Label htmlFor="price">Price</Label>
-        <Input
-          id="price"
-          name="price"
-          type="number"
-          step="0.01"
-          defaultValue={product.price}
-          required
-          aria-describedby="price-error"
-        />
-        {errors.price && (
-          <div id="price-error" aria-live="polite" className="text-sm text-red-500">
-            {errors.price.map((error) => (
-              <p key={error}>{error}</p>
-            ))}
-          </div>
-        )}
+        <Input id="price" name="price" type="number" step="0.01" defaultValue={product.price} required />
+        {state.errors?.price && <p className="text-sm text-red-500 mt-1">{state.errors.price[0]}</p>}
       </div>
-      <div className="grid gap-2">
-        <Label htmlFor="stock_quantity">Stock Quantity</Label>
-        <Input
-          id="stock_quantity"
-          name="stock_quantity"
-          type="number"
-          defaultValue={product.stock_quantity}
-          required
-          aria-describedby="stock-quantity-error"
-        />
-        {errors.stock_quantity && (
-          <div id="stock-quantity-error" aria-live="polite" className="text-sm text-red-500">
-            {errors.stock_quantity.map((error) => (
-              <p key={error}>{error}</p>
-            ))}
-          </div>
-        )}
+      <div>
+        <Label htmlFor="quantity">Quantity</Label>
+        <Input id="quantity" name="quantity" type="number" defaultValue={product.quantity} required />
+        {state.errors?.quantity && <p className="text-sm text-red-500 mt-1">{state.errors.quantity[0]}</p>}
       </div>
-      <div className="grid gap-2">
-        <Label htmlFor="sku">SKU</Label>
-        <Input id="sku" name="sku" type="text" defaultValue={product.sku || ""} aria-describedby="sku-error" />
-        {errors.sku && (
-          <div id="sku-error" aria-live="polite" className="text-sm text-red-500">
-            {errors.sku.map((error) => (
-              <p key={error}>{error}</p>
+      <div>
+        <Label htmlFor="supplier_id">Supplier</Label>
+        <Select name="supplier_id" defaultValue={String(product.supplier_id)} required>
+          <SelectTrigger>
+            <SelectValue placeholder="Select a supplier" />
+          </SelectTrigger>
+          <SelectContent>
+            {suppliers.map((supplier) => (
+              <SelectItem key={supplier.id} value={String(supplier.id)}>
+                {supplier.name}
+              </SelectItem>
             ))}
-          </div>
-        )}
+          </SelectContent>
+        </Select>
+        {state.errors?.supplier_id && <p className="text-sm text-red-500 mt-1">{state.errors.supplier_id[0]}</p>}
       </div>
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "Updating..." : "Update Product"}
-      </Button>
+      <SubmitButton />
     </form>
   )
 }
