@@ -1,48 +1,49 @@
-import "server-only"
+import { createClient } from "@/lib/supabase/server"
 import { unstable_noStore as noStore } from "next/cache"
-import { getAdminClient } from "@/lib/supabase/admin"
-import type { SaleWithItems } from "@/lib/supabase/types"
 
-export async function fetchSales() {
-  noStore()
-  const supabase = getAdminClient()
-  const { data, error } = await supabase.from("sales_with_client_name").select("*").order("date", { ascending: false })
-
-  if (error) {
-    console.error("Database Error (fetchSales):", error)
-    throw new Error("Failed to fetch sales.")
-  }
-  return data
+export type SaleWithRelations = {
+  id: string
+  quantity: number
+  total_amount: number
+  sale_date: string
+  created_at: string
+  products: { name: string } | null
+  clients: { name: string } | null
 }
 
-export async function fetchSaleById(id: string): Promise<SaleWithItems | null> {
+export async function fetchSales(): Promise<SaleWithRelations[]> {
   noStore()
-  const supabase = getAdminClient()
-  const { data: saleData, error: saleError } = await supabase.from("sales").select("*").eq("id", id).single()
+  const supabase = createClient()
+  const { data, error } = await supabase
+    .from("sales")
+    .select(`
+      id,
+      quantity,
+      total_amount,
+      sale_date,
+      created_at,
+      products(name),
+      clients(name)
+    `)
+    .order("sale_date", { ascending: false })
 
-  if (saleError) {
-    if (saleError.code === "PGRST116") {
-      return null
-    }
-    console.error("Database Error (fetchSaleById - sale):", saleError)
-    throw new Error("Failed to fetch sale.")
+  if (error) {
+    console.error("Database Error:", error)
+    throw new Error("Failed to fetch sales.")
   }
 
-  const { data: itemsData, error: itemsError } = await supabase
-    .from("sale_items")
-    .select("*, products(name)")
-    .eq("sale_id", id)
+  return data as SaleWithRelations[]
+}
 
-  if (itemsError) {
-    console.error("Database Error (fetchSaleById - items):", itemsError)
-    throw new Error("Failed to fetch sale items.")
+export async function fetchSaleById(id: string) {
+  noStore()
+  const supabase = createClient()
+  const { data, error } = await supabase.from("sales").select("*").eq("id", id).single()
+
+  if (error) {
+    console.error("Database Error:", error)
+    return null
   }
 
-  return {
-    ...saleData,
-    sale_items: itemsData.map((item) => ({
-      ...item,
-      product_name: item.products?.name ?? "Unknown Product",
-    })),
-  }
+  return data
 }

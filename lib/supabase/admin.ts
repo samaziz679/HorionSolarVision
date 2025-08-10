@@ -1,18 +1,15 @@
-import "server-only"
-import { createClient, type SupabaseClient } from "@supabase/supabase-js"
+import { createClient } from "@supabase/supabase-js"
 
-let cached: SupabaseClient | null = null
-
-export function getAdminClient(): SupabaseClient {
-  if (cached) return cached
-  const url = process.env.SUPABASE_URL
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
-  if (!url || !key) {
-    throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY")
+// This client is intended for server-side use ONLY, where service_role key is available.
+export const getAdminClient = () => {
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("Missing Supabase URL or Service Role Key for admin client")
   }
-  cached = createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: { headers: { "x-application-name": "solar-vision-erp" } },
+
+  return createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
   })
-  return cached
 }

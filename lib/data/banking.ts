@@ -1,34 +1,37 @@
-import "server-only"
+import { createClient } from "@/lib/supabase/server"
 import { unstable_noStore as noStore } from "next/cache"
-import { getAdminClient } from "@/lib/supabase/admin"
-import type { BankingAccount } from "@/lib/supabase/types"
+
+export type BankingAccount = {
+  id: string
+  bank_name: string
+  account_name: string
+  account_number: string
+  balance: number
+  created_at: string
+}
 
 export async function fetchBankingAccounts(): Promise<BankingAccount[]> {
   noStore()
-  const supabase = getAdminClient()
-  const { data, error } = await supabase.from("banking_accounts").select("*").order("created_at", { ascending: false })
+  const supabase = createClient()
+  const { data, error } = await supabase.from("banking_accounts").select("*").order("bank_name", { ascending: true })
 
   if (error) {
-    console.error("Database Error (fetchBankingAccounts):", error)
+    console.error("Database Error:", error)
     throw new Error("Failed to fetch banking accounts.")
   }
 
-  return (data ?? []) as BankingAccount[]
+  return data || []
 }
 
 export async function fetchBankingAccountById(id: string): Promise<BankingAccount | null> {
   noStore()
-  const supabase = getAdminClient()
+  const supabase = createClient()
   const { data, error } = await supabase.from("banking_accounts").select("*").eq("id", id).single()
 
   if (error) {
-    // It's not an error if no row is found
-    if (error.code === "PGRST116") {
-      return null
-    }
-    console.error("Database Error (fetchBankingAccountById):", error)
-    throw new Error("Failed to fetch banking account.")
+    console.error("Database Error:", error)
+    return null
   }
 
-  return (data ?? null) as BankingAccount | null
+  return data
 }

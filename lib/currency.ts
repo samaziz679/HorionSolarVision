@@ -43,9 +43,27 @@ export function formatMoney(
 }
 
 /**
+ * Formats a numeric value using a specified currency code.
+ */
+export function formatCurrency(amount: number | null | undefined, currencyCode = "XOF"): string {
+  if (amount === null || amount === undefined) {
+    return ""
+  }
+
+  const formatter = new Intl.NumberFormat("fr-FR", {
+    style: "currency",
+    currency: currencyCode,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })
+
+  return formatter.format(amount)
+}
+
+/**
  * Alias used in some files.
  */
-export const formatCurrency = (amount: number) => {
+export const formatCurrencyAlias = (amount: number) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: process.env.NEXT_PUBLIC_CURRENCY || "USD",

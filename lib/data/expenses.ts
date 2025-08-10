@@ -1,33 +1,37 @@
-import "server-only"
+import { createClient } from "@/lib/supabase/server"
 import { unstable_noStore as noStore } from "next/cache"
-import { getAdminClient } from "@/lib/supabase/admin"
-import type { Expense } from "@/lib/supabase/types"
+
+export type Expense = {
+  id: string
+  amount: number
+  category: string | null
+  description: string | null
+  date: string
+  created_at: string
+}
 
 export async function fetchExpenses(): Promise<Expense[]> {
   noStore()
-  const supabase = getAdminClient()
+  const supabase = createClient()
   const { data, error } = await supabase.from("expenses").select("*").order("date", { ascending: false })
 
   if (error) {
-    console.error("Database Error (fetchExpenses):", error)
+    console.error("Database Error:", error)
     throw new Error("Failed to fetch expenses.")
   }
 
-  return (data ?? []) as Expense[]
+  return data || []
 }
 
 export async function fetchExpenseById(id: string): Promise<Expense | null> {
   noStore()
-  const supabase = getAdminClient()
+  const supabase = createClient()
   const { data, error } = await supabase.from("expenses").select("*").eq("id", id).single()
 
   if (error) {
-    if (error.code === "PGRST116") {
-      return null
-    }
-    console.error("Database Error (fetchExpenseById):", error)
-    throw new Error("Failed to fetch expense.")
+    console.error("Database Error:", error)
+    return null
   }
 
-  return (data ?? null) as Expense | null
+  return data
 }

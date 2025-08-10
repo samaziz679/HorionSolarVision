@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { AlertTriangle } from "lucide-react"
+import type { Error } from "some-module" // Placeholder import for undeclared variables
 
 export default function GlobalError({
   error,
@@ -10,30 +11,23 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
-  // Log for observability (visible in browser console; server logs already capture stack)
-  // eslint-disable-next-line no-console
-  console.error("Global error boundary:", error)
+  // Log for observability
+  console.error(error)
 
   return (
-    <html>
-      <body className="min-h-screen flex items-center justify-center bg-white p-6">
-        <div className="max-w-md w-full border rounded-lg p-6 shadow-sm text-center space-y-4">
-          <div className="flex items-center justify-center gap-2 text-red-600">
-            <AlertTriangle className="h-5 w-5" />
-            <span className="font-semibold">Something went wrong</span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            The page encountered an unexpected error. You can try again or go back.
-          </p>
-          {error?.digest && <p className="text-xs text-gray-500">Digest: {error.digest}</p>}
-          <div className="flex items-center justify-center gap-3">
-            <Button onClick={() => reset()}>Try again</Button>
-            <a href="/" className="inline-flex items-center justify-center rounded-md border px-4 py-2 text-sm">
-              Go home
-            </a>
-          </div>
+    <div className="flex h-[70vh] flex-col items-center justify-center gap-4">
+      <div className="w-full max-w-md rounded-lg border bg-white p-8 text-center shadow-lg">
+        <AlertTriangle className="mx-auto h-12 w-12 text-red-500" />
+        <h2 className="mt-4 text-2xl font-bold">Something went wrong!</h2>
+        <p className="mt-2 text-gray-600">An unexpected error occurred. Please try again.</p>
+        {error?.digest && <p className="mt-4 text-xs text-gray-400">Error Digest: {error.digest}</p>}
+        <div className="mt-6 flex justify-center gap-4">
+          <Button onClick={() => reset()}>Try again</Button>
+          <Button variant="outline" asChild>
+            <a href="/">Go to Homepage</a>
+          </Button>
         </div>
-      </body>
-    </html>
+      </div>
+    </div>
   )
 }
