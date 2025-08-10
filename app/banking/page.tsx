@@ -1,5 +1,5 @@
 import { fetchBankAccounts } from "@/lib/data/banking"
-import BankingList from "@/components/banking/banking-list"
+import BankAccountList from "@/components/banking/banking-list"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { PlusCircle } from "lucide-react"
@@ -14,11 +14,11 @@ export default async function BankingPage() {
         <Button asChild>
           <Link href="/banking/new">
             <PlusCircle className="mr-2 h-4 w-4" />
-            New Account
+            New Bank Account
           </Link>
         </Button>
       </div>
-      <BankingList accounts={accounts} />
+      <BankAccountList accounts={accounts} />
     </div>
   )
 }

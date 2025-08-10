@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button"
 import { deleteBankAccount } from "@/app/banking/actions"
 import { useTransition } from "react"
 
-export default function DeleteBankingDialog({ accountId }: { accountId: string }) {
+export default function DeleteBankAccountDialog({ accountId }: { accountId: string }) {
   const [isPending, startTransition] = useTransition()
 
   const handleDelete = () => {

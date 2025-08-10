@@ -5,16 +5,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { formatCurrency } from "@/lib/utils"
-import DeleteBankingDialog from "./delete-banking-dialog"
+import DeleteBankAccountDialog from "./delete-banking-dialog"
 
-export default function BankingList({ accounts }: { accounts: BankAccount[] }) {
+export default function BankAccountList({ accounts }: { accounts: BankAccount[] }) {
   return (
     <div className="rounded-lg border">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Account Name</TableHead>
-            <TableHead>Bank</TableHead>
+            <TableHead>Bank Name</TableHead>
             <TableHead>Account Number</TableHead>
             <TableHead className="text-right">Balance</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
@@ -31,7 +31,7 @@ export default function BankingList({ accounts }: { accounts: BankAccount[] }) {
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/banking/${account.id}/edit`}>Edit</Link>
                 </Button>
-                <DeleteBankingDialog accountId={account.id} />
+                <DeleteBankAccountDialog accountId={account.id} />
               </TableCell>
             </TableRow>
           ))}

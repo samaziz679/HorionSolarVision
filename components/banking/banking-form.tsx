@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import type { BankAccount } from "@/lib/supabase/types"
 import { useEffect } from "react"
 
-export default function BankingForm({ account }: { account?: BankAccount | null }) {
+export default function BankAccountForm({ account }: { account?: BankAccount | null }) {
   const initialState: State = { message: null, errors: {} }
   const action = account ? updateBankAccount.bind(null, account.id) : createBankAccount
   const [state, dispatch] = useFormState(action, initialState)
@@ -38,20 +38,13 @@ export default function BankingForm({ account }: { account?: BankAccount | null 
         <Input id="account_number" name="account_number" defaultValue={account?.account_number} required />
         {state.errors?.account_number && <p className="text-sm text-red-500">{state.errors.account_number}</p>}
       </div>
-      <div>
-        <Label htmlFor="initial_balance">Initial Balance</Label>
-        <Input
-          id="initial_balance"
-          name="initial_balance"
-          type="number"
-          step="0.01"
-          defaultValue={account?.initial_balance}
-          required
-          disabled={!!account} // Disable editing initial balance
-        />
-        {state.errors?.initial_balance && <p className="text-sm text-red-500">{state.errors.initial_balance}</p>}
-        {!!account && <p className="text-xs text-gray-500">Initial balance cannot be changed after creation.</p>}
-      </div>
+      {!account && (
+        <div>
+          <Label htmlFor="initial_balance">Initial Balance</Label>
+          <Input id="initial_balance" name="initial_balance" type="number" step="0.01" defaultValue={0} required />
+          {state.errors?.initial_balance && <p className="text-sm text-red-500">{state.errors.initial_balance}</p>}
+        </div>
+      )}
       <div className="flex justify-end gap-4">
         <SubmitButton text={account ? "Update Account" : "Create Account"} />
       </div>

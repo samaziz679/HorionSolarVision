@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-import BankingForm from "@/components/banking/banking-form"
+import BankAccountForm from "@/components/banking/banking-form"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
 
-export default function NewBankingAccountPage() {
+export default function NewBankAccountPage() {
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
       <Breadcrumb>
@@ -24,7 +24,7 @@ export default function NewBankingAccountPage() {
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/banking">Banking Accounts</Link>
+              <Link href="/banking">Banking</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -36,7 +36,7 @@ export default function NewBankingAccountPage() {
 
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold">Create New Bank Account</h1>
-        <BankingForm />
+        <BankAccountForm />
       </div>
     </main>
   )
