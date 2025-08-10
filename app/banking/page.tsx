@@ -5,7 +5,7 @@ import Link from "next/link"
 import { PlusCircle } from "lucide-react"
 
 export default async function BankingPage() {
-  const accounts = await fetchBankAccounts()
+  const bankAccounts = await fetchBankAccounts()
 
   return (
     <div className="space-y-6">
@@ -18,7 +18,7 @@ export default async function BankingPage() {
           </Link>
         </Button>
       </div>
-      <BankAccountList accounts={accounts} />
+      <BankAccountList bankAccounts={bankAccounts} />
     </div>
   )
 }
