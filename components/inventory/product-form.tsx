@@ -1,65 +1,110 @@
 "use client"
 
-import { useFormState, useFormStatus } from "react-dom"
-import { createProduct } from "@/app/inventory/actions"
+import { useEffect } from "react"
+import { useFormState, useFormStatus } from "react"
+import { toast } from "sonner"
+import { createProduct, updateProduct, type State } from "@/app/inventory/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import type { Supplier } from "@/lib/supabase/types"
+import type { Product } from "@/lib/supabase/types"
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
+export function ProductForm({ product }: { product?: Product }) {
+  const initialState: State = { message: null, errors: {} }
+  const action = product ? updateProduct.bind(null, product.id) : createProduct
+  const [state, dispatch] = useFormState(action, initialState)
+
+  useEffect(() => {
+    if (state.message) {
+      if (Object.keys(state.errors ?? {}).length > 0) {
+        toast.error(state.message)
+      } else {
+        toast.success(state.message)
+      }
+    }
+  }, [state])
+
   return (
-    <Button type="submit" disabled={pending} className="w-full md:w-auto">
-      {pending ? "Creating..." : "Create Product"}
-    </Button>
+    <form action={dispatch} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="name">Product Name</Label>
+        <Input id="name" name="name" defaultValue={product?.name} aria-describedby="name-error" />
+        <div id="name-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.name &&
+            state.errors.name.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          name="description"
+          defaultValue={product?.description ?? ""}
+          aria-describedby="description-error"
+        />
+        <div id="description-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.description &&
+            state.errors.description.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="price">Price</Label>
+          <Input
+            id="price"
+            name="price"
+            type="number"
+            step="0.01"
+            defaultValue={product?.price}
+            aria-describedby="price-error"
+          />
+          <div id="price-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.price &&
+              state.errors.price.map((error: string) => (
+                <p className="mt-2 text-sm text-red-500" key={error}>
+                  {error}
+                </p>
+              ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="stock_quantity">Stock Quantity</Label>
+          <Input
+            id="stock_quantity"
+            name="stock_quantity"
+            type="number"
+            defaultValue={product?.stock_quantity}
+            aria-describedby="stock_quantity-error"
+          />
+          <div id="stock_quantity-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.stock_quantity &&
+              state.errors.stock_quantity.map((error: string) => (
+                <p className="mt-2 text-sm text-red-500" key={error}>
+                  {error}
+                </p>
+              ))}
+          </div>
+        </div>
+      </div>
+      <SubmitButton isEditing={!!product} />
+    </form>
   )
 }
 
-export default function ProductForm({ suppliers }: { suppliers: Supplier[] }) {
-  const initialState = { message: null, errors: {} }
-  const [state, dispatch] = useFormState(createProduct, initialState)
-
+function SubmitButton({ isEditing }: { isEditing: boolean }) {
+  const { pending } = useFormStatus()
   return (
-    <form action={dispatch} className="space-y-4 max-w-lg">
-      <div>
-        <Label htmlFor="name">Product Name</Label>
-        <Input id="name" name="name" required />
-        {state.errors?.name && <p className="text-sm text-red-500 mt-1">{state.errors.name[0]}</p>}
-      </div>
-      <div>
-        <Label htmlFor="description">Description</Label>
-        <Textarea id="description" name="description" />
-      </div>
-      <div>
-        <Label htmlFor="price">Price</Label>
-        <Input id="price" name="price" type="number" step="0.01" required />
-        {state.errors?.price && <p className="text-sm text-red-500 mt-1">{state.errors.price[0]}</p>}
-      </div>
-      <div>
-        <Label htmlFor="quantity">Quantity</Label>
-        <Input id="quantity" name="quantity" type="number" required />
-        {state.errors?.quantity && <p className="text-sm text-red-500 mt-1">{state.errors.quantity[0]}</p>}
-      </div>
-      <div>
-        <Label htmlFor="supplier_id">Supplier</Label>
-        <Select name="supplier_id" required>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a supplier" />
-          </SelectTrigger>
-          <SelectContent>
-            {suppliers.map((supplier) => (
-              <SelectItem key={supplier.id} value={String(supplier.id)}>
-                {supplier.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {state.errors?.supplier_id && <p className="text-sm text-red-500 mt-1">{state.errors.supplier_id[0]}</p>}
-      </div>
-      <SubmitButton />
-    </form>
+    <Button type="submit" disabled={pending} className="w-full">
+      {pending ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Product" : "Create Product"}
+    </Button>
   )
 }

@@ -1,36 +1,26 @@
 "use client"
 
 import { useEffect } from "react"
-import { useFormState, useFormStatus } from "react-dom"
+import { useFormState, useFormStatus } from "react"
 import { toast } from "sonner"
+import { createSupplierAction, updateSupplierAction, type State } from "@/app/suppliers/actions"
+import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Button } from "@/components/ui/button"
-import { createSupplierAction, updateSupplierAction, type State } from "@/app/suppliers/actions"
+import { Textarea } from "@/components/ui/textarea"
 import type { Supplier } from "@/lib/supabase/types"
 
-function SubmitButton({ isUpdate }: { isUpdate: boolean }) {
-  const { pending } = useFormStatus()
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? (isUpdate ? "Updating..." : "Creating...") : isUpdate ? "Update Supplier" : "Create Supplier"}
-    </Button>
-  )
-}
-
 export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
-  const initialState: State = { message: null, errors: {}, success: false }
+  const initialState: State = { message: null, errors: {} }
   const action = supplier ? updateSupplierAction.bind(null, supplier.id) : createSupplierAction
   const [state, dispatch] = useFormState(action, initialState)
 
   useEffect(() => {
     if (state.message) {
-      if (state.success) {
-        toast.success(state.message)
+      if (Object.keys(state.errors ?? {}).length > 0) {
+        toast.error(state.message)
       } else {
-        toast.error(state.message, {
-          description: state.errors ? Object.values(state.errors).flat().join("\n") : undefined,
-        })
+        toast.success(state.message)
       }
     }
   }, [state])
@@ -39,30 +29,79 @@ export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
     <form action={dispatch} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">Supplier Name</Label>
-        <Input id="name" name="name" defaultValue={supplier?.name} required />
-        {state.errors?.name && <p className="text-sm text-red-500">{state.errors.name[0]}</p>}
+        <Input id="name" name="name" defaultValue={supplier?.name} aria-describedby="name-error" />
+        <div id="name-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.name &&
+            state.errors.name.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="contact_person">Contact Person</Label>
-        <Input id="contact_person" name="contact_person" defaultValue={supplier?.contact_person ?? ""} />
-        {state.errors?.contact_person && <p className="text-sm text-red-500">{state.errors.contact_person[0]}</p>}
+        <Input
+          id="contact_person"
+          name="contact_person"
+          defaultValue={supplier?.contact_person ?? ""}
+          aria-describedby="contact_person-error"
+        />
+        <div id="contact_person-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.contact_person &&
+            state.errors.contact_person.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" defaultValue={supplier?.email ?? ""} />
-        {state.errors?.email && <p className="text-sm text-red-500">{state.errors.email[0]}</p>}
+        <Input id="email" name="email" type="email" defaultValue={supplier?.email} aria-describedby="email-error" />
+        <div id="email-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.email &&
+            state.errors.email.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="phone">Phone</Label>
-        <Input id="phone" name="phone" defaultValue={supplier?.phone ?? ""} />
-        {state.errors?.phone && <p className="text-sm text-red-500">{state.errors.phone[0]}</p>}
+        <Input id="phone" name="phone" defaultValue={supplier?.phone ?? ""} aria-describedby="phone-error" />
+        <div id="phone-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.phone &&
+            state.errors.phone.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="address">Address</Label>
-        <Input id="address" name="address" defaultValue={supplier?.address ?? ""} />
-        {state.errors?.address && <p className="text-sm text-red-500">{state.errors.address[0]}</p>}
+        <Textarea id="address" name="address" defaultValue={supplier?.address ?? ""} aria-describedby="address-error" />
+        <div id="address-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.address &&
+            state.errors.address.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
+        </div>
       </div>
-      <SubmitButton isUpdate={!!supplier} />
+      <SubmitButton isEditing={!!supplier} />
     </form>
+  )
+}
+
+function SubmitButton({ isEditing }: { isEditing: boolean }) {
+  const { pending } = useFormStatus()
+  return (
+    <Button type="submit" disabled={pending} className="w-full">
+      {pending ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Supplier" : "Create Supplier"}
+    </Button>
   )
 }
