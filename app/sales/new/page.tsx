@@ -18,13 +18,15 @@ export default async function NewSalePage() {
   const productOptions = products.map((product) => ({
     id: product.id,
     name: product.name,
-    prix_vente_detail_1: product.prix_vente_detail_1, // Using correct field name
+    prix_vente_detail_1: product.prix_vente_detail_1,
+    prix_vente_detail_2: product.prix_vente_detail_2,
+    prix_vente_gros: product.prix_vente_gros,
     stock_quantity: product.quantity,
   }))
 
   const clientOptions = clients.map((client) => ({
     id: client.id,
-    name: client.name, // Using single name field from database
+    name: client.name,
   }))
 
   return (
