@@ -15,9 +15,9 @@ export async function fetchClients() {
   return data as Client[]
 }
 
-export async function fetchClientById(id: number) {
+export async function fetchClientById(id: string) {
   noStore()
-  if (isNaN(id)) return null
+  if (!id) return null
 
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from("clients").select("*").eq("id", id).single()
@@ -34,7 +34,7 @@ export async function fetchClientById(id: number) {
 export async function fetchClientsForForm() {
   noStore()
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.from("clients").select("id, first_name, last_name")
+  const { data, error } = await supabase.from("clients").select("id, name")
 
   if (error) {
     console.error("Database Error:", error)

@@ -15,9 +15,9 @@ export async function fetchSuppliers() {
   return data as Supplier[]
 }
 
-export async function fetchSupplierById(id: number) {
+export async function fetchSupplierById(id: string) {
   noStore()
-  if (isNaN(id)) return null
+  if (!id) return null
 
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from("suppliers").select("*").eq("id", id).single()
