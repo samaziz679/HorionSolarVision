@@ -20,24 +20,19 @@ type PageProps = {
 }
 
 export default async function EditPurchasePage({ params }: PageProps) {
-  const { id } = params
-  const purchase = await fetchPurchaseById(id)
-  const products = await fetchProducts()
-  const suppliers = await fetchSuppliers()
+  const id = Number(params.id)
+  if (isNaN(id)) {
+    notFound()
+  }
+
+  const [purchase, products, suppliers] = await Promise.all([fetchPurchaseById(id), fetchProducts(), fetchSuppliers()])
 
   if (!purchase) {
     notFound()
   }
 
-  const productOptions = products.map((product) => ({
-    id: product.id,
-    name: product.name,
-  }))
-
-  const supplierOptions = suppliers.map((supplier) => ({
-    id: supplier.id,
-    name: supplier.name,
-  }))
+  const productOptions = products.map((p) => ({ id: p.id, name: p.name }))
+  const supplierOptions = suppliers.map((s) => ({ id: s.id, name: s.name }))
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">

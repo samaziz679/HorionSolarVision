@@ -121,7 +121,7 @@ export async function updateSupplier(id: number, prevState: State, formData: For
   redirect("/suppliers")
 }
 
-export async function deleteSupplier(id: number) {
+export async function deleteSupplierAction(id: number) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }

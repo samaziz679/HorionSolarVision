@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation"
 import { fetchSupplierById } from "@/lib/data/suppliers"
 import SupplierForm from "@/components/suppliers/supplier-form"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
@@ -18,7 +18,11 @@ type PageProps = {
 }
 
 export default async function EditSupplierPage({ params }: PageProps) {
-  const { id } = params
+  const id = Number(params.id)
+  if (isNaN(id)) {
+    notFound()
+  }
+
   const supplier = await fetchSupplierById(id)
 
   if (!supplier) {
@@ -42,18 +46,13 @@ export default async function EditSupplierPage({ params }: PageProps) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>Edit Supplier</BreadcrumbLink>
+            <BreadcrumbPage>Edit Supplier</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <Card>
-        <CardHeader>
-          <CardTitle>Edit Supplier</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SupplierForm supplier={supplier} />
-        </CardContent>
-      </Card>
+      <div className="grid gap-6">
+        <SupplierForm supplier={supplier} />
+      </div>
     </main>
   )
 }

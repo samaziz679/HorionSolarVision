@@ -118,7 +118,7 @@ export async function updateClient(id: number, prevState: State, formData: FormD
   redirect("/clients")
 }
 
-export async function deleteClient(id: number) {
+export async function deleteClientAction(id: number) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }

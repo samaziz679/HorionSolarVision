@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation"
 import { fetchClientById } from "@/lib/data/clients"
 import ClientForm from "@/components/clients/client-form"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
@@ -18,7 +18,11 @@ type PageProps = {
 }
 
 export default async function EditClientPage({ params }: PageProps) {
-  const { id } = params
+  const id = Number(params.id)
+  if (isNaN(id)) {
+    notFound()
+  }
+
   const client = await fetchClientById(id)
 
   if (!client) {
@@ -42,18 +46,13 @@ export default async function EditClientPage({ params }: PageProps) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>Edit Client</BreadcrumbLink>
+            <BreadcrumbPage>Edit Client</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <Card>
-        <CardHeader>
-          <CardTitle>Edit Client</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ClientForm client={client} />
-        </CardContent>
-      </Card>
+      <div className="grid gap-6">
+        <ClientForm client={client} />
+      </div>
     </main>
   )
 }
