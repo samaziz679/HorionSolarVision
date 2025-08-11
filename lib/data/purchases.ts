@@ -14,7 +14,6 @@ export async function fetchPurchases() {
       total,
       quantity,
       unit_price,
-      created_at,
       products (id, name),
       suppliers (id, name)
     `,
