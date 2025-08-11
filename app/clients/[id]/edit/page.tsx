@@ -10,10 +10,7 @@ type PageProps = {
 }
 
 export default async function EditClientPage({ params }: PageProps) {
-  const id = Number(params.id)
-  if (isNaN(id)) {
-    notFound()
-  }
+  const { id } = params
   const client = await fetchClientById(id)
 
   if (!client) {
