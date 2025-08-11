@@ -85,7 +85,7 @@ export function EditPurchaseForm({
 
         <div className="grid gap-2">
           <Label htmlFor="product_id">Product</Label>
-          <Select name="product_id" defaultValue={String(purchase.purchase_items[0]?.product_id)} required>
+          <Select name="product_id" defaultValue={String(purchase.product_id)} required>
             <SelectTrigger>
               <SelectValue placeholder="Select a product" />
             </SelectTrigger>
@@ -101,17 +101,17 @@ export function EditPurchaseForm({
 
         <div className="grid gap-2">
           <Label htmlFor="quantity">Quantity</Label>
-          <Input name="quantity" type="number" defaultValue={purchase.purchase_items[0]?.quantity ?? ""} required />
+          <Input name="quantity" type="number" defaultValue={purchase.quantity ?? ""} required />
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="unit_price">Unit Price</Label>
-          <Input name="unit_price" type="number" defaultValue={purchase.purchase_items[0]?.unit_price ?? ""} required />
+          <Label htmlFor="total_cost">Total Cost</Label>
+          <Input name="total_cost" type="number" defaultValue={purchase.total_cost ?? ""} required />
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="purchase_date">Purchase Date</Label>
-          <Input name="purchase_date" type="date" defaultValue={purchase.date.split("T")[0]} required />
+          <Label htmlFor="date">Purchase Date</Label>
+          <Input name="date" type="date" defaultValue={purchase.date.split("T")[0]} required />
         </div>
 
         <SubmitButton isLoading={isLoading} />
