@@ -1,14 +1,14 @@
 import { notFound } from "next/navigation"
 import { fetchPurchaseById } from "@/lib/data/purchases"
-import { fetchSuppliers } from "@/lib/data/suppliers"
 import { fetchProducts } from "@/lib/data/products"
+import { fetchSuppliers } from "@/lib/data/suppliers"
 import PurchaseForm from "@/components/purchases/purchase-form"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
@@ -21,8 +21,9 @@ type PageProps = {
 
 export default async function EditPurchasePage({ params }: PageProps) {
   const { id } = params
-
-  const [purchase, suppliers, products] = await Promise.all([fetchPurchaseById(id), fetchSuppliers(), fetchProducts()])
+  const purchase = await fetchPurchaseById(id)
+  const products = await fetchProducts()
+  const suppliers = await fetchSuppliers()
 
   if (!purchase) {
     notFound()
@@ -31,6 +32,11 @@ export default async function EditPurchasePage({ params }: PageProps) {
   const productOptions = products.map((product) => ({
     id: product.id,
     name: product.name,
+  }))
+
+  const supplierOptions = suppliers.map((supplier) => ({
+    id: supplier.id,
+    name: supplier.name,
   }))
 
   return (
@@ -50,18 +56,13 @@ export default async function EditPurchasePage({ params }: PageProps) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>Edit Purchase</BreadcrumbLink>
+            <BreadcrumbPage>Edit Purchase</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <Card>
-        <CardHeader>
-          <CardTitle>Edit Purchase</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PurchaseForm purchase={purchase} suppliers={suppliers} products={productOptions} />
-        </CardContent>
-      </Card>
+      <div className="grid gap-6">
+        <PurchaseForm purchase={purchase} products={productOptions} suppliers={supplierOptions} />
+      </div>
     </main>
   )
 }

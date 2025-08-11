@@ -7,21 +7,19 @@ import { createBankAccount, updateBankAccount, type State } from "@/app/banking/
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import type { BankAccount } from "@/lib/supabase/types"
+import type { Banking } from "@/lib/supabase/types"
 
-export default function BankingForm({ bankAccount }: { bankAccount?: BankAccount }) {
+export default function BankingForm({ bankingAccount }: { bankingAccount?: Banking }) {
   const initialState: State = { message: null, errors: {} }
-  const action = bankAccount ? updateBankAccount.bind(null, bankAccount.id) : createBankAccount
+  const action = bankingAccount ? updateBankAccount.bind(null, bankingAccount.id) : createBankAccount
   const [state, dispatch] = useFormState(action, initialState)
 
   useEffect(() => {
     if (state.message) {
       if (state.success === false) {
         toast.error(state.message)
-      } else {
-        toast.success(state.message)
       }
+      // Redirect handles success, so no toast needed here
     }
   }, [state])
 
@@ -33,8 +31,9 @@ export default function BankingForm({ bankAccount }: { bankAccount?: BankAccount
           <Input
             id="bank_name"
             name="bank_name"
-            defaultValue={bankAccount?.bank_name}
+            defaultValue={bankingAccount?.bank_name}
             aria-describedby="bank_name-error"
+            required
           />
           <div id="bank_name-error" aria-live="polite" aria-atomic="true">
             {state.errors?.bank_name &&
@@ -50,8 +49,9 @@ export default function BankingForm({ bankAccount }: { bankAccount?: BankAccount
           <Input
             id="account_number"
             name="account_number"
-            defaultValue={bankAccount?.account_number}
+            defaultValue={bankingAccount?.account_number}
             aria-describedby="account_number-error"
+            required
           />
           <div id="account_number-error" aria-live="polite" aria-atomic="true">
             {state.errors?.account_number &&
@@ -64,35 +64,46 @@ export default function BankingForm({ bankAccount }: { bankAccount?: BankAccount
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="account_holder_name">Account Holder Name</Label>
+        <Label htmlFor="account_name">Account Name</Label>
         <Input
-          id="account_holder_name"
-          name="account_holder_name"
-          defaultValue={bankAccount?.account_holder_name}
-          aria-describedby="account_holder_name-error"
+          id="account_name"
+          name="account_name"
+          defaultValue={bankingAccount?.account_name}
+          aria-describedby="account_name-error"
+          required
         />
-        <div id="account_holder_name-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.account_holder_name &&
-            state.errors.account_holder_name.map((error: string) => (
+        <div id="account_name-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.account_name &&
+            state.errors.account_name.map((error: string) => (
               <p className="mt-2 text-sm text-red-500" key={error}>
                 {error}
               </p>
             ))}
         </div>
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
-        <Textarea id="notes" name="notes" defaultValue={bankAccount?.notes ?? ""} aria-describedby="notes-error" />
-        <div id="notes-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.notes &&
-            state.errors.notes.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+      {!bankingAccount && (
+        <div className="space-y-2">
+          <Label htmlFor="balance">Initial Balance</Label>
+          <Input
+            id="balance"
+            name="balance"
+            type="number"
+            step="0.01"
+            defaultValue={bankingAccount?.balance ?? 0}
+            aria-describedby="balance-error"
+            required
+          />
+          <div id="balance-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.balance &&
+              state.errors.balance.map((error: string) => (
+                <p className="mt-2 text-sm text-red-500" key={error}>
+                  {error}
+                </p>
+              ))}
+          </div>
         </div>
-      </div>
-      <SubmitButton isEditing={!!bankAccount} />
+      )}
+      <SubmitButton isEditing={!!bankingAccount} />
     </form>
   )
 }

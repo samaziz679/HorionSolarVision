@@ -1,20 +1,29 @@
-export const dynamic = "force-dynamic"
-export const revalidate = 0
+import { fetchProducts } from "@/lib/data/products"
+import { fetchSuppliers } from "@/lib/data/suppliers"
+import PurchaseForm from "@/components/purchases/purchase-form"
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
-import PurchaseForm from "@/components/purchases/purchase-form"
-import { createClient } from "@/lib/supabase/server"
 
 export default async function NewPurchasePage() {
-  const supabase = createClient()
-  const { data: products } = await supabase.from("products").select("id, name")
-  const { data: suppliers } = await supabase.from("suppliers").select("id, name")
+  const products = await fetchProducts()
+  const suppliers = await fetchSuppliers()
+
+  const productOptions = products.map((product) => ({
+    id: product.id,
+    name: product.name,
+  }))
+
+  const supplierOptions = suppliers.map((supplier) => ({
+    id: supplier.id,
+    name: supplier.name,
+  }))
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
@@ -33,13 +42,12 @@ export default async function NewPurchasePage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>New Purchase</BreadcrumbLink>
+            <BreadcrumbPage>New Purchase</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">Create New Purchase</h1>
-        <PurchaseForm products={products || []} suppliers={suppliers || []} />
+      <div className="grid gap-6">
+        <PurchaseForm products={productOptions} suppliers={supplierOptions} />
       </div>
     </main>
   )

@@ -1,14 +1,14 @@
 import { notFound } from "next/navigation"
 import { fetchSaleById } from "@/lib/data/sales"
-import { fetchClients } from "@/lib/data/clients"
 import { fetchProducts } from "@/lib/data/products"
+import { fetchClients } from "@/lib/data/clients"
 import SaleForm from "@/components/sales/sale-form"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
@@ -21,22 +21,25 @@ type PageProps = {
 
 export default async function EditSalePage({ params }: PageProps) {
   const { id } = params
-
-  const [sale, clientsData, productsData] = await Promise.all([fetchSaleById(id), fetchClients(), fetchProducts()])
+  const sale = await fetchSaleById(id)
+  const products = await fetchProducts()
+  const clients = await fetchClients()
 
   if (!sale) {
     notFound()
   }
 
-  const clients = clientsData.map((client) => ({
-    id: client.id,
-    name: `${client.first_name} ${client.last_name}`,
-  }))
-
-  const products = productsData.map((product) => ({
+  const productOptions = products.map((product) => ({
     id: product.id,
     name: product.name,
     price: product.price,
+    stock_quantity: product.stock_quantity,
+  }))
+
+  const clientOptions = clients.map((client) => ({
+    id: client.id,
+    first_name: client.first_name,
+    last_name: client.last_name,
   }))
 
   return (
@@ -56,18 +59,13 @@ export default async function EditSalePage({ params }: PageProps) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>Edit Sale</BreadcrumbLink>
+            <BreadcrumbPage>Edit Sale</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <Card>
-        <CardHeader>
-          <CardTitle>Edit Sale</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <SaleForm sale={sale} clients={clients} products={products} />
-        </CardContent>
-      </Card>
+      <div className="grid gap-6">
+        <SaleForm sale={sale} products={productOptions} clients={clientOptions} />
+      </div>
     </main>
   )
 }

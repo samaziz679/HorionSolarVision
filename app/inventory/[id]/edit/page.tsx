@@ -2,12 +2,12 @@ import { notFound } from "next/navigation"
 import { fetchProductById } from "@/lib/data/products"
 import { fetchSuppliers } from "@/lib/data/suppliers"
 import ProductForm from "@/components/inventory/product-form"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
@@ -20,11 +20,17 @@ type PageProps = {
 
 export default async function EditProductPage({ params }: PageProps) {
   const { id } = params
-  const [product, suppliers] = await Promise.all([fetchProductById(id), fetchSuppliers()])
+  const product = await fetchProductById(id)
+  const suppliers = await fetchSuppliers()
 
   if (!product) {
     notFound()
   }
+
+  const supplierOptions = suppliers.map((supplier) => ({
+    id: supplier.id,
+    name: supplier.name,
+  }))
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
@@ -43,18 +49,13 @@ export default async function EditProductPage({ params }: PageProps) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>Edit Product</BreadcrumbLink>
+            <BreadcrumbPage>Edit Product</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <Card>
-        <CardHeader>
-          <CardTitle>Edit Product</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ProductForm product={product} suppliers={suppliers} />
-        </CardContent>
-      </Card>
+      <div className="grid gap-6">
+        <ProductForm product={product} suppliers={supplierOptions} />
+      </div>
     </main>
   )
 }

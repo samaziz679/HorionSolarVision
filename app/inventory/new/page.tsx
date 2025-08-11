@@ -1,18 +1,21 @@
-export const dynamic = "force-dynamic"
-export const revalidate = 0
+import { fetchSuppliers } from "@/lib/data/suppliers"
+import ProductForm from "@/components/inventory/product-form"
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
-import ProductForm from "@/components/inventory/product-form"
-import { fetchSuppliers } from "@/lib/data/suppliers"
 
 export default async function NewProductPage() {
   const suppliers = await fetchSuppliers()
+  const supplierOptions = suppliers.map((supplier) => ({
+    id: supplier.id,
+    name: supplier.name,
+  }))
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
@@ -31,13 +34,12 @@ export default async function NewProductPage() {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>New Product</BreadcrumbLink>
+            <BreadcrumbPage>New Product</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="space-y-6">
-        <h1 className="text-2xl font-semibold">Create New Product</h1>
-        <ProductForm suppliers={suppliers || []} />
+      <div className="grid gap-6">
+        <ProductForm suppliers={supplierOptions} />
       </div>
     </main>
   )

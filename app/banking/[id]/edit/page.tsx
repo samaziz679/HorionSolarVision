@@ -19,9 +19,9 @@ type PageProps = {
 
 export default async function EditBankingPage({ params }: PageProps) {
   const { id } = params
-  const bankAccount = await fetchBankAccountById(id)
+  const bankingAccount = await fetchBankAccountById(id)
 
-  if (!bankAccount) {
+  if (!bankingAccount) {
     notFound()
   }
 
@@ -51,7 +51,7 @@ export default async function EditBankingPage({ params }: PageProps) {
           <CardTitle>Edit Bank Account</CardTitle>
         </CardHeader>
         <CardContent>
-          <BankingForm bankAccount={bankAccount} />
+          <BankingForm bankingAccount={bankingAccount} />
         </CardContent>
       </Card>
     </main>
