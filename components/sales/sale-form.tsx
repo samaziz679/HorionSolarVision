@@ -151,17 +151,17 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="sale_date">Sale Date</Label>
+          <Label htmlFor="date">Sale Date</Label>
           <Input
-            id="sale_date"
-            name="sale_date"
+            id="date"
+            name="date"
             type="date"
             defaultValue={sale?.date ? new Date(sale.date).toISOString().split("T")[0] : ""}
-            aria-describedby="sale_date-error"
+            aria-describedby="date-error"
           />
-          <div id="sale_date-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.sale_date &&
-              state.errors.sale_date.map((error: string) => (
+          <div id="date-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.date &&
+              state.errors.date.map((error: string) => (
                 <p className="mt-2 text-sm text-red-500" key={error}>
                   {error}
                 </p>
