@@ -94,11 +94,16 @@ export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="phone">Phone</Label>
-        <Input id="phone" name="phone" defaultValue={supplier?.phone ?? ""} aria-describedby="phone-error" />
-        <div id="phone-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.phone &&
-            state.errors.phone.map((error: string) => (
+        <Label htmlFor="phone_number">Phone</Label>
+        <Input
+          id="phone_number"
+          name="phone_number"
+          defaultValue={supplier?.phone_number ?? ""}
+          aria-describedby="phone_number-error"
+        />
+        <div id="phone_number-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.phone_number &&
+            state.errors.phone_number.map((error: string) => (
               <p className="mt-2 text-sm text-red-500" key={error}>
                 {error}
               </p>
