@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { fetchProductById } from "@/lib/data/products"
-import { fetchSuppliers } from "@/lib/data/suppliers" // Corrected import path
+import { fetchSuppliers } from "@/lib/data/suppliers"
 import ProductForm from "@/components/inventory/product-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -8,6 +8,7 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
@@ -30,6 +31,11 @@ export default async function EditProductPage({ params }: PageProps) {
     notFound()
   }
 
+  const supplierOptions = suppliers.map((supplier) => ({
+    id: supplier.id,
+    name: supplier.name,
+  }))
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
       <Breadcrumb>
@@ -47,7 +53,7 @@ export default async function EditProductPage({ params }: PageProps) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>Edit Product</BreadcrumbLink>
+            <BreadcrumbPage>Edit Product</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -56,7 +62,7 @@ export default async function EditProductPage({ params }: PageProps) {
           <CardTitle>Edit Product</CardTitle>
         </CardHeader>
         <CardContent>
-          <ProductForm product={product} suppliers={suppliers} />
+          <ProductForm product={product} suppliers={supplierOptions} />
         </CardContent>
       </Card>
     </main>
