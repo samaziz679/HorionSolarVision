@@ -78,17 +78,17 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="expense_date">Expense Date</Label>
+        <Label htmlFor="date">Expense Date</Label>
         <Input
-          id="expense_date"
-          name="expense_date"
+          id="date"
+          name="date"
           type="date"
-          defaultValue={expense?.expense_date ? new Date(expense.expense_date).toISOString().split("T")[0] : ""}
-          aria-describedby="expense_date-error"
+          defaultValue={expense?.date ? new Date(expense.date).toISOString().split("T")[0] : ""}
+          aria-describedby="date-error"
         />
-        <div id="expense_date-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.expense_date &&
-            state.errors.expense_date.map((error: string) => (
+        <div id="date-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.date &&
+            state.errors.date.map((error: string) => (
               <p className="mt-2 text-sm text-red-500" key={error}>
                 {error}
               </p>
