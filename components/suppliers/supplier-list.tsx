@@ -52,7 +52,7 @@ export default function SupplierList({ suppliers }: SupplierListProps) {
                     <span className="sr-only">Edit</span>
                   </Link>
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(supplier.id)}>
+                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(supplier.id.toString())}>
                   <TrashIcon className="h-4 w-4" />
                   <span className="sr-only">Delete</span>
                 </Button>
