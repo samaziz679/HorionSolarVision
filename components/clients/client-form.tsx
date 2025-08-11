@@ -13,11 +13,30 @@ export default function ClientForm({ client }: { client?: Client }) {
   const [state, setState] = useState<State>({ message: null, errors: {} })
   const [isLoading, setIsLoading] = useState(false)
 
+  const splitName = (fullName: string) => {
+    const parts = fullName.trim().split(" ")
+    return {
+      firstName: parts[0] || "",
+      lastName: parts.slice(1).join(" ") || "",
+    }
+  }
+
+  const clientName = client?.name ? splitName(client.name) : { firstName: "", lastName: "" }
+
   const handleSubmit = async (formData: FormData) => {
     setIsLoading(true)
     setState({ message: null, errors: {} })
 
     try {
+      const firstName = formData.get("first_name") as string
+      const lastName = formData.get("last_name") as string
+      const fullName = `${firstName} ${lastName}`.trim()
+
+      // Replace the separate name fields with the combined name
+      formData.delete("first_name")
+      formData.delete("last_name")
+      formData.set("name", fullName)
+
       const action = client ? updateClient.bind(null, client.id) : createClient
       const result = await action(state, formData)
       setState(result)
@@ -53,7 +72,7 @@ export default function ClientForm({ client }: { client?: Client }) {
           <Input
             id="first_name"
             name="first_name"
-            defaultValue={client?.first_name ?? ""}
+            defaultValue={clientName.firstName}
             aria-describedby="first_name-error"
           />
           <div id="first_name-error" aria-live="polite" aria-atomic="true">
@@ -70,7 +89,7 @@ export default function ClientForm({ client }: { client?: Client }) {
           <Input
             id="last_name"
             name="last_name"
-            defaultValue={client?.last_name ?? ""}
+            defaultValue={clientName.lastName}
             aria-describedby="last_name-error"
           />
           <div id="last_name-error" aria-live="polite" aria-atomic="true">
