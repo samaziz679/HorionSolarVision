@@ -1,148 +1,128 @@
 "use server"
 
+import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
-import { z } from "zod"
+import { redirect } from "next/navigation"
+import { getAuthUser } from "@/lib/auth"
 
 const FormSchema = z.object({
   id: z.string(),
-  supplier_id: z.string({ required_error: "Supplier is required." }),
-  purchase_date: z.string({ required_error: "Purchase date is required." }),
-  items: z
-    .array(
-      z.object({
-        product_id: z.string(),
-        quantity: z.coerce.number().gt(0, "Quantity must be greater than 0."),
-        price: z.coerce.number().gt(0, "Price must be greater than 0."),
-      }),
-    )
-    .min(1, "At least one item is required."),
+  product_id: z.coerce.number().min(1, "Product is required."),
+  supplier_id: z.coerce.number().min(1, "Supplier is required."),
+  quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
+  total_cost: z.coerce.number().min(0, "Total cost cannot be negative."),
+  date: z.string().min(1, "Purchase date is required."),
 })
 
-const CreatePurchase = FormSchema.omit({ id: true })
-const UpdatePurchase = FormSchema
+const CreatePurchaseSchema = FormSchema.omit({ id: true })
+const UpdatePurchaseSchema = FormSchema
 
 export type State = {
   errors?: {
+    product_id?: string[]
     supplier_id?: string[]
-    purchase_date?: string[]
-    items?: string
+    quantity?: string[]
+    total_cost?: string[]
+    date?: string[]
   }
   message?: string | null
+  success?: boolean
 }
 
 export async function createPurchase(prevState: State, formData: FormData) {
-  const supabase = createClient()
+  const user = await getAuthUser()
+  if (!user) {
+    return { message: "Authentication error. Please sign in.", success: false }
+  }
 
-  const items = JSON.parse(formData.get("items") as string)
-  const validatedFields = CreatePurchase.safeParse({
+  const validatedFields = CreatePurchaseSchema.safeParse({
+    product_id: formData.get("product_id"),
     supplier_id: formData.get("supplier_id"),
-    purchase_date: formData.get("purchase_date"),
-    items: items,
+    quantity: formData.get("quantity"),
+    total_cost: formData.get("total_cost"),
+    date: formData.get("date"),
   })
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: "Failed to create purchase. Please check the fields.",
+      message: "Missing or invalid fields. Failed to create purchase.",
+      success: false,
     }
   }
 
-  const { supplier_id, purchase_date, items: purchaseItems } = validatedFields.data
-  const total_amount = purchaseItems.reduce((acc, item) => acc + item.quantity * item.price, 0)
+  const supabase = createClient()
+  const { error } = await supabase.from("purchases").insert({
+    ...validatedFields.data,
+    user_id: user.id,
+  })
 
-  const { data: purchase, error: purchaseError } = await supabase
-    .from("purchases")
-    .insert({ supplier_id, purchase_date, total_amount })
-    .select()
-    .single()
-
-  if (purchaseError) {
-    return { message: "Database Error: Failed to create purchase." }
-  }
-
-  const purchase_items_to_insert = purchaseItems.map((item) => ({
-    purchase_id: purchase.id,
-    product_id: item.product_id,
-    quantity: item.quantity,
-    price: item.price,
-  }))
-
-  const { error: itemsError } = await supabase.from("purchase_items").insert(purchase_items_to_insert)
-
-  if (itemsError) {
-    return { message: "Database Error: Failed to create purchase items." }
+  if (error) {
+    console.error("Database Error:", error)
+    return { message: "Database Error: Failed to create purchase.", success: false }
   }
 
   revalidatePath("/purchases")
-  return { message: "Purchase created successfully." }
+  redirect("/purchases")
 }
 
-export async function updatePurchase(id: string, prevState: State, formData: FormData) {
-  const supabase = createClient()
+export async function updatePurchase(id: number, prevState: State, formData: FormData) {
+  const user = await getAuthUser()
+  if (!user) {
+    return { message: "Authentication error. Please sign in.", success: false }
+  }
 
-  const items = JSON.parse(formData.get("items") as string)
-  const validatedFields = UpdatePurchase.safeParse({
-    id: id,
+  const validatedFields = UpdatePurchaseSchema.safeParse({
+    id: id.toString(),
+    product_id: formData.get("product_id"),
     supplier_id: formData.get("supplier_id"),
-    purchase_date: formData.get("purchase_date"),
-    items: items,
+    quantity: formData.get("quantity"),
+    total_cost: formData.get("total_cost"),
+    date: formData.get("date"),
   })
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: "Failed to update purchase. Please check the fields.",
+      message: "Missing or invalid fields. Failed to update purchase.",
+      success: false,
     }
   }
 
-  const { supplier_id, purchase_date, items: purchaseItems } = validatedFields.data
-  const total_amount = purchaseItems.reduce((acc, item) => acc + item.quantity * item.price, 0)
+  const { product_id, supplier_id, quantity, total_cost, date } = validatedFields.data
+  const supabase = createClient()
 
-  const { error: purchaseError } = await supabase
+  const { error } = await supabase
     .from("purchases")
-    .update({ supplier_id, purchase_date, total_amount })
+    .update({ product_id, supplier_id, quantity, total_cost, date })
     .eq("id", id)
+    .eq("user_id", user.id)
 
-  if (purchaseError) {
-    return { message: "Database Error: Failed to update purchase." }
-  }
-
-  // This is a simplified update. A real app would handle item updates more granularly.
-  await supabase.from("purchase_items").delete().eq("purchase_id", id)
-
-  const purchase_items_to_insert = purchaseItems.map((item) => ({
-    purchase_id: id,
-    product_id: item.product_id,
-    quantity: item.quantity,
-    price: item.price,
-  }))
-
-  const { error: itemsError } = await supabase.from("purchase_items").insert(purchase_items_to_insert)
-
-  if (itemsError) {
-    return { message: "Database Error: Failed to update purchase items." }
+  if (error) {
+    console.error("Database Error:", error)
+    return { message: "Database Error: Failed to update purchase.", success: false }
   }
 
   revalidatePath("/purchases")
   revalidatePath(`/purchases/${id}/edit`)
-  return { message: "Purchase updated successfully." }
+  redirect("/purchases")
 }
 
-export async function deletePurchase(id: string) {
-  const supabase = createClient()
-
-  // First delete related purchase items due to foreign key constraints
-  const { error: itemsError } = await supabase.from("purchase_items").delete().eq("purchase_id", id)
-  if (itemsError) {
-    return { message: "Database Error: Failed to delete purchase items." }
+export async function deletePurchase(id: number) {
+  const user = await getAuthUser()
+  if (!user) {
+    return { message: "Authentication error. Please sign in.", success: false }
   }
 
-  const { error: purchaseError } = await supabase.from("purchases").delete().eq("id", id)
-  if (purchaseError) {
-    return { message: "Database Error: Failed to delete purchase." }
+  const supabase = createClient()
+  const { error } = await supabase.from("purchases").delete().eq("id", id).eq("user_id", user.id)
+
+  if (error) {
+    console.error("Database Error:", error)
+    return { message: "Database Error: Failed to delete purchase.", success: false }
   }
 
   revalidatePath("/purchases")
-  return { message: "Purchase deleted successfully." }
+  return { message: "Purchase deleted successfully.", success: true }
 }

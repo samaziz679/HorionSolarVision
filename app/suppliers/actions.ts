@@ -8,11 +8,11 @@ import { getAuthUser } from "@/lib/auth"
 
 const FormSchema = z.object({
   id: z.string(),
-  name: z.string().min(1, "Supplier name is required."),
-  contact_person: z.string().optional(),
-  email: z.string().email("Invalid email address."),
-  phone: z.string().optional(),
+  name: z.string().min(1, "Name is required."),
+  email: z.string().email("Invalid email address.").min(1, "Email is required."),
+  phone_number: z.string().optional(),
   address: z.string().optional(),
+  contact_person: z.string().optional(),
 })
 
 const CreateSupplierSchema = FormSchema.omit({ id: true })
@@ -21,10 +21,10 @@ const UpdateSupplierSchema = FormSchema
 export type State = {
   errors?: {
     name?: string[]
-    contact_person?: string[]
     email?: string[]
-    phone?: string[]
+    phone_number?: string[]
     address?: string[]
+    contact_person?: string[]
   }
   message?: string | null
   success?: boolean
@@ -38,10 +38,10 @@ export async function createSupplier(prevState: State, formData: FormData) {
 
   const validatedFields = CreateSupplierSchema.safeParse({
     name: formData.get("name"),
-    contact_person: formData.get("contact_person"),
     email: formData.get("email"),
-    phone: formData.get("phone"),
+    phone_number: formData.get("phone_number"),
     address: formData.get("address"),
+    contact_person: formData.get("contact_person"),
   })
 
   if (!validatedFields.success) {
@@ -52,15 +52,15 @@ export async function createSupplier(prevState: State, formData: FormData) {
     }
   }
 
-  const { name, contact_person, email, phone, address } = validatedFields.data
+  const { name, email, phone_number, address, contact_person } = validatedFields.data
   const supabase = createClient()
 
   const { error } = await supabase.from("suppliers").insert({
     name,
-    contact_person,
     email,
-    phone,
-    address,
+    phone_number: phone_number || null,
+    address: address || null,
+    contact_person: contact_person || null,
     user_id: user.id,
   })
 
@@ -73,19 +73,19 @@ export async function createSupplier(prevState: State, formData: FormData) {
   redirect("/suppliers")
 }
 
-export async function updateSupplier(id: string, prevState: State, formData: FormData) {
+export async function updateSupplier(id: number, prevState: State, formData: FormData) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
   const validatedFields = UpdateSupplierSchema.safeParse({
-    id,
+    id: id.toString(),
     name: formData.get("name"),
-    contact_person: formData.get("contact_person"),
     email: formData.get("email"),
-    phone: formData.get("phone"),
+    phone_number: formData.get("phone_number"),
     address: formData.get("address"),
+    contact_person: formData.get("contact_person"),
   })
 
   if (!validatedFields.success) {
@@ -96,12 +96,18 @@ export async function updateSupplier(id: string, prevState: State, formData: For
     }
   }
 
-  const { name, contact_person, email, phone, address } = validatedFields.data
+  const { name, email, phone_number, address, contact_person } = validatedFields.data
   const supabase = createClient()
 
   const { error } = await supabase
     .from("suppliers")
-    .update({ name, contact_person, email, phone, address })
+    .update({
+      name,
+      email,
+      phone_number: phone_number || null,
+      address: address || null,
+      contact_person: contact_person || null,
+    })
     .eq("id", id)
     .eq("user_id", user.id)
 
@@ -115,7 +121,7 @@ export async function updateSupplier(id: string, prevState: State, formData: For
   redirect("/suppliers")
 }
 
-export async function deleteSupplierAction(id: string) {
+export async function deleteSupplier(id: number) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }

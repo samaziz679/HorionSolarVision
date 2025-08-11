@@ -1,4 +1,3 @@
-// v3.0 Final - Corrected function names
 "use server"
 
 import { z } from "zod"
@@ -11,7 +10,7 @@ const FormSchema = z.object({
   id: z.string(),
   first_name: z.string().min(1, "First name is required."),
   last_name: z.string().min(1, "Last name is required."),
-  email: z.string().email("Invalid email address.").optional().or(z.literal("")),
+  email: z.string().email("Invalid email address.").min(1, "Email is required."),
   phone: z.string().optional(),
   address: z.string().optional(),
 })
@@ -63,8 +62,8 @@ export async function createClient(prevState: State, formData: FormData) {
     first_name,
     last_name,
     email,
-    phone,
-    address,
+    phone: phone || null,
+    address: address || null,
     user_id: user.id,
   })
 
@@ -77,14 +76,14 @@ export async function createClient(prevState: State, formData: FormData) {
   redirect("/clients")
 }
 
-export async function updateClient(id: string, prevState: State, formData: FormData) {
+export async function updateClient(id: number, prevState: State, formData: FormData) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
   const validatedFields = UpdateClientSchema.safeParse({
-    id,
+    id: id.toString(),
     first_name: formData.get("first_name"),
     last_name: formData.get("last_name"),
     email: formData.get("email"),
@@ -105,7 +104,7 @@ export async function updateClient(id: string, prevState: State, formData: FormD
 
   const { error } = await supabase
     .from("clients")
-    .update({ first_name, last_name, email, phone, address })
+    .update({ first_name, last_name, email, phone: phone || null, address: address || null })
     .eq("id", id)
     .eq("user_id", user.id)
 
@@ -119,7 +118,7 @@ export async function updateClient(id: string, prevState: State, formData: FormD
   redirect("/clients")
 }
 
-export async function deleteClientAction(id: string) {
+export async function deleteClient(id: number) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
