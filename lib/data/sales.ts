@@ -13,7 +13,6 @@ export async function fetchSales() {
       date,
       total_amount,
       created_at,
-      products (id, name),
       clients (id, first_name, last_name)
     `,
     )
@@ -42,8 +41,11 @@ export async function fetchSaleById(id: number) {
     .select(
       `
       *,
-      products (id, name, price),
-      clients (id, first_name, last_name)
+      sale_items (
+        *,
+        products (*)
+      ),
+      clients (*)
     `,
     )
     .eq("id", id)
