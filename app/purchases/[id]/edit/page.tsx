@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation"
 import { fetchPurchaseById } from "@/lib/data/purchases"
 import { fetchProducts } from "@/lib/data/products"
+import { fetchSuppliers } from "@/lib/data/suppliers"
 import PurchaseForm from "@/components/purchases/purchase-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -11,7 +12,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
-import type { Product } from "@/lib/supabase/types"
+import type { Product, Supplier } from "@/lib/supabase/types"
 
 type PageProps = {
   params: {
@@ -23,6 +24,7 @@ export default async function EditPurchasePage({ params }: PageProps) {
   const { id } = params
   const purchase = await fetchPurchaseById(Number(id))
   const products = await fetchProducts()
+  const suppliers = await fetchSuppliers()
 
   if (!purchase) {
     notFound()
@@ -31,6 +33,11 @@ export default async function EditPurchasePage({ params }: PageProps) {
   const productOptions = products.map((product: Product) => ({
     id: product.id,
     name: product.name,
+  }))
+
+  const supplierOptions = suppliers.map((supplier: Supplier) => ({
+    id: supplier.id,
+    name: supplier.name,
   }))
 
   return (
@@ -59,7 +66,7 @@ export default async function EditPurchasePage({ params }: PageProps) {
           <CardTitle>Edit Purchase</CardTitle>
         </CardHeader>
         <CardContent>
-          <PurchaseForm purchase={purchase} products={productOptions} />
+          <PurchaseForm purchase={purchase} products={productOptions} suppliers={supplierOptions} />
         </CardContent>
       </Card>
     </main>
