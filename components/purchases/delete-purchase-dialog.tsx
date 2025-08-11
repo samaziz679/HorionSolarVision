@@ -13,18 +13,23 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { deletePurchase } from "@/app/purchases/actions"
-import { useTransition } from "react"
+import { useState } from "react"
 
 export default function DeletePurchaseDialog({ purchaseId }: { purchaseId: string }) {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
 
-  const handleDelete = () => {
-    startTransition(async () => {
+  const handleDelete = async () => {
+    setIsPending(true)
+    try {
       const result = await deletePurchase(purchaseId)
       if (result?.message) {
         alert(result.message)
       }
-    })
+    } catch (error) {
+      alert("Failed to delete purchase")
+    } finally {
+      setIsPending(false)
+    }
   }
 
   return (

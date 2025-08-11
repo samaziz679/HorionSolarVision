@@ -1,6 +1,6 @@
 "use client"
 
-import { useTransition } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import {
   AlertDialog,
@@ -21,10 +21,11 @@ interface DeleteSupplierDialogProps {
 }
 
 export default function DeleteSupplierDialog({ supplierId, isOpen, onClose }: DeleteSupplierDialogProps) {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
 
-  const handleDelete = () => {
-    startTransition(async () => {
+  const handleDelete = async () => {
+    setIsPending(true)
+    try {
       const result = await deleteSupplierAction(supplierId)
       if (result.success) {
         toast.success(result.message)
@@ -32,7 +33,11 @@ export default function DeleteSupplierDialog({ supplierId, isOpen, onClose }: De
       } else {
         toast.error(result.message)
       }
-    })
+    } catch (error) {
+      toast.error("Failed to delete supplier")
+    } finally {
+      setIsPending(false)
+    }
   }
 
   return (

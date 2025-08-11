@@ -13,18 +13,23 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { deleteExpense } from "@/app/expenses/actions"
-import { useTransition } from "react"
+import { useState } from "react"
 
 export default function DeleteExpenseDialog({ expenseId }: { expenseId: string }) {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
 
-  const handleDelete = () => {
-    startTransition(async () => {
+  const handleDelete = async () => {
+    setIsPending(true)
+    try {
       const result = await deleteExpense(expenseId)
       if (result?.message) {
         alert(result.message)
       }
-    })
+    } catch (error) {
+      alert("Failed to delete expense")
+    } finally {
+      setIsPending(false)
+    }
   }
 
   return (

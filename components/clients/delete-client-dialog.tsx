@@ -1,6 +1,6 @@
 "use client"
 
-import { useTransition } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import {
   AlertDialog,
@@ -21,10 +21,11 @@ interface DeleteClientDialogProps {
 }
 
 export default function DeleteClientDialog({ clientId, isOpen, onClose }: DeleteClientDialogProps) {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
 
-  const handleDelete = () => {
-    startTransition(async () => {
+  const handleDelete = async () => {
+    setIsPending(true)
+    try {
       const result = await deleteClientAction(clientId)
       if (result.success) {
         toast.success(result.message)
@@ -32,7 +33,11 @@ export default function DeleteClientDialog({ clientId, isOpen, onClose }: Delete
       } else {
         toast.error(result.message)
       }
-    })
+    } catch (error) {
+      toast.error("Failed to delete client")
+    } finally {
+      setIsPending(false)
+    }
   }
 
   return (

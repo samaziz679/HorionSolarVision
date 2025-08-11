@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { deleteProduct } from "@/app/inventory/actions"
-import { useTransition } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 
 interface DeleteProductDialogProps {
@@ -21,10 +21,11 @@ interface DeleteProductDialogProps {
 }
 
 export default function DeleteProductDialog({ productId, isOpen, onClose }: DeleteProductDialogProps) {
-  const [isPending, startTransition] = useTransition()
+  const [isPending, setIsPending] = useState(false)
 
-  const handleDelete = () => {
-    startTransition(async () => {
+  const handleDelete = async () => {
+    setIsPending(true)
+    try {
       const result = await deleteProduct(productId)
       if (result?.message) {
         toast.error(result.message)
@@ -32,7 +33,11 @@ export default function DeleteProductDialog({ productId, isOpen, onClose }: Dele
         toast.success("Product deleted successfully.")
         onClose()
       }
-    })
+    } catch (error) {
+      toast.error("Failed to delete product")
+    } finally {
+      setIsPending(false)
+    }
   }
 
   return (
