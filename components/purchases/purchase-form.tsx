@@ -120,18 +120,18 @@ export default function PurchaseForm({
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="total_price">Total Price</Label>
+          <Label htmlFor="total_cost">Total Cost</Label>
           <Input
-            id="total_price"
-            name="total_price"
+            id="total_cost"
+            name="total_cost"
             type="number"
             step="0.01"
-            defaultValue={purchase?.total_price ?? ""}
-            aria-describedby="total_price-error"
+            defaultValue={purchase?.total_cost ?? ""}
+            aria-describedby="total_cost-error"
           />
-          <div id="total_price-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.total_price &&
-              state.errors.total_price.map((error: string) => (
+          <div id="total_cost-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.total_cost &&
+              state.errors.total_cost.map((error: string) => (
                 <p className="mt-2 text-sm text-red-500" key={error}>
                   {error}
                 </p>
@@ -140,17 +140,17 @@ export default function PurchaseForm({
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="purchase_date">Purchase Date</Label>
+        <Label htmlFor="date">Purchase Date</Label>
         <Input
-          id="purchase_date"
-          name="purchase_date"
+          id="date"
+          name="date"
           type="date"
-          defaultValue={purchase?.purchase_date ? new Date(purchase.purchase_date).toISOString().split("T")[0] : ""}
-          aria-describedby="purchase_date-error"
+          defaultValue={purchase?.date ? new Date(purchase.date).toISOString().split("T")[0] : ""}
+          aria-describedby="date-error"
         />
-        <div id="purchase_date-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.purchase_date &&
-            state.errors.purchase_date.map((error: string) => (
+        <div id="date-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.date &&
+            state.errors.date.map((error: string) => (
               <p className="mt-2 text-sm text-red-500" key={error}>
                 {error}
               </p>
