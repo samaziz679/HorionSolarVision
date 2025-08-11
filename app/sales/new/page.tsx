@@ -18,7 +18,7 @@ export default async function NewSalePage() {
   const productOptions = products.map((product) => ({
     id: product.id,
     name: product.name,
-    price: product.price,
+    price: product.prix_vente_detail_1, // Using prix_vente_detail_1 instead of non-existent price field
     stock_quantity: product.stock_quantity,
   }))
 
