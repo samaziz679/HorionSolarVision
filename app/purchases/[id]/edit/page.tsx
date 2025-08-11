@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { fetchPurchaseById } from "@/lib/data/purchases"
 import { fetchSuppliers } from "@/lib/data/suppliers"
-import { fetchProducts } from "@/lib/data/products" // Corrected function name
+import { fetchProducts } from "@/lib/data/products"
 import PurchaseForm from "@/components/purchases/purchase-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -20,10 +20,8 @@ type PageProps = {
 }
 
 export default async function EditPurchasePage({ params }: PageProps) {
-  const id = Number(params.id)
-  if (isNaN(id)) {
-    notFound()
-  }
+  // Corrected: The ID for a purchase is a string, not a number.
+  const { id } = params
 
   const [purchase, suppliers, products] = await Promise.all([fetchPurchaseById(id), fetchSuppliers(), fetchProducts()])
 
