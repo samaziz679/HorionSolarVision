@@ -34,6 +34,7 @@ export async function fetchPurchaseById(id: number) {
 
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
+    .from("purchases")
     .select(
       `
       *,
