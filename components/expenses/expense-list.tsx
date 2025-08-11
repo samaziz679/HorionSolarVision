@@ -31,7 +31,7 @@ export default function ExpenseList({ expenses }: { expenses: Expense[] }) {
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/expenses/${expense.id}/edit`}>Edit</Link>
                 </Button>
-                <DeleteExpenseDialog expenseId={expense.id} />
+                <DeleteExpenseDialog expenseId={expense.id.toString()} />
               </TableCell>
             </TableRow>
           ))}
