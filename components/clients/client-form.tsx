@@ -76,8 +76,8 @@ export default function ClientForm({ client }: { client?: Client }) {
             aria-describedby="first_name-error"
           />
           <div id="first_name-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.first_name &&
-              state.errors.first_name.map((error: string) => (
+            {state.errors?.name &&
+              state.errors.name.map((error: string) => (
                 <p className="mt-2 text-sm text-red-500" key={error}>
                   {error}
                 </p>
@@ -93,8 +93,8 @@ export default function ClientForm({ client }: { client?: Client }) {
             aria-describedby="last_name-error"
           />
           <div id="last_name-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.last_name &&
-              state.errors.last_name.map((error: string) => (
+            {state.errors?.name &&
+              state.errors.name.map((error: string) => (
                 <p className="mt-2 text-sm text-red-500" key={error}>
                   {error}
                 </p>
