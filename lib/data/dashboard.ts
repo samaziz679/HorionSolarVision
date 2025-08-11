@@ -50,7 +50,7 @@ export async function getRecentSales() {
       `
       id,
       date,
-      total_price,
+      total_amount,
       clients (
         name,
         email
@@ -65,8 +65,10 @@ export async function getRecentSales() {
     throw new Error("Could not fetch recent sales.")
   }
 
-  return data.map((sale) => ({
-    ...sale,
+  return (data || []).map((sale) => ({
+    id: sale.id,
+    date: sale.date,
+    total_amount: sale.total_amount,
     client_name: sale.clients?.name ?? "N/A",
     client_email: sale.clients?.email ?? "N/A",
   }))
