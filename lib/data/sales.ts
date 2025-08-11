@@ -1,62 +1,53 @@
-import "server-only"
-import { createClient } from "@/lib/supabase/server"
+import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { unstable_noStore as noStore } from "next/cache"
-import type { SaleWithItems } from "@/lib/supabase/types"
+import type { SaleWithDetails } from "@/lib/supabase/types"
 
 export async function fetchSales() {
   noStore()
-  const supabase = createClient()
-  // This query explicitly joins the clients table and selects the first and last names.
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("sales")
-    .select(`
+    .select(
+      `
       id,
-      date,
+      sale_date,
       total_amount,
-      clients (
-        first_name,
-        last_name
-      )
-    `)
-    .order("date", { ascending: false })
+      created_at,
+      products (id, name),
+      clients (id, first_name, last_name)
+    `,
+    )
+    .order("sale_date", { ascending: false })
 
   if (error) {
-    console.error("Error fetching sales:", error)
+    console.error("Database Error:", error)
     throw new Error("Failed to fetch sales.")
   }
 
-  // We now manually create the 'client_name' property in the application code.
-  // This makes the component's job easier and isolates the data transformation logic here.
-  return data.map((sale) => ({
-    ...sale,
-    client_name: sale.clients ? `${sale.clients.first_name} ${sale.clients.last_name}`.trim() : "N/A",
-  }))
+  return data as SaleWithDetails[]
 }
 
-export async function fetchSaleById(id: number): Promise<SaleWithItems | null> {
+export async function fetchSaleById(id: number) {
   noStore()
   if (isNaN(id)) return null
 
-  const supabase = createClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("sales")
-    .select(`
+    .select(
+      `
       *,
-      sale_items (
-        *,
-        products(*)
-      )
-    `)
+      products (id, name, price),
+      clients (id, first_name, last_name)
+    `,
+    )
     .eq("id", id)
     .single()
 
   if (error) {
-    console.error(`Error fetching sale with id ${id}:`, error)
-    if (error.code === "PGRST116") {
-      return null
-    }
-    throw new Error("Failed to fetch sale.")
+    console.error("Database Error:", error)
+    return null
   }
 
-  return data
+  return data as SaleWithDetails | null
 }

@@ -1,25 +1,25 @@
-// v2.0 Final
-import "server-only"
-import { createClient } from "@/lib/supabase/server"
+import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { unstable_noStore as noStore } from "next/cache"
 import type { Supplier } from "@/lib/supabase/types"
 
-export async function fetchSuppliers(): Promise<Supplier[]> {
+export async function fetchSuppliers() {
   noStore()
-  const supabase = createClient()
-  const { data, error } = await supabase.from("suppliers").select("*").order("name", { ascending: true })
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.from("suppliers").select("*").order("created_at", { ascending: false })
 
   if (error) {
     console.error("Database Error:", error)
     throw new Error("Failed to fetch suppliers.")
   }
 
-  return data || []
+  return data as Supplier[]
 }
 
-export async function fetchSupplierById(id: string): Promise<Supplier | null> {
+export async function fetchSupplierById(id: number) {
   noStore()
-  const supabase = createClient()
+  if (isNaN(id)) return null
+
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from("suppliers").select("*").eq("id", id).single()
 
   if (error) {
@@ -27,17 +27,18 @@ export async function fetchSupplierById(id: string): Promise<Supplier | null> {
     return null
   }
 
-  return data
+  return data as Supplier | null
 }
 
-export async function fetchSupplierOptions() {
+export async function fetchSuppliersForForm() {
   noStore()
-  const supabase = createClient()
-  const { data, error } = await supabase.from("suppliers").select("id, name").order("name")
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.from("suppliers").select("id, name")
 
   if (error) {
     console.error("Database Error:", error)
-    throw new Error("Failed to fetch supplier options.")
+    throw new Error("Failed to fetch suppliers for form.")
   }
-  return data || []
+
+  return data
 }

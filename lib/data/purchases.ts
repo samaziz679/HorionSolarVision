@@ -1,10 +1,10 @@
-import { createClient } from "@/lib/supabase/server"
+import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { unstable_noStore as noStore } from "next/cache"
-import type { Purchase } from "@/lib/supabase/types"
+import type { PurchaseWithDetails } from "@/lib/supabase/types"
 
 export async function fetchPurchases() {
   noStore()
-  const supabase = createClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("purchases")
     .select(
@@ -12,38 +12,42 @@ export async function fetchPurchases() {
       id,
       purchase_date,
       total_amount,
-      suppliers ( name ),
-      purchase_items ( quantity, products ( name, price ) )
+      created_at,
+      products (id, name),
+      suppliers (id, name)
     `,
     )
     .order("purchase_date", { ascending: false })
 
   if (error) {
-    console.error("Error fetching purchases:", error)
+    console.error("Database Error:", error)
     throw new Error("Failed to fetch purchases.")
   }
 
-  return data as unknown as Purchase[]
+  return data as PurchaseWithDetails[]
 }
 
-export async function fetchPurchaseById(id: string) {
+export async function fetchPurchaseById(id: number) {
   noStore()
-  const supabase = createClient()
+  if (isNaN(id)) return null
+
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("purchases")
     .select(
       `
       *,
-      purchase_items ( id, product_id, quantity, price )
+      products (id, name),
+      suppliers (id, name)
     `,
     )
     .eq("id", id)
     .single()
 
   if (error) {
-    console.error("Error fetching purchase by ID:", error)
+    console.error("Database Error:", error)
     return null
   }
 
-  return data
+  return data as PurchaseWithDetails | null
 }

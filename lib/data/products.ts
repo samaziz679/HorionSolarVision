@@ -1,38 +1,65 @@
-import "server-only"
-import { createClient } from "@/lib/supabase/server"
+import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { unstable_noStore as noStore } from "next/cache"
-import type { Product } from "@/lib/supabase/types"
+import type { ProductWithSupplier } from "@/lib/supabase/types"
 
-export async function fetchProducts(): Promise<Product[]> {
+export async function fetchProducts() {
   noStore()
-  const supabase = createClient()
-  const { data, error } = await supabase.from("products").select("*").order("name", { ascending: true })
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      `
+      id,
+      name,
+      description,
+      price,
+      stock_quantity,
+      created_at,
+      suppliers (id, name)
+    `,
+    )
+    .order("created_at", { ascending: false })
 
   if (error) {
-    console.error("Error fetching products:", error)
+    console.error("Database Error:", error)
     throw new Error("Failed to fetch products.")
   }
 
-  return data || []
+  return data as ProductWithSupplier[]
 }
 
-export async function fetchProductById(id: number): Promise<Product | null> {
+export async function fetchProductById(id: number) {
   noStore()
-  if (isNaN(id)) {
-    console.error("Invalid product ID provided.")
-    return null
-  }
-  const supabase = createClient()
-  const { data, error } = await supabase.from("products").select("*").eq("id", id).single()
+  if (isNaN(id)) return null
+
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from("products")
+    .select(
+      `
+      *,
+      suppliers (id, name)
+    `,
+    )
+    .eq("id", id)
+    .single()
 
   if (error) {
-    console.error(`Error fetching product with id ${id}:`, error)
-    // It's common for .single() to fail if no row is found.
-    // We return null in that case, which is expected.
-    if (error.code === "PGRST116") {
-      return null
-    }
-    throw new Error("Failed to fetch product.")
+    console.error("Database Error:", error)
+    return null
+  }
+
+  return data as ProductWithSupplier | null
+}
+
+export async function fetchProductsForForm() {
+  noStore()
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.from("products").select("id, name, price")
+
+  if (error) {
+    console.error("Database Error:", error)
+    throw new Error("Failed to fetch products for form.")
   }
 
   return data

@@ -1,30 +1,44 @@
-// v2.0 Final
-import "server-only"
-import { createClient } from "@/lib/supabase/server"
+import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { unstable_noStore as noStore } from "next/cache"
 import type { Client } from "@/lib/supabase/types"
 
-export async function fetchClients(): Promise<Client[]> {
+export async function fetchClients() {
   noStore()
-  const supabase = createClient()
-  const { data, error } = await supabase.from("clients").select("*").order("last_name", { ascending: true })
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false })
 
   if (error) {
     console.error("Database Error:", error)
     throw new Error("Failed to fetch clients.")
   }
 
-  return data || []
+  return data as Client[]
 }
 
-export async function fetchClientById(id: string): Promise<Client | null> {
+export async function fetchClientById(id: number) {
   noStore()
-  const supabase = createClient()
+  if (isNaN(id)) return null
+
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from("clients").select("*").eq("id", id).single()
 
   if (error) {
     console.error("Database Error:", error)
+    // Don't throw for single record not found, page will show 404
     return null
+  }
+
+  return data as Client | null
+}
+
+export async function fetchClientsForForm() {
+  noStore()
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.from("clients").select("id, first_name, last_name")
+
+  if (error) {
+    console.error("Database Error:", error)
+    throw new Error("Failed to fetch clients for form.")
   }
 
   return data
