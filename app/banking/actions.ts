@@ -16,7 +16,7 @@ const FormSchema = z.object({
 })
 
 const CreateBankingSchema = FormSchema.omit({ id: true })
-const UpdateBankingSchema = FormSchema
+const UpdateBankingSchema = FormSchema.omit({ id: true })
 
 export type State = {
   errors?: {
@@ -68,14 +68,13 @@ export async function createBankAccount(prevState: State, formData: FormData) {
   redirect("/banking")
 }
 
-export async function updateBankAccount(id: string, prevState: State, formData: FormData) {
+export async function updateBankAccount(id: number, prevState: State, formData: FormData) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
   const validatedFields = UpdateBankingSchema.safeParse({
-    id: id,
     bank_name: formData.get("bank_name"),
     account_holder: formData.get("account_holder"),
     account_number: formData.get("account_number"),
@@ -116,7 +115,7 @@ export async function updateBankAccount(id: string, prevState: State, formData: 
   redirect("/banking")
 }
 
-export async function deleteBankAccount(id: string) {
+export async function deleteBankAccount(id: number) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
