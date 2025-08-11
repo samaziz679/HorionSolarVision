@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { fetchExpenseById } from "@/lib/data/expenses"
-import EditExpenseForm from "@/components/expenses/edit-expense-form"
+import ExpenseForm from "@/components/expenses/expense-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type PageProps = {
@@ -26,7 +26,7 @@ export default async function EditExpensePage({ params }: PageProps) {
         <CardTitle>Edit Expense</CardTitle>
       </CardHeader>
       <CardContent>
-        <EditExpenseForm expense={expense} />
+        <ExpenseForm expense={expense} />
       </CardContent>
     </Card>
   )

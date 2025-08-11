@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { fetchBankAccountById } from "@/lib/data/banking"
-import EditBankingForm from "@/components/banking/edit-banking-form"
+import BankingForm from "@/components/banking/banking-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type PageProps = {
@@ -26,7 +26,7 @@ export default async function EditBankingPage({ params }: PageProps) {
         <CardTitle>Edit Bank Account</CardTitle>
       </CardHeader>
       <CardContent>
-        <EditBankingForm bankAccount={bankAccount} />
+        <BankingForm bankingAccount={bankAccount} />
       </CardContent>
     </Card>
   )
