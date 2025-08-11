@@ -1,57 +1,46 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { toast } from "sonner"
+import { useState, useEffect } from "react"
 import { createSale, updateSale, type State } from "@/app/sales/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Trash2 } from "lucide-react"
-import type { Sale, Product, Client, SaleItem } from "@/lib/supabase/types"
+import type { Sale, Product, Client } from "@/lib/supabase/types"
 import { formatCurrency } from "@/lib/currency"
 
 type SaleFormProps = {
-  sale?: Sale & { sale_items: SaleItem[] }
-  products: Pick<Product, "id" | "name" | "prix_vente_detail_1">[]
+  sale?: Sale
+  products: Pick<Product, "id" | "name" | "prix_vente_detail_1" | "prix_vente_detail_2" | "prix_vente_gros">[]
   clients: Pick<Client, "id" | "name">[]
-}
-
-type SaleItemForm = {
-  id: string
-  product_id: string
-  product_name: string
-  quantity: number
-  unit_price: number
-  total: number
 }
 
 export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   const [state, setState] = useState<State>({ message: null, errors: {} })
   const [isLoading, setIsLoading] = useState(false)
 
-  const [items, setItems] = useState<SaleItemForm[]>(
-    sale?.sale_items.map((item) => {
-      const product = products.find((p) => p.id === item.product_id)
-      return {
-        id: `item-${item.id}`,
-        product_id: item.product_id.toString(),
-        product_name: product?.name ?? "Unknown",
-        quantity: item.quantity,
-        unit_price: Number(item.unit_price),
-        total: item.quantity * Number(item.unit_price),
-      }
-    }) || [],
-  )
+  const [selectedProduct, setSelectedProduct] = useState(sale?.product_id || "")
+  const [quantity, setQuantity] = useState(sale?.quantity || 1)
+  const [pricePlan, setPricePlan] = useState(sale?.price_plan || "detail_1")
+  const [unitPrice, setUnitPrice] = useState(sale?.unit_price || 0)
 
-  const [selectedProduct, setSelectedProduct] = useState<string>("")
+  useEffect(() => {
+    const product = products.find((p) => p.id === selectedProduct)
+    if (product) {
+      setUnitPrice(Number(product[`prix_vente_${pricePlan}`]))
+    }
+  }, [selectedProduct, pricePlan, products])
 
-  const totalAmount = useMemo(() => items.reduce((sum, item) => sum + item.total, 0), [items])
+  const totalAmount = quantity * unitPrice
 
   const handleSubmit = async (formData: FormData) => {
     setIsLoading(true)
     setState({ message: null, errors: {} })
+
+    formData.set("product_id", selectedProduct)
+    formData.set("quantity", quantity.toString())
+    formData.set("price_plan", pricePlan)
+    formData.set("unit_price", unitPrice.toString())
 
     try {
       const action = sale ? updateSale.bind(null, sale.id) : createSale
@@ -64,53 +53,6 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
     }
   }
 
-  useEffect(() => {
-    if (state.message) {
-      if (state.errors && Object.keys(state.errors).length > 0) {
-        toast.error(state.message)
-      } else {
-        toast.success(state.message)
-      }
-    }
-  }, [state])
-
-  const handleAddItem = () => {
-    const product = products.find((p) => p.id.toString() === selectedProduct)
-    if (!product || items.some((item) => item.product_id === selectedProduct)) {
-      toast.warning("Product is already in the sale or not selected.")
-      return
-    }
-    setItems([
-      ...items,
-      {
-        id: `new-${Date.now()}`,
-        product_id: product.id.toString(),
-        product_name: product.name,
-        quantity: 1,
-        unit_price: Number(product.prix_vente_detail_1),
-        total: Number(product.prix_vente_detail_1),
-      },
-    ])
-    setSelectedProduct("")
-  }
-
-  const handleRemoveItem = (id: string) => {
-    setItems(items.filter((item) => item.id !== id))
-  }
-
-  const handleItemChange = (id: string, field: "quantity" | "unit_price", value: number) => {
-    setItems(
-      items.map((item) => {
-        if (item.id === id) {
-          const newItem = { ...item, [field]: value }
-          newItem.total = newItem.quantity * newItem.unit_price
-          return newItem
-        }
-        return item
-      }),
-    )
-  }
-
   return (
     <form
       onSubmit={(e) => {
@@ -119,23 +61,16 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
       }}
       className="space-y-6"
     >
-      <input
-        type="hidden"
-        name="items"
-        value={JSON.stringify(items.map(({ id, product_name, total, ...rest }) => rest))}
-      />
-      <input type="hidden" name="total_amount" value={totalAmount} />
-
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="client_id">Client</Label>
-          <Select name="client_id" defaultValue={sale?.client_id?.toString()}>
+          <Select name="client_id" value={sale?.client_id || ""} required>
             <SelectTrigger aria-describedby="client_id-error">
               <SelectValue placeholder="Select a client" />
             </SelectTrigger>
             <SelectContent>
               {clients.map((client) => (
-                <SelectItem key={client.id} value={client.id.toString()}>
+                <SelectItem key={client.id} value={client.id}>
                   {client.name}
                 </SelectItem>
               ))}
@@ -157,6 +92,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             name="sale_date"
             type="date"
             defaultValue={sale?.sale_date ? new Date(sale.sale_date).toISOString().split("T")[0] : ""}
+            required
             aria-describedby="sale_date-error"
           />
           <div id="sale_date-error" aria-live="polite" aria-atomic="true">
@@ -171,66 +107,113 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
       </div>
 
       <div className="space-y-4">
-        <Label>Sale Items</Label>
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[40%]">Product</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Unit Price</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="w-12"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>{item.product_name}</TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      value={item.quantity}
-                      onChange={(e) => handleItemChange(item.id, "quantity", Number.parseInt(e.target.value) || 0)}
-                      className="w-20"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={item.unit_price}
-                      onChange={(e) => handleItemChange(item.id, "unit_price", Number.parseFloat(e.target.value) || 0)}
-                      className="w-24"
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">{formatCurrency(item.total)}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(item.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <Label>Product Details</Label>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="product_id">Product</Label>
+            <Select value={selectedProduct} onValueChange={setSelectedProduct} required>
+              <SelectTrigger aria-describedby="product_id-error">
+                <SelectValue placeholder="Select a product" />
+              </SelectTrigger>
+              <SelectContent>
+                {products.map((product) => (
+                  <SelectItem key={product.id} value={product.id}>
+                    {product.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div id="product_id-error" aria-live="polite" aria-atomic="true">
+              {state.errors?.product_id &&
+                state.errors.product_id.map((error: string) => (
+                  <p className="mt-2 text-sm text-red-500" key={error}>
+                    {error}
+                  </p>
+                ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="quantity">Quantity</Label>
+            <Input
+              id="quantity"
+              type="number"
+              min="1"
+              value={quantity}
+              onChange={(e) => setQuantity(Number(e.target.value) || 1)}
+              required
+              aria-describedby="quantity-error"
+            />
+            <div id="quantity-error" aria-live="polite" aria-atomic="true">
+              {state.errors?.quantity &&
+                state.errors.quantity.map((error: string) => (
+                  <p className="mt-2 text-sm text-red-500" key={error}>
+                    {error}
+                  </p>
+                ))}
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select a product to add" />
-            </SelectTrigger>
-            <SelectContent>
-              {products.map((p) => (
-                <SelectItem key={p.id} value={p.id.toString()}>
-                  {p.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button type="button" onClick={handleAddItem}>
-            Add Item
-          </Button>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="price_plan">Price Plan</Label>
+            <Select value={pricePlan} onValueChange={setPricePlan} required>
+              <SelectTrigger aria-describedby="price_plan-error">
+                <SelectValue placeholder="Select price plan" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="detail_1">Retail Price 1</SelectItem>
+                <SelectItem value="detail_2">Retail Price 2</SelectItem>
+                <SelectItem value="gros">Wholesale Price</SelectItem>
+              </SelectContent>
+            </Select>
+            <div id="price_plan-error" aria-live="polite" aria-atomic="true">
+              {state.errors?.price_plan &&
+                state.errors.price_plan.map((error: string) => (
+                  <p className="mt-2 text-sm text-red-500" key={error}>
+                    {error}
+                  </p>
+                ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="unit_price">Unit Price</Label>
+            <Input
+              id="unit_price"
+              type="number"
+              step="0.01"
+              value={unitPrice}
+              onChange={(e) => setUnitPrice(Number(e.target.value) || 0)}
+              required
+              aria-describedby="unit_price-error"
+            />
+            <div id="unit_price-error" aria-live="polite" aria-atomic="true">
+              {state.errors?.unit_price &&
+                state.errors.unit_price.map((error: string) => (
+                  <p className="mt-2 text-sm text-red-500" key={error}>
+                    {error}
+                  </p>
+                ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="notes">Notes (Optional)</Label>
+        <Input
+          id="notes"
+          name="notes"
+          defaultValue={sale?.notes || ""}
+          placeholder="Additional notes about this sale"
+          aria-describedby="notes-error"
+        />
+        <div id="notes-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.notes &&
+            state.errors.notes.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
         </div>
       </div>
 
@@ -241,15 +224,9 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
         </div>
       </div>
 
-      <SubmitButton isEditing={!!sale} isLoading={isLoading} />
+      <Button type="submit" disabled={isLoading} className="w-full">
+        {isLoading ? (sale ? "Updating Sale..." : "Creating Sale...") : sale ? "Update Sale" : "Create Sale"}
+      </Button>
     </form>
-  )
-}
-
-function SubmitButton({ isEditing, isLoading }: { isEditing: boolean; isLoading: boolean }) {
-  return (
-    <Button type="submit" disabled={isLoading} className="w-full">
-      {isLoading ? (isEditing ? "Updating Sale..." : "Creating Sale...") : isEditing ? "Update Sale" : "Create Sale"}
-    </Button>
   )
 }

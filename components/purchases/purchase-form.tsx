@@ -56,7 +56,7 @@ export default function PurchaseForm({
     >
       <div className="space-y-2">
         <Label htmlFor="supplier_id">Supplier</Label>
-        <Select name="supplier_id" defaultValue={purchase?.supplier_id?.toString()}>
+        <Select name="supplier_id" defaultValue={purchase?.supplier_id?.toString()} required>
           <SelectTrigger aria-describedby="supplier_id-error">
             <SelectValue placeholder="Select a supplier" />
           </SelectTrigger>
@@ -79,7 +79,7 @@ export default function PurchaseForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="product_id">Product</Label>
-        <Select name="product_id" defaultValue={purchase?.product_id?.toString()}>
+        <Select name="product_id" defaultValue={purchase?.product_id?.toString()} required>
           <SelectTrigger aria-describedby="product_id-error">
             <SelectValue placeholder="Select a product" />
           </SelectTrigger>
@@ -108,6 +108,7 @@ export default function PurchaseForm({
             name="quantity"
             type="number"
             defaultValue={purchase?.quantity ?? ""}
+            required
             aria-describedby="quantity-error"
           />
           <div id="quantity-error" aria-live="polite" aria-atomic="true">
@@ -127,6 +128,7 @@ export default function PurchaseForm({
             type="number"
             step="0.01"
             defaultValue={purchase?.total ?? ""}
+            required
             aria-describedby="total-error"
           />
           <div id="total-error" aria-live="polite" aria-atomic="true">
@@ -146,6 +148,7 @@ export default function PurchaseForm({
           name="purchase_date"
           type="date"
           defaultValue={purchase?.purchase_date ? new Date(purchase.purchase_date).toISOString().split("T")[0] : ""}
+          required
           aria-describedby="purchase_date-error"
         />
         <div id="purchase_date-error" aria-live="polite" aria-atomic="true">

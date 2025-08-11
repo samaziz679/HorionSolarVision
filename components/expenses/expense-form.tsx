@@ -48,7 +48,13 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
     >
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
-        <Input id="category" name="category" defaultValue={expense?.category ?? ""} aria-describedby="category-error" />
+        <Input
+          id="category"
+          name="category"
+          defaultValue={expense?.category ?? ""}
+          required
+          aria-describedby="category-error"
+        />
         <div id="category-error" aria-live="polite" aria-atomic="true">
           {state.errors?.category &&
             state.errors.category.map((error: string) => (
@@ -66,6 +72,7 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
           type="number"
           step="0.01"
           defaultValue={expense?.amount ?? ""}
+          required
           aria-describedby="amount-error"
         />
         <div id="amount-error" aria-live="polite" aria-atomic="true">
@@ -84,6 +91,7 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
           name="expense_date"
           type="date"
           defaultValue={expense?.expense_date ? new Date(expense.expense_date).toISOString().split("T")[0] : ""}
+          required
           aria-describedby="expense_date-error"
         />
         <div id="expense_date-error" aria-live="polite" aria-atomic="true">

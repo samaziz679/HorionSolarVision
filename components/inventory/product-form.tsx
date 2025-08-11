@@ -52,7 +52,7 @@ export default function ProductForm({
     >
       <div className="space-y-2">
         <Label htmlFor="name">Product Name</Label>
-        <Input id="name" name="name" defaultValue={product?.name ?? ""} aria-describedby="name-error" />
+        <Input id="name" name="name" defaultValue={product?.name ?? ""} required aria-describedby="name-error" />
         <div id="name-error" aria-live="polite" aria-atomic="true">
           {state.errors?.name &&
             state.errors.name.map((error: string) => (
@@ -62,6 +62,7 @@ export default function ProductForm({
             ))}
         </div>
       </div>
+
       <div className="space-y-2">
         <Label htmlFor="description">Description</Label>
         <Textarea
@@ -79,18 +80,73 @@ export default function ProductForm({
             ))}
         </div>
       </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="type">Product Type</Label>
+        <Input id="type" name="type" defaultValue={product?.type ?? ""} aria-describedby="type-error" />
+        <div id="type-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.type &&
+            state.errors.type.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="unit">Unit</Label>
+        <Input
+          id="unit"
+          name="unit"
+          defaultValue={product?.unit ?? ""}
+          placeholder="e.g., kg, pieces, liters"
+          aria-describedby="unit-error"
+        />
+        <div id="unit-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.unit &&
+            state.errors.unit.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="prix_achat">Purchase Price (Prix d'achat)</Label>
+        <Input
+          id="prix_achat"
+          name="prix_achat"
+          type="number"
+          step="0.01"
+          defaultValue={product?.prix_achat ?? ""}
+          required
+          aria-describedby="prix_achat-error"
+        />
+        <div id="prix_achat-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.prix_achat &&
+            state.errors.prix_achat.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="price">Price</Label>
+          <Label htmlFor="prix_vente_detail_1">Retail Price 1</Label>
           <Input
-            id="price"
+            id="prix_vente_detail_1"
             name="prix_vente_detail_1"
             type="number"
             step="0.01"
             defaultValue={product?.prix_vente_detail_1 ?? ""}
-            aria-describedby="price-error"
+            required
+            aria-describedby="prix_vente_detail_1-error"
           />
-          <div id="price-error" aria-live="polite" aria-atomic="true">
+          <div id="prix_vente_detail_1-error" aria-live="polite" aria-atomic="true">
             {state.errors?.prix_vente_detail_1 &&
               state.errors.prix_vente_detail_1.map((error: string) => (
                 <p className="mt-2 text-sm text-red-500" key={error}>
@@ -100,15 +156,16 @@ export default function ProductForm({
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="stock_quantity">Stock Quantity</Label>
+          <Label htmlFor="quantity">Stock Quantity</Label>
           <Input
-            id="stock_quantity"
+            id="quantity"
             name="quantity"
             type="number"
             defaultValue={product?.quantity ?? ""}
-            aria-describedby="stock_quantity-error"
+            required
+            aria-describedby="quantity-error"
           />
-          <div id="stock_quantity-error" aria-live="polite" aria-atomic="true">
+          <div id="quantity-error" aria-live="polite" aria-atomic="true">
             {state.errors?.quantity &&
               state.errors.quantity.map((error: string) => (
                 <p className="mt-2 text-sm text-red-500" key={error}>
@@ -118,6 +175,68 @@ export default function ProductForm({
           </div>
         </div>
       </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="prix_vente_detail_2">Retail Price 2 (Optional)</Label>
+          <Input
+            id="prix_vente_detail_2"
+            name="prix_vente_detail_2"
+            type="number"
+            step="0.01"
+            defaultValue={product?.prix_vente_detail_2 ?? ""}
+            aria-describedby="prix_vente_detail_2-error"
+          />
+          <div id="prix_vente_detail_2-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.prix_vente_detail_2 &&
+              state.errors.prix_vente_detail_2.map((error: string) => (
+                <p className="mt-2 text-sm text-red-500" key={error}>
+                  {error}
+                </p>
+              ))}
+          </div>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="prix_vente_gros">Wholesale Price (Optional)</Label>
+          <Input
+            id="prix_vente_gros"
+            name="prix_vente_gros"
+            type="number"
+            step="0.01"
+            defaultValue={product?.prix_vente_gros ?? ""}
+            aria-describedby="prix_vente_gros-error"
+          />
+          <div id="prix_vente_gros-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.prix_vente_gros &&
+              state.errors.prix_vente_gros.map((error: string) => (
+                <p className="mt-2 text-sm text-red-500" key={error}>
+                  {error}
+                </p>
+              ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="seuil_stock_bas">Low Stock Threshold</Label>
+        <Input
+          id="seuil_stock_bas"
+          name="seuil_stock_bas"
+          type="number"
+          defaultValue={product?.seuil_stock_bas ?? ""}
+          placeholder="Alert when stock falls below this number"
+          aria-describedby="seuil_stock_bas-error"
+        />
+        <div id="seuil_stock_bas-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.seuil_stock_bas &&
+            state.errors.seuil_stock_bas.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
+        </div>
+      </div>
+
       <SubmitButton isEditing={!!product} isLoading={isLoading} />
     </form>
   )
