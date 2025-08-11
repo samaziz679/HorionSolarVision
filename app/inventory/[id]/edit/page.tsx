@@ -8,7 +8,6 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
@@ -20,21 +19,12 @@ type PageProps = {
 }
 
 export default async function EditProductPage({ params }: PageProps) {
-  const id = Number(params.id)
-  if (isNaN(id)) {
-    notFound()
-  }
-
+  const { id } = params
   const [product, suppliers] = await Promise.all([fetchProductById(id), fetchSuppliers()])
 
   if (!product) {
     notFound()
   }
-
-  const supplierOptions = suppliers.map((supplier) => ({
-    id: supplier.id,
-    name: supplier.name,
-  }))
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
@@ -53,7 +43,7 @@ export default async function EditProductPage({ params }: PageProps) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Edit Product</BreadcrumbPage>
+            <BreadcrumbLink>Edit Product</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
@@ -62,7 +52,7 @@ export default async function EditProductPage({ params }: PageProps) {
           <CardTitle>Edit Product</CardTitle>
         </CardHeader>
         <CardContent>
-          <ProductForm product={product} suppliers={supplierOptions} />
+          <ProductForm product={product} suppliers={suppliers} />
         </CardContent>
       </Card>
     </main>

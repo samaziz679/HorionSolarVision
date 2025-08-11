@@ -28,7 +28,6 @@ export default async function EditPurchasePage({ params }: PageProps) {
     notFound()
   }
 
-  // Corrected: Map the full products array to the shape expected by the form.
   const productOptions = products.map((product) => ({
     id: product.id,
     name: product.name,
@@ -60,7 +59,6 @@ export default async function EditPurchasePage({ params }: PageProps) {
           <CardTitle>Edit Purchase</CardTitle>
         </CardHeader>
         <CardContent>
-          {/* Corrected: Pass the correctly shaped productOptions to the form */}
           <PurchaseForm purchase={purchase} suppliers={suppliers} products={productOptions} />
         </CardContent>
       </Card>
