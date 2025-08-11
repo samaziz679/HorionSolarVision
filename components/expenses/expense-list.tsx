@@ -23,7 +23,7 @@ export default function ExpenseList({ expenses }: { expenses: Expense[] }) {
         <TableBody>
           {expenses.map((expense) => (
             <TableRow key={expense.id}>
-              <TableCell>{formatDate(expense.expense_date)}</TableCell>
+              <TableCell>{formatDate(expense.date)}</TableCell>
               <TableCell>{expense.description}</TableCell>
               <TableCell>{expense.category}</TableCell>
               <TableCell className="text-right">{formatCurrency(expense.amount)}</TableCell>

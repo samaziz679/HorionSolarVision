@@ -5,7 +5,7 @@ import type { Expense } from "@/lib/supabase/types"
 export async function fetchExpenses() {
   noStore()
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.from("expenses").select("*").order("expense_date", { ascending: false })
+  const { data, error } = await supabase.from("expenses").select("*").order("date", { ascending: false })
 
   if (error) {
     console.error("Database Error:", error)
