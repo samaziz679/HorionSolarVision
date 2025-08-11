@@ -11,7 +11,7 @@ const FormSchema = z.object({
   description: z.string().optional(),
   amount: z.coerce.number().gt(0, "Amount must be greater than 0."),
   category: z.string().optional(),
-  date: z.string().min(1, "Expense date is required."),
+  expense_date: z.string().min(1, "Expense date is required."),
 })
 
 const CreateExpenseSchema = FormSchema.omit({ id: true })
@@ -22,7 +22,7 @@ export type State = {
     description?: string[]
     amount?: string[]
     category?: string[]
-    date?: string[]
+    expense_date?: string[]
   }
   message?: string | null
   success?: boolean
@@ -38,7 +38,7 @@ export async function createExpense(prevState: State, formData: FormData) {
     description: formData.get("description"),
     amount: formData.get("amount"),
     category: formData.get("category"),
-    date: formData.get("date"),
+    expense_date: formData.get("expense_date"),
   })
 
   if (!validatedFields.success) {
@@ -51,10 +51,11 @@ export async function createExpense(prevState: State, formData: FormData) {
 
   const supabase = createClient()
   const { error } = await supabase.from("expenses").insert({
-    ...validatedFields.data,
     description: validatedFields.data.description || null,
     category: validatedFields.data.category || null,
-    user_id: user.id,
+    amount: validatedFields.data.amount,
+    expense_date: validatedFields.data.expense_date,
+    created_by: user.id,
   })
 
   if (error) {
@@ -66,18 +67,18 @@ export async function createExpense(prevState: State, formData: FormData) {
   redirect("/expenses")
 }
 
-export async function updateExpense(id: number, prevState: State, formData: FormData) {
+export async function updateExpense(id: string, prevState: State, formData: FormData) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
   const validatedFields = UpdateExpenseSchema.safeParse({
-    id: id.toString(),
+    id: id,
     description: formData.get("description"),
     amount: formData.get("amount"),
     category: formData.get("category"),
-    date: formData.get("date"),
+    expense_date: formData.get("expense_date"),
   })
 
   if (!validatedFields.success) {
@@ -88,7 +89,7 @@ export async function updateExpense(id: number, prevState: State, formData: Form
     }
   }
 
-  const { description, amount, category, date } = validatedFields.data
+  const { description, amount, category, expense_date } = validatedFields.data
   const supabase = createClient()
 
   const { error } = await supabase
@@ -97,10 +98,10 @@ export async function updateExpense(id: number, prevState: State, formData: Form
       description: description || null,
       amount,
       category: category || null,
-      date,
+      expense_date,
     })
     .eq("id", id)
-    .eq("user_id", user.id)
+    .eq("created_by", user.id)
 
   if (error) {
     console.error("Database Error:", error)
@@ -112,14 +113,14 @@ export async function updateExpense(id: number, prevState: State, formData: Form
   redirect("/expenses")
 }
 
-export async function deleteExpense(id: number) {
+export async function deleteExpense(id: string) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
   const supabase = createClient()
-  const { error } = await supabase.from("expenses").delete().eq("id", id).eq("user_id", user.id)
+  const { error } = await supabase.from("expenses").delete().eq("id", id).eq("created_by", user.id)
 
   if (error) {
     console.error("Database Error:", error)
