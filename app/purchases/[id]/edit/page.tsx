@@ -1,17 +1,17 @@
 import { notFound } from "next/navigation"
 import { fetchPurchaseById } from "@/lib/data/purchases"
 import { fetchProducts } from "@/lib/data/products"
-import { fetchSuppliers } from "@/lib/data/suppliers"
 import PurchaseForm from "@/components/purchases/purchase-form"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
+import type { Product } from "@/lib/supabase/types"
 
 type PageProps = {
   params: {
@@ -20,19 +20,18 @@ type PageProps = {
 }
 
 export default async function EditPurchasePage({ params }: PageProps) {
-  const id = Number(params.id)
-  if (isNaN(id)) {
-    notFound()
-  }
-
-  const [purchase, products, suppliers] = await Promise.all([fetchPurchaseById(id), fetchProducts(), fetchSuppliers()])
+  const { id } = params
+  const purchase = await fetchPurchaseById(Number(id))
+  const products = await fetchProducts()
 
   if (!purchase) {
     notFound()
   }
 
-  const productOptions = products.map((p) => ({ id: p.id, name: p.name }))
-  const supplierOptions = suppliers.map((s) => ({ id: s.id, name: s.name }))
+  const productOptions = products.map((product: Product) => ({
+    id: product.id,
+    name: product.name,
+  }))
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
@@ -51,13 +50,18 @@ export default async function EditPurchasePage({ params }: PageProps) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Edit Purchase</BreadcrumbPage>
+            <BreadcrumbLink>Edit Purchase</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="grid gap-6">
-        <PurchaseForm purchase={purchase} products={productOptions} suppliers={supplierOptions} />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Edit Purchase</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <PurchaseForm purchase={purchase} products={productOptions} />
+        </CardContent>
+      </Card>
     </main>
   )
 }

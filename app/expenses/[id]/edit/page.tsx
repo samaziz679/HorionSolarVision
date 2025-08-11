@@ -1,12 +1,12 @@
 import { notFound } from "next/navigation"
 import { fetchExpenseById } from "@/lib/data/expenses"
 import ExpenseForm from "@/components/expenses/expense-form"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
@@ -18,12 +18,8 @@ type PageProps = {
 }
 
 export default async function EditExpensePage({ params }: PageProps) {
-  const id = Number(params.id)
-  if (isNaN(id)) {
-    notFound()
-  }
-
-  const expense = await fetchExpenseById(id)
+  const { id } = params
+  const expense = await fetchExpenseById(Number(id))
 
   if (!expense) {
     notFound()
@@ -46,13 +42,18 @@ export default async function EditExpensePage({ params }: PageProps) {
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbPage>Edit Expense</BreadcrumbPage>
+            <BreadcrumbLink>Edit Expense</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
-      <div className="grid gap-6">
-        <ExpenseForm expense={expense} />
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Edit Expense</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ExpenseForm expense={expense} />
+        </CardContent>
+      </Card>
     </main>
   )
 }

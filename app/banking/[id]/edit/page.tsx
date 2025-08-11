@@ -19,7 +19,7 @@ type PageProps = {
 
 export default async function EditBankingPage({ params }: PageProps) {
   const { id } = params
-  const bankingAccount = await fetchBankAccountById(id)
+  const bankingAccount = await fetchBankAccountById(Number(id))
 
   if (!bankingAccount) {
     notFound()
