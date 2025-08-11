@@ -1,13 +1,13 @@
 "use client"
 
-import type { Purchase } from "@/lib/supabase/types"
+import type { PurchaseWithDetails } from "@/lib/supabase/types"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import DeletePurchaseDialog from "./delete-purchase-dialog"
 
-export default function PurchaseList({ purchases }: { purchases: Purchase[] }) {
+export default function PurchaseList({ purchases }: { purchases: PurchaseWithDetails[] }) {
   return (
     <div className="rounded-lg border">
       <Table>
