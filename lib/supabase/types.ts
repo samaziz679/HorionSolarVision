@@ -462,6 +462,12 @@ export type Purchase = Tables<"purchases">
 export type Expense = Tables<"expenses">
 export type Banking = Tables<"banking">
 
+export type BankAccount = Banking
+
+export type ProductWithSupplier = Product & {
+  suppliers: Supplier | null
+}
+
 export type SaleWithItems = Sale & {
   sale_items: (SaleItem & {
     products: Product | null
@@ -469,7 +475,12 @@ export type SaleWithItems = Sale & {
   clients: Client | null
 }
 
+export type SaleWithDetails = SaleWithItems
+
 export type PurchaseWithRelations = Purchase & {
   suppliers: Supplier | null
   products: Product | null
 }
+
+export type PurchaseWithItems = PurchaseWithRelations
+export type PurchaseWithDetails = PurchaseWithRelations

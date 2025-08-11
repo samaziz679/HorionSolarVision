@@ -24,3 +24,6 @@ export const createSupabaseServerClient = () => {
     },
   )
 }
+
+export const createClient = createSupabaseServerClient
+export const createSupabaseClient = createSupabaseServerClient
