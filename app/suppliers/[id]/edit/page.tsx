@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { fetchSupplierById } from "@/lib/data/suppliers"
-import EditSupplierForm from "@/components/suppliers/edit-supplier-form"
+import { EditSupplierForm } from "@/components/suppliers/edit-supplier-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type PageProps = {

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { fetchSaleById } from "@/lib/data/sales"
 import { fetchProducts } from "@/lib/data/products"
 import { fetchClients } from "@/lib/data/clients"
-import EditSaleForm from "@/components/sales/edit-sale-form"
+import { EditSaleForm } from "@/components/sales/edit-sale-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type PageProps = {

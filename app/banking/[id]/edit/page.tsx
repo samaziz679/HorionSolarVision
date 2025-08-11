@@ -10,11 +10,7 @@ type PageProps = {
 }
 
 export default async function EditBankingPage({ params }: PageProps) {
-  const id = Number(params.id)
-  if (isNaN(id)) {
-    notFound()
-  }
-  const bankAccount = await fetchBankAccountById(id)
+  const bankAccount = await fetchBankAccountById(params.id)
 
   if (!bankAccount) {
     notFound()
