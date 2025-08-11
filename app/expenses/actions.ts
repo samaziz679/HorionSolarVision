@@ -8,9 +8,9 @@ import { getAuthUser } from "@/lib/auth"
 
 const FormSchema = z.object({
   id: z.string(),
-  description: z.string().optional(),
+  description: z.string().min(1, "Description is required."),
   amount: z.coerce.number().gt(0, "Amount must be greater than 0."),
-  category: z.string().optional(),
+  category: z.string().min(1, "Category is required."),
   expense_date: z.string().min(1, "Expense date is required."),
 })
 
@@ -51,8 +51,8 @@ export async function createExpense(prevState: State, formData: FormData) {
 
   const supabase = createClient()
   const { error } = await supabase.from("expenses").insert({
-    description: validatedFields.data.description || null,
-    category: validatedFields.data.category || null,
+    description: validatedFields.data.description,
+    category: validatedFields.data.category,
     amount: validatedFields.data.amount,
     expense_date: validatedFields.data.expense_date,
     created_by: user.id,
@@ -95,9 +95,9 @@ export async function updateExpense(id: string, prevState: State, formData: Form
   const { error } = await supabase
     .from("expenses")
     .update({
-      description: description || null,
+      description,
       amount,
-      category: category || null,
+      category,
       expense_date,
     })
     .eq("id", id)
