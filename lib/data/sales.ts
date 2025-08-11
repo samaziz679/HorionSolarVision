@@ -24,7 +24,12 @@ export async function fetchSales() {
     throw new Error("Failed to fetch sales.")
   }
 
-  return data as SaleWithDetails[]
+  return data.map((sale) => ({
+    id: sale.id,
+    date: sale.sale_date,
+    total_amount: sale.total_amount,
+    client_name: `${sale.clients.first_name} ${sale.clients.last_name}`.trim(),
+  }))
 }
 
 export async function fetchSaleById(id: number) {
