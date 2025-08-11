@@ -232,12 +232,6 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             Add Item
           </Button>
         </div>
-        {state.errors?.sale_items &&
-          state.errors.sale_items.map((error: string) => (
-            <p className="mt-2 text-sm text-red-500" key={error}>
-              {error}
-            </p>
-          ))}
       </div>
 
       <div className="flex justify-end">
