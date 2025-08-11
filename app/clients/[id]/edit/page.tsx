@@ -16,7 +16,7 @@ type PageProps = {
     id: string
   }
 }
-
+ 
 export default async function EditClientPage({ params }: PageProps) {
   const id = Number(params.id)
   if (isNaN(id)) {
