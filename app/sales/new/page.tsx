@@ -19,7 +19,7 @@ export default async function NewSalePage() {
     id: product.id,
     name: product.name,
     price: product.prix_vente_detail_1, // Using prix_vente_detail_1 instead of non-existent price field
-    stock_quantity: product.stock_quantity,
+    stock_quantity: product.quantity,
   }))
 
   const clientOptions = clients.map((client) => ({
