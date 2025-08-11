@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
-import { fetchProductById, fetchSuppliers } from "@/lib/data/products"
+import { fetchProductById } from "@/lib/data/products"
+import { fetchSuppliers } from "@/lib/data/suppliers" // Corrected import path
 import ProductForm from "@/components/inventory/product-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {

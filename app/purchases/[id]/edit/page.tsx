@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { fetchPurchaseById } from "@/lib/data/purchases"
 import { fetchSuppliers } from "@/lib/data/suppliers"
-import { fetchProductsForSale } from "@/lib/data/products"
+import { fetchProducts } from "@/lib/data/products" // Corrected function name
 import PurchaseForm from "@/components/purchases/purchase-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -25,11 +25,7 @@ export default async function EditPurchasePage({ params }: PageProps) {
     notFound()
   }
 
-  const [purchase, suppliers, products] = await Promise.all([
-    fetchPurchaseById(id),
-    fetchSuppliers(),
-    fetchProductsForSale(),
-  ])
+  const [purchase, suppliers, products] = await Promise.all([fetchPurchaseById(id), fetchSuppliers(), fetchProducts()])
 
   if (!purchase) {
     notFound()

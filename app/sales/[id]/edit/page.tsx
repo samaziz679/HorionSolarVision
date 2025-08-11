@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { fetchSaleById } from "@/lib/data/sales"
 import { fetchClients } from "@/lib/data/clients"
-import { fetchProductsForSale } from "@/lib/data/products"
+import { fetchProducts } from "@/lib/data/products" // Corrected function name
 import SaleForm from "@/components/sales/sale-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -25,7 +25,7 @@ export default async function EditSalePage({ params }: PageProps) {
     notFound()
   }
 
-  const [sale, clients, products] = await Promise.all([fetchSaleById(id), fetchClients(), fetchProductsForSale()])
+  const [sale, clients, products] = await Promise.all([fetchSaleById(id), fetchClients(), fetchProducts()])
 
   if (!sale) {
     notFound()
