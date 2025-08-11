@@ -112,7 +112,13 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   }
 
   return (
-    <form action={handleSubmit} className="space-y-6">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        handleSubmit(new FormData(e.currentTarget))
+      }}
+      className="space-y-6"
+    >
       <input
         type="hidden"
         name="items"
