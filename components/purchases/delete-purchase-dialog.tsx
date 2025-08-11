@@ -21,7 +21,7 @@ export default function DeletePurchaseDialog({ purchaseId }: { purchaseId: strin
   const handleDelete = async () => {
     setIsPending(true)
     try {
-      const result = await deletePurchase(purchaseId)
+      const result = await deletePurchase(Number.parseInt(purchaseId))
       if (result?.message) {
         alert(result.message)
       }
