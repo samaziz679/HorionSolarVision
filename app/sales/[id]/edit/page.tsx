@@ -38,8 +38,27 @@ export default async function EditSalePage({ params }: PageProps) {
 
   const clientOptions = clients.map((client: Client) => ({
     id: client.id,
-    name: client.name,
+    first_name: client.name.split(" ")[0] || client.name,
+    last_name: client.name.split(" ").slice(1).join(" ") || "",
   }))
+
+  const saleWithItems = {
+    ...sale,
+    date: sale.sale_date, // Map sale_date to date for form compatibility
+    sale_items: sale.product_id
+      ? [
+          {
+            id: sale.id,
+            sale_id: sale.id,
+            product_id: sale.product_id,
+            quantity: sale.quantity,
+            unit_price: sale.unit_price,
+            created_at: sale.sale_date,
+            products: sale.products,
+          },
+        ]
+      : [],
+  }
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
@@ -67,7 +86,7 @@ export default async function EditSalePage({ params }: PageProps) {
           <CardTitle>Edit Sale</CardTitle>
         </CardHeader>
         <CardContent>
-          <SaleForm sale={sale} products={productOptions} clients={clientOptions} />
+          <SaleForm sale={saleWithItems} products={productOptions} clients={clientOptions} />
         </CardContent>
       </Card>
     </main>
