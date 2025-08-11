@@ -14,8 +14,8 @@ import { formatCurrency } from "@/lib/currency"
 
 type SaleFormProps = {
   sale?: Sale & { sale_items: SaleItem[] }
-  products: Pick<Product, "id" | "name" | "price">[]
-  clients: Pick<Client, "id" | "first_name" | "last_name">[]
+  products: Pick<Product, "id" | "name" | "prix_vente_detail_1">[]
+  clients: Pick<Client, "id" | "name">[]
 }
 
 type SaleItemForm = {
@@ -87,8 +87,8 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
         product_id: product.id.toString(),
         product_name: product.name,
         quantity: 1,
-        unit_price: Number(product.price),
-        total: Number(product.price),
+        unit_price: Number(product.prix_vente_detail_1),
+        total: Number(product.prix_vente_detail_1),
       },
     ])
     setSelectedProduct("")
@@ -136,7 +136,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             <SelectContent>
               {clients.map((client) => (
                 <SelectItem key={client.id} value={client.id.toString()}>
-                  {client.first_name} {client.last_name}
+                  {client.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -151,17 +151,17 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="date">Sale Date</Label>
+          <Label htmlFor="sale_date">Sale Date</Label>
           <Input
-            id="date"
-            name="date"
+            id="sale_date"
+            name="sale_date"
             type="date"
-            defaultValue={sale?.date ? new Date(sale.date).toISOString().split("T")[0] : ""}
-            aria-describedby="date-error"
+            defaultValue={sale?.sale_date ? new Date(sale.sale_date).toISOString().split("T")[0] : ""}
+            aria-describedby="sale_date-error"
           />
-          <div id="date-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.date &&
-              state.errors.date.map((error: string) => (
+          <div id="sale_date-error" aria-live="polite" aria-atomic="true">
+            {state.errors?.sale_date &&
+              state.errors.sale_date.map((error: string) => (
                 <p className="mt-2 text-sm text-red-500" key={error}>
                   {error}
                 </p>

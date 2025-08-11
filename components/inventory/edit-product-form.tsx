@@ -58,18 +58,23 @@ export default function EditProductForm({ product, suppliers }: { product: Produ
         <Label htmlFor="price">Price</Label>
         <Input
           id="price"
-          name="price"
+          name="prix_vente_detail_1" // Changed name to match database field
           type="number"
           step="0.01"
           defaultValue={product.prix_vente_detail_1 ?? ""}
           required
         />
-        {state.errors?.price && <p className="text-sm text-red-500 mt-1">{state.errors.price[0]}</p>}
+        {state.errors?.prix_vente_detail_1 && (
+          <p className="text-sm text-red-500 mt-1">{state.errors.prix_vente_detail_1[0]}</p>
+        )}{" "}
+        {/* Updated error field name */}
       </div>
       <div>
         <Label htmlFor="stock_quantity">Stock Quantity</Label>
-        <Input id="stock_quantity" name="stock_quantity" type="number" defaultValue={product.quantity ?? ""} required />
-        {state.errors?.stock_quantity && <p className="text-sm text-red-500 mt-1">{state.errors.stock_quantity[0]}</p>}
+        <Input id="stock_quantity" name="quantity" type="number" defaultValue={product.quantity ?? ""} required />{" "}
+        {/* Changed name to match database field */}
+        {state.errors?.quantity && <p className="text-sm text-red-500 mt-1">{state.errors.quantity[0]}</p>}{" "}
+        {/* Updated error field name */}
       </div>
       <div>
         <Label htmlFor="supplier_id">Supplier</Label>

@@ -87,15 +87,15 @@ export default function ProductForm({
           <Label htmlFor="price">Price</Label>
           <Input
             id="price"
-            name="price"
+            name="prix_vente_detail_1" // Changed name to match database field
             type="number"
             step="0.01"
-            defaultValue={product?.price ?? ""}
+            defaultValue={product?.prix_vente_detail_1 ?? ""} // Using correct database field
             aria-describedby="price-error"
           />
           <div id="price-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.price &&
-              state.errors.price.map((error: string) => (
+            {state.errors?.prix_vente_detail_1 && // Updated error field name
+              state.errors.prix_vente_detail_1.map((error: string) => (
                 <p className="mt-2 text-sm text-red-500" key={error}>
                   {error}
                 </p>
@@ -106,14 +106,14 @@ export default function ProductForm({
           <Label htmlFor="stock_quantity">Stock Quantity</Label>
           <Input
             id="stock_quantity"
-            name="stock_quantity"
+            name="quantity" // Changed name to match database field
             type="number"
-            defaultValue={product?.stock_quantity ?? ""}
+            defaultValue={product?.quantity ?? ""} // Using correct database field
             aria-describedby="stock_quantity-error"
           />
           <div id="stock_quantity-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.stock_quantity &&
-              state.errors.stock_quantity.map((error: string) => (
+            {state.errors?.quantity && // Updated error field name
+              state.errors.quantity.map((error: string) => (
                 <p className="mt-2 text-sm text-red-500" key={error}>
                   {error}
                 </p>
