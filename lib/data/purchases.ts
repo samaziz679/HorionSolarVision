@@ -15,7 +15,8 @@ export async function fetchPurchases() {
       quantity,
       unit_price,
       created_at,
-      products (id, name)
+      products (id, name),
+      suppliers (id, name)
     `,
     )
     .order("purchase_date", { ascending: false })

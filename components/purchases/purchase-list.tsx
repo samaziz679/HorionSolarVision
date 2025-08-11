@@ -24,11 +24,11 @@ export default function PurchaseList({ purchases }: { purchases: PurchaseWithDet
         <TableBody>
           {purchases.map((purchase) => (
             <TableRow key={purchase.id}>
-              <TableCell>{formatDate(purchase.date)}</TableCell>
+              <TableCell>{formatDate(purchase.purchase_date)}</TableCell>
               <TableCell>{purchase.suppliers?.name || "N/A"}</TableCell>
               <TableCell>{purchase.products?.name || "N/A"}</TableCell>
               <TableCell>{purchase.quantity}</TableCell>
-              <TableCell className="text-right">{formatCurrency(purchase.total_cost)}</TableCell>
+              <TableCell className="text-right">{formatCurrency(purchase.total)}</TableCell>
               <TableCell className="flex gap-2">
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/purchases/${purchase.id}/edit`}>Edit</Link>
