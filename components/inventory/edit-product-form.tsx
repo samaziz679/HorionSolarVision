@@ -56,18 +56,19 @@ export default function EditProductForm({ product, suppliers }: { product: Produ
       </div>
       <div>
         <Label htmlFor="price">Price</Label>
-        <Input id="price" name="price" type="number" step="0.01" defaultValue={product.price ?? ""} required />
+        <Input
+          id="price"
+          name="price"
+          type="number"
+          step="0.01"
+          defaultValue={product.prix_vente_detail_1 ?? ""}
+          required
+        />
         {state.errors?.price && <p className="text-sm text-red-500 mt-1">{state.errors.price[0]}</p>}
       </div>
       <div>
         <Label htmlFor="stock_quantity">Stock Quantity</Label>
-        <Input
-          id="stock_quantity"
-          name="stock_quantity"
-          type="number"
-          defaultValue={product.stock_quantity ?? ""}
-          required
-        />
+        <Input id="stock_quantity" name="stock_quantity" type="number" defaultValue={product.quantity ?? ""} required />
         {state.errors?.stock_quantity && <p className="text-sm text-red-500 mt-1">{state.errors.stock_quantity[0]}</p>}
       </div>
       <div>
