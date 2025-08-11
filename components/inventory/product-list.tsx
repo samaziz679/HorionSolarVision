@@ -22,9 +22,9 @@ import { formatMoney } from "@/lib/currency"
 export default function ProductList({ products }: { products: Product[] }) {
   const [sorting, setSorting] = React.useState<SortingState>([])
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
-  const [selectedProductId, setSelectedProductId] = React.useState<number | null>(null)
+  const [selectedProductId, setSelectedProductId] = React.useState<string | null>(null)
 
-  const handleDeleteClick = (id: number) => {
+  const handleDeleteClick = (id: string) => {
     setSelectedProductId(id)
     setIsDeleteDialogOpen(true)
   }
@@ -35,9 +35,9 @@ export default function ProductList({ products }: { products: Product[] }) {
       header: "Name",
     },
     {
-      accessorKey: "price",
+      accessorKey: "prix_vente_detail_1",
       header: "Price",
-      cell: ({ row }) => formatMoney(row.original.price),
+      cell: ({ row }) => formatMoney(row.original.prix_vente_detail_1),
     },
     {
       accessorKey: "quantity",
