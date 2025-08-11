@@ -3,47 +3,6 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type Database = {
   public: {
     Tables: {
-      banking: {
-        Row: {
-          account_holder: string | null
-          account_number: string | null
-          bank_name: string | null
-          branch_name: string | null
-          created_at: string
-          id: number
-          initial_balance: number | null
-          user_id: string | null
-        }
-        Insert: {
-          account_holder?: string | null
-          account_number?: string | null
-          bank_name?: string | null
-          branch_name?: string | null
-          created_at?: string
-          id?: number
-          initial_balance?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          account_holder?: string | null
-          account_number?: string | null
-          bank_name?: string | null
-          branch_name?: string | null
-          created_at?: string
-          id?: number
-          initial_balance?: number | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "banking_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       clients: {
         Row: {
           address: string | null
@@ -460,9 +419,6 @@ export type SaleItem = Tables<"sale_items">
 export type Supplier = Tables<"suppliers">
 export type Purchase = Tables<"purchases">
 export type Expense = Tables<"expenses">
-export type Banking = Tables<"banking">
-
-export type BankAccount = Banking
 
 export type ProductWithSupplier = Product & {
   suppliers: Supplier | null

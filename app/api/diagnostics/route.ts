@@ -33,13 +33,11 @@ async function checkView(supabase: SupabaseClient<any>, view: string): Promise<C
 export async function GET() {
   const supabase = supabaseAdmin as SupabaseClient<any>
 
-  const [products, purchases, sales, expenses, bankEntries, bankingAccounts] = await Promise.all([
+  const [products, purchases, sales, expenses] = await Promise.all([
     checkTable(supabase, "products"),
     checkTable(supabase, "purchases"),
     checkTable(supabase, "sales"),
     checkTable(supabase, "expenses"),
-    checkTable(supabase, "bank_entries"), // your live DB uses bank_entries
-    checkTable(supabase, "banking_accounts"), // legacy check (may be absent)
   ])
 
   const [currentStock, financialSummary, totalSalesPerProduct] = await Promise.all([
@@ -62,8 +60,6 @@ export async function GET() {
         purchases,
         sales,
         expenses,
-        bank_entries: bankEntries,
-        banking_accounts: bankingAccounts,
       },
       views: {
         current_stock: currentStock,

@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Home, LineChart, Package, Package2, ShoppingCart, Users, DollarSign, Banknote, Truck } from "lucide-react"
+import { Home, LineChart, Package, Package2, ShoppingCart, Users, DollarSign, Truck } from "lucide-react"
 import UserButton from "@/components/auth/user-button"
 
 export default function Sidebar() {
@@ -63,13 +63,6 @@ export default function Sidebar() {
             >
               <DollarSign className="h-4 w-4" />
               Expenses
-            </Link>
-            <Link
-              href="/banking"
-              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-            >
-              <Banknote className="h-4 w-4" />
-              Banking
             </Link>
             <Link
               href="/reports"

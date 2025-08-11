@@ -1,18 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import {
-  Home,
-  LineChart,
-  Package,
-  Package2,
-  PanelLeft,
-  ShoppingCart,
-  Users,
-  DollarSign,
-  Banknote,
-  Truck,
-} from "lucide-react"
+import { Home, LineChart, Package, Package2, PanelLeft, ShoppingCart, Users, DollarSign, Truck } from "lucide-react"
 
 import {
   Breadcrumb,
@@ -96,13 +85,6 @@ export default function Header() {
             >
               <DollarSign className="h-5 w-5" />
               Expenses
-            </Link>
-            <Link
-              href="/banking"
-              className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
-            >
-              <Banknote className="h-5 w-5" />
-              Banking
             </Link>
             <Link
               href="/reports"
