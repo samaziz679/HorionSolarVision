@@ -24,10 +24,17 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   const [pricePlan, setPricePlan] = useState(sale?.price_plan || "detail_1")
   const [unitPrice, setUnitPrice] = useState(sale?.unit_price || 0)
 
+  const pricePlanMapping = {
+    detail_1: "prix_vente_detail_1" as const,
+    detail_2: "prix_vente_detail_2" as const,
+    gros: "prix_vente_gros" as const,
+  }
+
   useEffect(() => {
     const product = products.find((p) => p.id === selectedProduct)
     if (product) {
-      setUnitPrice(Number(product[`prix_vente_${pricePlan}`]))
+      const priceProperty = pricePlanMapping[pricePlan as keyof typeof pricePlanMapping]
+      setUnitPrice(Number(product[priceProperty]))
     }
   }, [selectedProduct, pricePlan, products])
 
