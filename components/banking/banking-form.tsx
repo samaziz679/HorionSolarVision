@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
-import { useFormState, useFormStatus } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createBankAccount, updateBankAccount, type State } from "@/app/banking/actions"
 import { Button } from "@/components/ui/button"
@@ -10,21 +9,40 @@ import { Label } from "@/components/ui/label"
 import type { Banking } from "@/lib/supabase/types"
 
 export default function BankingForm({ bankingAccount }: { bankingAccount?: Banking }) {
-  const initialState: State = { message: null, errors: {} }
-  const action = bankingAccount ? updateBankAccount.bind(null, bankingAccount.id) : createBankAccount
-  const [state, dispatch] = useFormState(action, initialState)
+  const [state, setState] = useState<State>({ message: null, errors: {} })
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (formData: FormData) => {
+    setIsLoading(true)
+    setState({ message: null, errors: {} })
+
+    try {
+      const action = bankingAccount ? updateBankAccount.bind(null, bankingAccount.id) : createBankAccount
+      const result = await action(state, formData)
+      setState(result)
+    } catch (error) {
+      setState({ message: "An error occurred", errors: {} })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (state.message) {
       if (state.success === false) {
         toast.error(state.message)
       }
-      // Redirect handles success, so no toast needed here
     }
   }, [state])
 
   return (
-    <form action={dispatch} className="space-y-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        handleSubmit(new FormData(e.target))
+      }}
+      className="space-y-4"
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="bank_name">Bank Name</Label>
@@ -103,16 +121,15 @@ export default function BankingForm({ bankingAccount }: { bankingAccount?: Banki
           </div>
         </div>
       )}
-      <SubmitButton isEditing={!!bankingAccount} />
+      <SubmitButton isEditing={!!bankingAccount} isLoading={isLoading} />
     </form>
   )
 }
 
-function SubmitButton({ isEditing }: { isEditing: boolean }) {
-  const { pending } = useFormStatus()
+function SubmitButton({ isEditing, isLoading }: { isEditing: boolean; isLoading: boolean }) {
   return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending
+    <Button type="submit" disabled={isLoading} className="w-full">
+      {isLoading
         ? isEditing
           ? "Updating..."
           : "Creating..."

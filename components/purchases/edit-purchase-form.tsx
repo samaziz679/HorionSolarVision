@@ -1,10 +1,9 @@
 "use client"
-import { useFormState, useFormStatus } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { updatePurchase } from "@/app/purchases/actions"
 import { toast } from "sonner"
-import { useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
@@ -15,15 +14,14 @@ const initialState = {
   errors: {},
 }
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
-
+function SubmitButton({ isLoading }: { isLoading: boolean }) {
   return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? "Updating Purchase..." : "Update Purchase"}
+    <Button type="submit" disabled={isLoading} className="w-full">
+      {isLoading ? "Updating Purchase..." : "Update Purchase"}
     </Button>
   )
 }
+
 export function EditPurchaseForm({
   purchase,
   products,
@@ -33,8 +31,23 @@ export function EditPurchaseForm({
   products: Product[]
   suppliers: Supplier[]
 }) {
-  const updatePurchaseWithId = updatePurchase.bind(null, purchase.id)
-  const [state, dispatch] = useFormState(updatePurchaseWithId, initialState)
+  const [state, setState] = useState({ message: null, errors: {} })
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (formData: FormData) => {
+    setIsLoading(true)
+    setState({ message: null, errors: {} })
+
+    try {
+      const updatePurchaseWithId = updatePurchase.bind(null, purchase.id)
+      const result = await updatePurchaseWithId(state, formData)
+      setState(result)
+    } catch (error) {
+      setState({ message: "An error occurred", errors: {} })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (state.message) {
@@ -47,7 +60,7 @@ export function EditPurchaseForm({
   }, [state])
 
   return (
-    <form action={dispatch}>
+    <form action={handleSubmit}>
       <div className="grid gap-4">
         <div className="grid gap-2">
           <Label htmlFor="supplier_id">Supplier</Label>
@@ -96,7 +109,7 @@ export function EditPurchaseForm({
           <Input name="purchase_date" type="date" defaultValue={purchase.date.split("T")[0]} required />
         </div>
 
-        <SubmitButton />
+        <SubmitButton isLoading={isLoading} />
       </div>
     </form>
   )

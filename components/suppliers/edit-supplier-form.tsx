@@ -1,7 +1,8 @@
 "use client"
 
-import { useFormState, useFormStatus } from "react"
-import { useEffect } from "react"
+import type React from "react"
+
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -15,18 +16,35 @@ const initialState = {
   errors: {},
 }
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
+function SubmitButton({ isLoading }: { isLoading: boolean }) {
   return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? "Updating Supplier..." : "Update Supplier"}
+    <Button type="submit" disabled={isLoading} className="w-full">
+      {isLoading ? "Updating Supplier..." : "Update Supplier"}
     </Button>
   )
 }
 
 export function EditSupplierForm({ supplier }: { supplier: Supplier }) {
-  const updateSupplierWithId = updateSupplier.bind(null, String(supplier.id))
-  const [state, dispatch] = useFormState(updateSupplierWithId, initialState)
+  const [state, setState] = useState({ message: null, errors: {} })
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsLoading(true)
+    setState({ message: null, errors: {} })
+
+    const formData = new FormData(event.currentTarget)
+
+    try {
+      const updateSupplierWithId = updateSupplier.bind(null, String(supplier.id))
+      const result = await updateSupplierWithId(state, formData)
+      setState(result)
+    } catch (error) {
+      setState({ message: "An error occurred", errors: {} })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (state?.message) {
@@ -39,7 +57,7 @@ export function EditSupplierForm({ supplier }: { supplier: Supplier }) {
   }, [state])
 
   return (
-    <form action={dispatch} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-2">
         <Label htmlFor="name">Supplier Name</Label>
         <Input id="name" name="name" type="text" defaultValue={supplier.name} required />
@@ -67,7 +85,7 @@ export function EditSupplierForm({ supplier }: { supplier: Supplier }) {
         <Textarea id="address" name="address" defaultValue={supplier.address ?? ""} />
       </div>
 
-      <SubmitButton />
+      <SubmitButton isLoading={isLoading} />
     </form>
   )
 }

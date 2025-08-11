@@ -1,6 +1,6 @@
 "use client"
 
-import { useFormState, useFormStatus } from "react"
+import { useState } from "react"
 import { updateProduct } from "@/app/inventory/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,22 +9,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import type { Product, Supplier } from "@/lib/supabase/types"
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
+function SubmitButton({ isLoading }: { isLoading: boolean }) {
   return (
-    <Button type="submit" disabled={pending} className="w-full md:w-auto">
-      {pending ? "Updating..." : "Update Product"}
+    <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
+      {isLoading ? "Updating..." : "Update Product"}
     </Button>
   )
 }
 
 export default function EditProductForm({ product, suppliers }: { product: Product; suppliers: Supplier[] }) {
-  const initialState = { message: null, errors: {} }
-  const updateProductWithId = updateProduct.bind(null, product.id)
-  const [state, dispatch] = useFormState(updateProductWithId, initialState)
+  const [state, setState] = useState({ message: null, errors: {} })
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (formData: FormData) => {
+    setIsLoading(true)
+    setState({ message: null, errors: {} })
+
+    try {
+      const updateProductWithId = updateProduct.bind(null, product.id)
+      const result = await updateProductWithId(state, formData)
+      setState(result)
+    } catch (error) {
+      setState({ message: "An error occurred", errors: {} })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   return (
-    <form action={dispatch} className="space-y-4 max-w-lg">
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
       <div>
         <Label htmlFor="name">Product Name</Label>
         <Input id="name" name="name" defaultValue={product.name} required />
@@ -60,7 +73,7 @@ export default function EditProductForm({ product, suppliers }: { product: Produ
         </Select>
         {state.errors?.supplier_id && <p className="text-sm text-red-500 mt-1">{state.errors.supplier_id[0]}</p>}
       </div>
-      <SubmitButton />
+      <SubmitButton isLoading={isLoading} />
     </form>
   )
 }

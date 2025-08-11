@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
-import { useFormState, useFormStatus } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createClient, updateClient, type State } from "@/app/clients/actions"
 import { Button } from "@/components/ui/button"
@@ -11,9 +10,23 @@ import { Textarea } from "@/components/ui/textarea"
 import type { Client } from "@/lib/supabase/types"
 
 export default function ClientForm({ client }: { client?: Client }) {
-  const initialState: State = { message: null, errors: {} }
-  const action = client ? updateClient.bind(null, client.id) : createClient
-  const [state, dispatch] = useFormState(action, initialState)
+  const [state, setState] = useState<State>({ message: null, errors: {} })
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (formData: FormData) => {
+    setIsLoading(true)
+    setState({ message: null, errors: {} })
+
+    try {
+      const action = client ? updateClient.bind(null, client.id) : createClient
+      const result = await action(state, formData)
+      setState(result)
+    } catch (error) {
+      setState({ message: "An error occurred", errors: {} })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (state.message) {
@@ -26,7 +39,14 @@ export default function ClientForm({ client }: { client?: Client }) {
   }, [state])
 
   return (
-    <form action={dispatch} className="space-y-4">
+    <form
+      onSubmit={async (event) => {
+        event.preventDefault()
+        const formData = new FormData(event.currentTarget)
+        await handleSubmit(formData)
+      }}
+      className="space-y-4"
+    >
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="first_name">First Name</Label>
@@ -94,16 +114,15 @@ export default function ClientForm({ client }: { client?: Client }) {
             ))}
         </div>
       </div>
-      <SubmitButton isEditing={!!client} />
+      <SubmitButton isEditing={!!client} isLoading={isLoading} />
     </form>
   )
 }
 
-function SubmitButton({ isEditing }: { isEditing: boolean }) {
-  const { pending } = useFormStatus()
+function SubmitButton({ isEditing, isLoading }: { isEditing: boolean; isLoading: boolean }) {
   return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Client" : "Create Client"}
+    <Button type="submit" disabled={isLoading} className="w-full">
+      {isLoading ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Client" : "Create Client"}
     </Button>
   )
 }

@@ -1,11 +1,6 @@
 "use client"
 
-// This component would be very similar to SaleForm but would be initialized
-// with the `sale` prop data. It would also call an `updateSale` server action.
-// For brevity, I'm providing a simplified structure. A full implementation
-// would mirror the complexity of SaleForm.
-
-import { useFormStatus } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -18,11 +13,10 @@ import type { Product, Client, SaleWithItems } from "@/lib/supabase/types"
 
 const initialState = { message: null, errors: {} }
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
+function SubmitButton({ isLoading }: { isLoading: boolean }) {
   return (
-    <Button type="submit" disabled={pending} className="w-full mt-4">
-      {pending ? "Updating Sale..." : "Update Sale"}
+    <Button type="submit" disabled={isLoading} className="w-full mt-4">
+      {isLoading ? "Updating Sale..." : "Update Sale"}
     </Button>
   )
 }
@@ -36,11 +30,7 @@ export function EditSaleForm({
   products: Product[]
   clients: Client[]
 }) {
-  // const updateSaleWithId = updateSale.bind(null, sale.id)
-  // const [state, dispatch] = useFormState(updateSaleWithId, initialState)
-
-  // For demonstration, we'll use a simple form structure.
-  // A real implementation would need state management for items like in SaleForm.
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
     // toast logic here
@@ -75,7 +65,7 @@ export function EditSaleForm({
           `sale.sale_items` into a state variable and providing UI to modify them.
         </p>
 
-        <SubmitButton />
+        <SubmitButton isLoading={isLoading} />
       </div>
     </form>
   )

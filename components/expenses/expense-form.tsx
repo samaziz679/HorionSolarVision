@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
-import { useFormState, useFormStatus } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createExpense, updateExpense, type State } from "@/app/expenses/actions"
 import { Button } from "@/components/ui/button"
@@ -11,9 +10,23 @@ import { Textarea } from "@/components/ui/textarea"
 import type { Expense } from "@/lib/supabase/types"
 
 export default function ExpenseForm({ expense }: { expense?: Expense }) {
-  const initialState: State = { message: null, errors: {} }
-  const action = expense ? updateExpense.bind(null, expense.id) : createExpense
-  const [state, dispatch] = useFormState(action, initialState)
+  const [state, setState] = useState<State>({ message: null, errors: {} })
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (formData: FormData) => {
+    setIsLoading(true)
+    setState({ message: null, errors: {} })
+
+    try {
+      const action = expense ? updateExpense.bind(null, expense.id) : createExpense
+      const result = await action(state, formData)
+      setState(result)
+    } catch (error) {
+      setState({ message: "An error occurred", errors: {} })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (state.message) {
@@ -26,7 +39,13 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
   }, [state])
 
   return (
-    <form action={dispatch} className="space-y-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        handleSubmit(new FormData(e.target))
+      }}
+      className="space-y-4"
+    >
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
         <Input id="category" name="category" defaultValue={expense?.category} aria-describedby="category-error" />
@@ -93,16 +112,15 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
             ))}
         </div>
       </div>
-      <SubmitButton isEditing={!!expense} />
+      <SubmitButton isEditing={!!expense} isLoading={isLoading} />
     </form>
   )
 }
 
-function SubmitButton({ isEditing }: { isEditing: boolean }) {
-  const { pending } = useFormStatus()
+function SubmitButton({ isEditing, isLoading }: { isEditing: boolean; isLoading: boolean }) {
   return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Expense" : "Create Expense"}
+    <Button type="submit" disabled={isLoading} className="w-full">
+      {isLoading ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Expense" : "Create Expense"}
     </Button>
   )
 }

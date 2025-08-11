@@ -1,7 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
-import { useFormState, useFormStatus } from "react"
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { createPurchase, updatePurchase, type State } from "@/app/purchases/actions"
 import { Button } from "@/components/ui/button"
@@ -19,9 +18,23 @@ export default function PurchaseForm({
   products: Pick<Product, "id" | "name">[]
   suppliers: Pick<Supplier, "id" | "name">[]
 }) {
-  const initialState: State = { message: null, errors: {} }
-  const action = purchase ? updatePurchase.bind(null, purchase.id) : createPurchase
-  const [state, dispatch] = useFormState(action, initialState)
+  const [state, setState] = useState<State>({ message: null, errors: {} })
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (formData: FormData) => {
+    setIsLoading(true)
+    setState({ message: null, errors: {} })
+
+    try {
+      const action = purchase ? updatePurchase.bind(null, purchase.id) : createPurchase
+      const result = await action(state, formData)
+      setState(result)
+    } catch (error) {
+      setState({ message: "An error occurred", errors: {} })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (state.message) {
@@ -34,7 +47,13 @@ export default function PurchaseForm({
   }, [state])
 
   return (
-    <form action={dispatch} className="space-y-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        handleSubmit(new FormData(e.target))
+      }}
+      className="space-y-4"
+    >
       <div className="space-y-2">
         <Label htmlFor="supplier_id">Supplier</Label>
         <Select name="supplier_id" defaultValue={purchase?.supplier_id?.toString()}>
@@ -138,16 +157,15 @@ export default function PurchaseForm({
             ))}
         </div>
       </div>
-      <SubmitButton isEditing={!!purchase} />
+      <SubmitButton isEditing={!!purchase} isLoading={isLoading} />
     </form>
   )
 }
 
-function SubmitButton({ isEditing }: { isEditing: boolean }) {
-  const { pending } = useFormStatus()
+function SubmitButton({ isEditing, isLoading }: { isEditing: boolean; isLoading: boolean }) {
   return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Purchase" : "Create Purchase"}
+    <Button type="submit" disabled={isLoading} className="w-full">
+      {isLoading ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Purchase" : "Create Purchase"}
     </Button>
   )
 }
