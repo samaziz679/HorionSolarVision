@@ -44,7 +44,7 @@ export default function SupplierList({ suppliers }: SupplierListProps) {
               <TableCell className="font-medium">{supplier.name}</TableCell>
               <TableCell>{supplier.contact_person}</TableCell>
               <TableCell>{supplier.email}</TableCell>
-              <TableCell>{supplier.phone}</TableCell>
+              <TableCell>{supplier.phone_number}</TableCell>
               <TableCell className="flex justify-end gap-2">
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/suppliers/${supplier.id}/edit`}>
