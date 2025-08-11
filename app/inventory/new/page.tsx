@@ -1,4 +1,3 @@
-import { fetchSuppliers } from "@/lib/data/suppliers"
 import ProductForm from "@/components/inventory/product-form"
 import {
   Breadcrumb,
@@ -11,12 +10,6 @@ import {
 import Link from "next/link"
 
 export default async function NewProductPage() {
-  const suppliers = await fetchSuppliers()
-  const supplierOptions = suppliers.map((supplier) => ({
-    id: supplier.id,
-    name: supplier.name,
-  }))
-
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
       <Breadcrumb>
@@ -39,7 +32,7 @@ export default async function NewProductPage() {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="grid gap-6">
-        <ProductForm suppliers={supplierOptions} />
+        <ProductForm />
       </div>
     </main>
   )
