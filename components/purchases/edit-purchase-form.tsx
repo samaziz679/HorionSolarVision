@@ -2,14 +2,14 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { updatePurchase } from "@/app/purchases/actions"
+import { updatePurchase, type State } from "@/app/purchases/actions"
 import { toast } from "sonner"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
 import type { Product, Supplier, PurchaseWithItems } from "@/lib/supabase/types"
 
-const initialState = {
+const initialState: State = {
   message: null,
   errors: {},
 }
@@ -31,12 +31,12 @@ export function EditPurchaseForm({
   products: Product[]
   suppliers: Supplier[]
 }) {
-  const [state, setState] = useState({ message: null, errors: {} })
+  const [state, setState] = useState<State>(initialState)
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (formData: FormData) => {
     setIsLoading(true)
-    setState({ message: null, errors: {} })
+    setState(initialState)
 
     try {
       const updatePurchaseWithId = updatePurchase.bind(null, purchase.id)
@@ -96,12 +96,12 @@ export function EditPurchaseForm({
 
         <div className="grid gap-2">
           <Label htmlFor="quantity">Quantity</Label>
-          <Input name="quantity" type="number" defaultValue={purchase.purchase_items[0]?.quantity} required />
+          <Input name="quantity" type="number" defaultValue={purchase.purchase_items[0]?.quantity ?? ""} required />
         </div>
 
         <div className="grid gap-2">
           <Label htmlFor="unit_price">Unit Price</Label>
-          <Input name="unit_price" type="number" defaultValue={purchase.purchase_items[0]?.unit_price} required />
+          <Input name="unit_price" type="number" defaultValue={purchase.purchase_items[0]?.unit_price ?? ""} required />
         </div>
 
         <div className="grid gap-2">
