@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-import { BankingForm } from "@/components/banking/banking-form"
+import BankingForm from "@/components/banking/banking-form"
 import {
   Breadcrumb,
   BreadcrumbItem,

@@ -1,4 +1,4 @@
-import { ClientForm } from "@/components/clients/client-form"
+import ClientForm from "@/components/clients/client-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Breadcrumb,

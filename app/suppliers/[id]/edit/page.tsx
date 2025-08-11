@@ -10,7 +10,9 @@ type PageProps = {
 }
 
 export default async function EditSupplierPage({ params }: PageProps) {
-  const supplier = await fetchSupplierById(params.id)
+  const id = params.id
+  const supplier = await fetchSupplierById(id)
+
   if (!supplier) {
     notFound()
   }

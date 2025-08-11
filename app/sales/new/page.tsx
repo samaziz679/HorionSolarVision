@@ -1,6 +1,6 @@
 import { fetchProducts } from "@/lib/data/products"
 import { fetchClients } from "@/lib/data/clients"
-import { SaleForm } from "@/components/sales/sale-form"
+import SaleForm from "@/components/sales/sale-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export default async function NewSalePage() {

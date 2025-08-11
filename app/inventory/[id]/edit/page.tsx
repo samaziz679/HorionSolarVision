@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { fetchProductById } from "@/lib/data/products"
-import EditProductForm from "@/components/inventory/edit-product-form"
 import { fetchSuppliers } from "@/lib/data/suppliers"
+import ProductForm from "@/components/inventory/product-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type PageProps = {
@@ -11,11 +11,7 @@ type PageProps = {
 }
 
 export default async function EditProductPage({ params }: PageProps) {
-  const id = Number(params.id)
-  if (isNaN(id)) {
-    notFound()
-  }
-
+  const id = params.id
   const [product, suppliers] = await Promise.all([fetchProductById(id), fetchSuppliers()])
 
   if (!product) {
@@ -28,7 +24,7 @@ export default async function EditProductPage({ params }: PageProps) {
         <CardTitle>Edit Product</CardTitle>
       </CardHeader>
       <CardContent>
-        <EditProductForm product={product} suppliers={suppliers} />
+        <ProductForm product={product} suppliers={suppliers} />
       </CardContent>
     </Card>
   )

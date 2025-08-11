@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { fetchPurchaseById } from "@/lib/data/purchases"
 import { fetchProducts } from "@/lib/data/products"
 import { fetchSuppliers } from "@/lib/data/suppliers"
-import { EditPurchaseForm } from "@/components/purchases/edit-purchase-form"
+import PurchaseForm from "@/components/purchases/purchase-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type PageProps = {
@@ -12,7 +12,7 @@ type PageProps = {
 }
 
 export default async function EditPurchasePage({ params }: PageProps) {
-  const { id } = params
+  const id = params.id
   const [purchase, products, suppliers] = await Promise.all([fetchPurchaseById(id), fetchProducts(), fetchSuppliers()])
 
   if (!purchase) {
@@ -25,7 +25,7 @@ export default async function EditPurchasePage({ params }: PageProps) {
         <CardTitle>Edit Purchase</CardTitle>
       </CardHeader>
       <CardContent>
-        <EditPurchaseForm purchase={purchase} products={products} suppliers={suppliers} />
+        <PurchaseForm purchase={purchase} products={products} suppliers={suppliers} />
       </CardContent>
     </Card>
   )
