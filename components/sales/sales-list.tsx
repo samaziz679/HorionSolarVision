@@ -7,18 +7,17 @@ import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { Pencil } from "lucide-react"
 
-// This type now matches the exact structure returned by our updated fetchSales function.
 type SaleForList = {
-  id: number
+  id: string
   date: string
   total_amount: number
-  client_name: string // We can rely on this property existing.
+  client_name: string
 }
 
 export function SalesList({ sales }: { sales: SaleForList[] }) {
   const router = useRouter()
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     router.push(`/sales/${id}/edit`)
   }
 
@@ -45,10 +44,9 @@ export function SalesList({ sales }: { sales: SaleForList[] }) {
             sales.map((sale) => (
               <TableRow key={sale.id}>
                 <TableCell>
-                  <Badge variant="outline">SALE-{sale.id}</Badge>
+                  <Badge variant="outline">SALE-{sale.id.slice(0, 8)}</Badge>
                 </TableCell>
                 <TableCell>{new Date(sale.date).toLocaleDateString()}</TableCell>
-                {/* This now correctly displays the combined first and last name. */}
                 <TableCell>{sale.client_name}</TableCell>
                 <TableCell className="text-right">{formatMoney(sale.total_amount)}</TableCell>
                 <TableCell className="text-right">
