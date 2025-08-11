@@ -33,7 +33,7 @@ export default async function EditSalePage({ params }: PageProps) {
   const productOptions = products.map((product: Product) => ({
     id: product.id,
     name: product.name,
-    price: product.prix_vente_detail_1,
+    prix_vente_detail_1: product.prix_vente_detail_1,
   }))
 
   const clientOptions = clients.map((client: Client) => ({
