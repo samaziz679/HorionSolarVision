@@ -10,14 +10,15 @@ export async function fetchPurchases() {
     .select(
       `
       id,
-      purchase_date,
-      total_amount,
+      date,
+      total_cost,
+      quantity,
       created_at,
       products (id, name),
       suppliers (id, name)
     `,
     )
-    .order("purchase_date", { ascending: false })
+    .order("date", { ascending: false })
 
   if (error) {
     console.error("Database Error:", error)
@@ -33,7 +34,6 @@ export async function fetchPurchaseById(id: number) {
 
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
-    .from("purchases")
     .select(
       `
       *,
