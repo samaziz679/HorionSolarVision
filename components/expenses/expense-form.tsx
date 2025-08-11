@@ -83,7 +83,7 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
           id="date"
           name="date"
           type="date"
-          defaultValue={expense?.date ? new Date(expense.date).toISOString().split("T")[0] : ""}
+          defaultValue={expense?.expense_date ? new Date(expense.expense_date).toISOString().split("T")[0] : ""}
           aria-describedby="date-error"
         />
         <div id="date-error" aria-live="polite" aria-atomic="true">
