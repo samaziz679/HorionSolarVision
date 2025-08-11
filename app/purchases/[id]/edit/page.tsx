@@ -20,7 +20,6 @@ type PageProps = {
 }
 
 export default async function EditPurchasePage({ params }: PageProps) {
-  // Corrected: The ID for a purchase is a string, not a number.
   const { id } = params
 
   const [purchase, suppliers, products] = await Promise.all([fetchPurchaseById(id), fetchSuppliers(), fetchProducts()])
@@ -28,6 +27,12 @@ export default async function EditPurchasePage({ params }: PageProps) {
   if (!purchase) {
     notFound()
   }
+
+  // Corrected: Map the full products array to the shape expected by the form.
+  const productOptions = products.map((product) => ({
+    id: product.id,
+    name: product.name,
+  }))
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
@@ -55,7 +60,8 @@ export default async function EditPurchasePage({ params }: PageProps) {
           <CardTitle>Edit Purchase</CardTitle>
         </CardHeader>
         <CardContent>
-          <PurchaseForm purchase={purchase} suppliers={suppliers} products={products} />
+          {/* Corrected: Pass the correctly shaped productOptions to the form */}
+          <PurchaseForm purchase={purchase} suppliers={suppliers} products={productOptions} />
         </CardContent>
       </Card>
     </main>
