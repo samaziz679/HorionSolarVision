@@ -9,7 +9,7 @@ type PageProps = {
   }
 }
 
-export default async function EditBankAccountPage({ params }: PageProps) {
+export default async function EditBankingPage({ params }: PageProps) {
   const id = Number(params.id)
   if (isNaN(id)) {
     notFound()
