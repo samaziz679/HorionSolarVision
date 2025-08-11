@@ -8,11 +8,12 @@ import { getAuthUser } from "@/lib/auth"
 
 const FormSchema = z.object({
   id: z.string(),
-  product_id: z.coerce.number().min(1, "Product is required."),
-  supplier_id: z.coerce.number().min(1, "Supplier is required."),
+  product_id: z.string().min(1, "Product is required."),
+  supplier_id: z.string().min(1, "Supplier is required."),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
-  total_cost: z.coerce.number().min(0, "Total cost cannot be negative."),
-  date: z.string().min(1, "Purchase date is required."),
+  unit_price: z.coerce.number().min(0, "Unit price cannot be negative."),
+  total: z.coerce.number().min(0, "Total cannot be negative."),
+  purchase_date: z.string().min(1, "Purchase date is required."),
 })
 
 const CreatePurchaseSchema = FormSchema.omit({ id: true })
@@ -23,8 +24,9 @@ export type State = {
     product_id?: string[]
     supplier_id?: string[]
     quantity?: string[]
-    total_cost?: string[]
-    date?: string[]
+    unit_price?: string[]
+    total?: string[]
+    purchase_date?: string[]
   }
   message?: string | null
   success?: boolean
@@ -40,8 +42,9 @@ export async function createPurchase(prevState: State, formData: FormData) {
     product_id: formData.get("product_id"),
     supplier_id: formData.get("supplier_id"),
     quantity: formData.get("quantity"),
-    total_cost: formData.get("total_cost"),
-    date: formData.get("date"),
+    unit_price: formData.get("unit_price"),
+    total: formData.get("total"),
+    purchase_date: formData.get("purchase_date"),
   })
 
   if (!validatedFields.success) {
@@ -55,7 +58,7 @@ export async function createPurchase(prevState: State, formData: FormData) {
   const supabase = createClient()
   const { error } = await supabase.from("purchases").insert({
     ...validatedFields.data,
-    user_id: user.id,
+    created_by: user.id,
   })
 
   if (error) {
@@ -67,19 +70,20 @@ export async function createPurchase(prevState: State, formData: FormData) {
   redirect("/purchases")
 }
 
-export async function updatePurchase(id: number, prevState: State, formData: FormData) {
+export async function updatePurchase(id: string, prevState: State, formData: FormData) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
   const validatedFields = UpdatePurchaseSchema.safeParse({
-    id: id.toString(),
+    id: id,
     product_id: formData.get("product_id"),
     supplier_id: formData.get("supplier_id"),
     quantity: formData.get("quantity"),
-    total_cost: formData.get("total_cost"),
-    date: formData.get("date"),
+    unit_price: formData.get("unit_price"),
+    total: formData.get("total"),
+    purchase_date: formData.get("purchase_date"),
   })
 
   if (!validatedFields.success) {
@@ -90,14 +94,14 @@ export async function updatePurchase(id: number, prevState: State, formData: For
     }
   }
 
-  const { product_id, supplier_id, quantity, total_cost, date } = validatedFields.data
+  const { product_id, supplier_id, quantity, unit_price, total, purchase_date } = validatedFields.data
   const supabase = createClient()
 
   const { error } = await supabase
     .from("purchases")
-    .update({ product_id, supplier_id, quantity, total_cost, date })
+    .update({ product_id, supplier_id, quantity, unit_price, total, purchase_date })
     .eq("id", id)
-    .eq("user_id", user.id)
+    .eq("created_by", user.id)
 
   if (error) {
     console.error("Database Error:", error)
@@ -109,14 +113,14 @@ export async function updatePurchase(id: number, prevState: State, formData: For
   redirect("/purchases")
 }
 
-export async function deletePurchase(id: number) {
+export async function deletePurchase(id: string) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
   const supabase = createClient()
-  const { error } = await supabase.from("purchases").delete().eq("id", id).eq("user_id", user.id)
+  const { error } = await supabase.from("purchases").delete().eq("id", id).eq("created_by", user.id)
 
   if (error) {
     console.error("Database Error:", error)
