@@ -42,7 +42,7 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
     <form
       onSubmit={(e) => {
         e.preventDefault()
-        handleSubmit(new FormData(e.target))
+        handleSubmit(new FormData(e.currentTarget))
       }}
       className="space-y-4"
     >

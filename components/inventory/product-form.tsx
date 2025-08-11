@@ -49,7 +49,7 @@ export default function ProductForm({
     <form
       onSubmit={(e) => {
         e.preventDefault()
-        handleSubmit(new FormData(e.target))
+        handleSubmit(new FormData(e.currentTarget))
       }}
       className="space-y-4"
     >

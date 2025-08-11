@@ -42,7 +42,7 @@ export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
     <form
       onSubmit={(e) => {
         e.preventDefault()
-        handleSubmit(new FormData(e.target))
+        handleSubmit(new FormData(e.currentTarget))
       }}
       className="space-y-4"
     >
