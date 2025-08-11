@@ -10,9 +10,8 @@ const FormSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Name is required."),
   email: z.string().email("Invalid email address.").min(1, "Email is required."),
-  phone_number: z.string().optional(),
+  phone: z.string().optional(),
   address: z.string().optional(),
-  contact_person: z.string().optional(),
 })
 
 const CreateSupplierSchema = FormSchema.omit({ id: true })
@@ -22,9 +21,8 @@ export type State = {
   errors?: {
     name?: string[]
     email?: string[]
-    phone_number?: string[]
+    phone?: string[]
     address?: string[]
-    contact_person?: string[]
   }
   message?: string | null
   success?: boolean
@@ -39,9 +37,8 @@ export async function createSupplier(prevState: State, formData: FormData) {
   const validatedFields = CreateSupplierSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
-    phone_number: formData.get("phone_number"),
+    phone: formData.get("phone"),
     address: formData.get("address"),
-    contact_person: formData.get("contact_person"),
   })
 
   if (!validatedFields.success) {
@@ -52,15 +49,14 @@ export async function createSupplier(prevState: State, formData: FormData) {
     }
   }
 
-  const { name, email, phone_number, address, contact_person } = validatedFields.data
+  const { name, email, phone, address } = validatedFields.data
   const supabase = createClient()
 
   const { error } = await supabase.from("suppliers").insert({
     name,
     email,
-    phone_number: phone_number || null,
+    phone: phone || null,
     address: address || null,
-    contact_person: contact_person || null,
     created_by: user.id,
   })
 
@@ -83,9 +79,8 @@ export async function updateSupplier(id: string, prevState: State, formData: For
     id: id,
     name: formData.get("name"),
     email: formData.get("email"),
-    phone_number: formData.get("phone_number"),
+    phone: formData.get("phone"),
     address: formData.get("address"),
-    contact_person: formData.get("contact_person"),
   })
 
   if (!validatedFields.success) {
@@ -96,7 +91,7 @@ export async function updateSupplier(id: string, prevState: State, formData: For
     }
   }
 
-  const { name, email, phone_number, address, contact_person } = validatedFields.data
+  const { name, email, phone, address } = validatedFields.data
   const supabase = createClient()
 
   const { error } = await supabase
@@ -104,9 +99,8 @@ export async function updateSupplier(id: string, prevState: State, formData: For
     .update({
       name,
       email,
-      phone_number: phone_number || null,
+      phone: phone || null,
       address: address || null,
-      contact_person: contact_person || null,
     })
     .eq("id", id)
     .eq("created_by", user.id)
