@@ -32,7 +32,6 @@ export default function SupplierList({ suppliers }: SupplierListProps) {
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Contact Person</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Phone</TableHead>
             <TableHead className="text-right">Actions</TableHead>
@@ -42,9 +41,8 @@ export default function SupplierList({ suppliers }: SupplierListProps) {
           {suppliers.map((supplier) => (
             <TableRow key={supplier.id}>
               <TableCell className="font-medium">{supplier.name}</TableCell>
-              <TableCell>{supplier.contact_person}</TableCell>
               <TableCell>{supplier.email}</TableCell>
-              <TableCell>{supplier.phone_number}</TableCell>
+              <TableCell>{supplier.phone}</TableCell>
               <TableCell className="flex justify-end gap-2">
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/suppliers/${supplier.id}/edit`}>
@@ -52,7 +50,7 @@ export default function SupplierList({ suppliers }: SupplierListProps) {
                     <span className="sr-only">Edit</span>
                   </Link>
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(supplier.id.toString())}>
+                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(supplier.id)}>
                   <TrashIcon className="h-4 w-4" />
                   <span className="sr-only">Delete</span>
                 </Button>
