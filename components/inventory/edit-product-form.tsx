@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type { Product, Supplier } from "@/lib/supabase/types"
+import type { State } from "@/app/inventory/actions"
 
 function SubmitButton({ isLoading }: { isLoading: boolean }) {
   return (
@@ -18,7 +19,7 @@ function SubmitButton({ isLoading }: { isLoading: boolean }) {
 }
 
 export default function EditProductForm({ product, suppliers }: { product: Product; suppliers: Supplier[] }) {
-  const [state, setState] = useState({ message: null, errors: {} })
+  const [state, setState] = useState<State>({ message: null, errors: {} })
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (formData: FormData) => {
@@ -37,10 +38,16 @@ export default function EditProductForm({ product, suppliers }: { product: Produ
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        handleSubmit(new FormData(e.currentTarget))
+      }}
+      className="space-y-4 max-w-lg"
+    >
       <div>
         <Label htmlFor="name">Product Name</Label>
-        <Input id="name" name="name" defaultValue={product.name} required />
+        <Input id="name" name="name" defaultValue={product.name ?? ""} required />
         {state.errors?.name && <p className="text-sm text-red-500 mt-1">{state.errors.name[0]}</p>}
       </div>
       <div>
@@ -49,17 +56,23 @@ export default function EditProductForm({ product, suppliers }: { product: Produ
       </div>
       <div>
         <Label htmlFor="price">Price</Label>
-        <Input id="price" name="price" type="number" step="0.01" defaultValue={product.price} required />
+        <Input id="price" name="price" type="number" step="0.01" defaultValue={product.price ?? ""} required />
         {state.errors?.price && <p className="text-sm text-red-500 mt-1">{state.errors.price[0]}</p>}
       </div>
       <div>
-        <Label htmlFor="quantity">Quantity</Label>
-        <Input id="quantity" name="quantity" type="number" defaultValue={product.quantity} required />
-        {state.errors?.quantity && <p className="text-sm text-red-500 mt-1">{state.errors.quantity[0]}</p>}
+        <Label htmlFor="stock_quantity">Stock Quantity</Label>
+        <Input
+          id="stock_quantity"
+          name="stock_quantity"
+          type="number"
+          defaultValue={product.stock_quantity ?? ""}
+          required
+        />
+        {state.errors?.stock_quantity && <p className="text-sm text-red-500 mt-1">{state.errors.stock_quantity[0]}</p>}
       </div>
       <div>
         <Label htmlFor="supplier_id">Supplier</Label>
-        <Select name="supplier_id" defaultValue={String(product.supplier_id)} required>
+        <Select name="supplier_id" defaultValue={product.supplier_id ? String(product.supplier_id) : ""}>
           <SelectTrigger>
             <SelectValue placeholder="Select a supplier" />
           </SelectTrigger>
