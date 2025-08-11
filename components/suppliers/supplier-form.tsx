@@ -59,23 +59,6 @@ export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="contact_person">Contact Person</Label>
-        <Input
-          id="contact_person"
-          name="contact_person"
-          defaultValue={supplier?.contact_person ?? ""}
-          aria-describedby="contact_person-error"
-        />
-        <div id="contact_person-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.contact_person &&
-            state.errors.contact_person.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
-        </div>
-      </div>
-      <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
         <Input
           id="email"
@@ -94,16 +77,11 @@ export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
         </div>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="phone_number">Phone</Label>
-        <Input
-          id="phone_number"
-          name="phone_number"
-          defaultValue={supplier?.phone_number ?? ""}
-          aria-describedby="phone_number-error"
-        />
-        <div id="phone_number-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.phone_number &&
-            state.errors.phone_number.map((error: string) => (
+        <Label htmlFor="phone">Phone</Label>
+        <Input id="phone" name="phone" defaultValue={supplier?.phone ?? ""} aria-describedby="phone-error" />
+        <div id="phone-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.phone &&
+            state.errors.phone.map((error: string) => (
               <p className="mt-2 text-sm text-red-500" key={error}>
                 {error}
               </p>
