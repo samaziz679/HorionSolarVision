@@ -22,11 +22,17 @@ export default async function NewSalePage() {
     stock_quantity: product.quantity,
   }))
 
-  const clientOptions = clients.map((client) => ({
-    id: client.id,
-    first_name: client.first_name,
-    last_name: client.last_name,
-  }))
+  const clientOptions = clients.map((client) => {
+    const nameParts = client.name.split(" ")
+    const first_name = nameParts[0] || ""
+    const last_name = nameParts.slice(1).join(" ") || ""
+
+    return {
+      id: client.id,
+      first_name,
+      last_name,
+    }
+  })
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
