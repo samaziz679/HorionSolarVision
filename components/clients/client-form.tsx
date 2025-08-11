@@ -53,7 +53,7 @@ export default function ClientForm({ client }: { client?: Client }) {
           <Input
             id="first_name"
             name="first_name"
-            defaultValue={client?.first_name}
+            defaultValue={client?.first_name ?? ""}
             aria-describedby="first_name-error"
           />
           <div id="first_name-error" aria-live="polite" aria-atomic="true">
@@ -67,7 +67,12 @@ export default function ClientForm({ client }: { client?: Client }) {
         </div>
         <div className="space-y-2">
           <Label htmlFor="last_name">Last Name</Label>
-          <Input id="last_name" name="last_name" defaultValue={client?.last_name} aria-describedby="last_name-error" />
+          <Input
+            id="last_name"
+            name="last_name"
+            defaultValue={client?.last_name ?? ""}
+            aria-describedby="last_name-error"
+          />
           <div id="last_name-error" aria-live="polite" aria-atomic="true">
             {state.errors?.last_name &&
               state.errors.last_name.map((error: string) => (

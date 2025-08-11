@@ -107,7 +107,7 @@ export default function PurchaseForm({
             id="quantity"
             name="quantity"
             type="number"
-            defaultValue={purchase?.quantity}
+            defaultValue={purchase?.quantity ?? ""}
             aria-describedby="quantity-error"
           />
           <div id="quantity-error" aria-live="polite" aria-atomic="true">
@@ -126,7 +126,7 @@ export default function PurchaseForm({
             name="total_price"
             type="number"
             step="0.01"
-            defaultValue={purchase?.total_price}
+            defaultValue={purchase?.total_price ?? ""}
             aria-describedby="total_price-error"
           />
           <div id="total_price-error" aria-live="polite" aria-atomic="true">

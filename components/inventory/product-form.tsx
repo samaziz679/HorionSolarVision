@@ -55,7 +55,7 @@ export default function ProductForm({
     >
       <div className="space-y-2">
         <Label htmlFor="name">Product Name</Label>
-        <Input id="name" name="name" defaultValue={product?.name} aria-describedby="name-error" />
+        <Input id="name" name="name" defaultValue={product?.name ?? ""} aria-describedby="name-error" />
         <div id="name-error" aria-live="polite" aria-atomic="true">
           {state.errors?.name &&
             state.errors.name.map((error: string) => (
@@ -90,7 +90,7 @@ export default function ProductForm({
             name="price"
             type="number"
             step="0.01"
-            defaultValue={product?.price}
+            defaultValue={product?.price ?? ""}
             aria-describedby="price-error"
           />
           <div id="price-error" aria-live="polite" aria-atomic="true">
@@ -108,7 +108,7 @@ export default function ProductForm({
             id="stock_quantity"
             name="stock_quantity"
             type="number"
-            defaultValue={product?.stock_quantity}
+            defaultValue={product?.stock_quantity ?? ""}
             aria-describedby="stock_quantity-error"
           />
           <div id="stock_quantity-error" aria-live="polite" aria-atomic="true">

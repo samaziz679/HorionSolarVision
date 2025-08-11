@@ -48,7 +48,7 @@ export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
     >
       <div className="space-y-2">
         <Label htmlFor="name">Supplier Name</Label>
-        <Input id="name" name="name" defaultValue={supplier?.name} aria-describedby="name-error" />
+        <Input id="name" name="name" defaultValue={supplier?.name ?? ""} aria-describedby="name-error" />
         <div id="name-error" aria-live="polite" aria-atomic="true">
           {state.errors?.name &&
             state.errors.name.map((error: string) => (
@@ -77,7 +77,13 @@ export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" defaultValue={supplier?.email} aria-describedby="email-error" />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          defaultValue={supplier?.email ?? ""}
+          aria-describedby="email-error"
+        />
         <div id="email-error" aria-live="polite" aria-atomic="true">
           {state.errors?.email &&
             state.errors.email.map((error: string) => (

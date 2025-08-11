@@ -48,7 +48,7 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
     >
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
-        <Input id="category" name="category" defaultValue={expense?.category} aria-describedby="category-error" />
+        <Input id="category" name="category" defaultValue={expense?.category ?? ""} aria-describedby="category-error" />
         <div id="category-error" aria-live="polite" aria-atomic="true">
           {state.errors?.category &&
             state.errors.category.map((error: string) => (
@@ -65,7 +65,7 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
           name="amount"
           type="number"
           step="0.01"
-          defaultValue={expense?.amount}
+          defaultValue={expense?.amount ?? ""}
           aria-describedby="amount-error"
         />
         <div id="amount-error" aria-live="polite" aria-atomic="true">
