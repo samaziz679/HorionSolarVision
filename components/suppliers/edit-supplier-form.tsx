@@ -8,10 +8,10 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { updateSupplier } from "@/app/suppliers/actions"
+import { updateSupplier, type State } from "@/app/suppliers/actions"
 import type { Supplier } from "@/lib/supabase/types"
 
-const initialState = {
+const initialState: State = {
   message: null,
   errors: {},
 }
@@ -25,13 +25,13 @@ function SubmitButton({ isLoading }: { isLoading: boolean }) {
 }
 
 export function EditSupplierForm({ supplier }: { supplier: Supplier }) {
-  const [state, setState] = useState({ message: null, errors: {} })
+  const [state, setState] = useState<State>(initialState)
   const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsLoading(true)
-    setState({ message: null, errors: {} })
+    setState(initialState)
 
     const formData = new FormData(event.currentTarget)
 
@@ -60,7 +60,7 @@ export function EditSupplierForm({ supplier }: { supplier: Supplier }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-2">
         <Label htmlFor="name">Supplier Name</Label>
-        <Input id="name" name="name" type="text" defaultValue={supplier.name} required />
+        <Input id="name" name="name" type="text" defaultValue={supplier.name ?? ""} required />
         {state?.errors?.name && <p className="text-sm font-medium text-destructive">{state.errors.name[0]}</p>}
       </div>
 
