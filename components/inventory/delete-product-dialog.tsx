@@ -15,7 +15,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 
 interface DeleteProductDialogProps {
-  productId: number
+  productId: string // Changed from number to string for UUID compatibility
   isOpen: boolean
   onClose: () => void
 }
@@ -26,7 +26,7 @@ export default function DeleteProductDialog({ productId, isOpen, onClose }: Dele
   const handleDelete = async () => {
     setIsPending(true)
     try {
-      const result = await deleteProduct(String(productId))
+      const result = await deleteProduct(productId) // Removed String() conversion since productId is already a string
       if (result?.message) {
         toast.error(result.message)
       } else {
