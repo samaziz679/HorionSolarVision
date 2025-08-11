@@ -105,13 +105,13 @@ export function EditPurchaseForm({
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="total_cost">Total Cost</Label>
-          <Input name="total_cost" type="number" defaultValue={purchase.total_cost ?? ""} required />
+          <Label htmlFor="total">Total Cost</Label>
+          <Input name="total" type="number" defaultValue={purchase.total ?? ""} required />
         </div>
 
         <div className="grid gap-2">
-          <Label htmlFor="date">Purchase Date</Label>
-          <Input name="date" type="date" defaultValue={purchase.date.split("T")[0]} required />
+          <Label htmlFor="purchase_date">Purchase Date</Label>
+          <Input name="purchase_date" type="date" defaultValue={purchase.purchase_date.split("T")[0]} required />
         </div>
 
         <SubmitButton isLoading={isLoading} />
