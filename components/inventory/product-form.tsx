@@ -26,7 +26,7 @@ export default function ProductForm({
     if (state.message) {
       if (state.success === false) {
         toast.error(state.message)
-      } else {
+      } else if (state.success === true) {
         toast.success(state.message)
       }
     }
