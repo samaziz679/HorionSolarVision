@@ -16,7 +16,7 @@ type PageProps = {
     id: string
   }
 }
- 
+
 export default async function EditClientPage({ params }: PageProps) {
   const id = Number(params.id)
   if (isNaN(id)) {
@@ -38,7 +38,7 @@ export default async function EditClientPage({ params }: PageProps) {
               <Link href="/dashboard">Dashboard</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
+          <BreadcrumbSeparator /> 
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
               <Link href="/clients">Clients</Link>
