@@ -40,7 +40,7 @@ export default function ClientList({ clients }: ClientListProps) {
         <TableBody>
           {clients.map((client) => (
             <TableRow key={client.id}>
-              <TableCell className="font-medium">{`${client.first_name} ${client.last_name}`}</TableCell>
+              <TableCell className="font-medium">{client.name}</TableCell>
               <TableCell>{client.email}</TableCell>
               <TableCell>{client.phone}</TableCell>
               <TableCell className="flex justify-end gap-2">
