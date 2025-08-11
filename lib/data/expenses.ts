@@ -5,7 +5,7 @@ import type { Expense } from "@/lib/supabase/types"
 export async function fetchExpenses() {
   noStore()
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.from("expenses").select("*").order("date", { ascending: false })
+  const { data, error } = await supabase.from("expenses").select("*").order("expense_date", { ascending: false })
 
   if (error) {
     console.error("Database Error:", error)
@@ -15,9 +15,9 @@ export async function fetchExpenses() {
   return data as Expense[]
 }
 
-export async function fetchExpenseById(id: number) {
+export async function fetchExpenseById(id: string) {
   noStore()
-  if (isNaN(id)) return null
+  if (!id) return null
 
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from("expenses").select("*").eq("id", id).single()

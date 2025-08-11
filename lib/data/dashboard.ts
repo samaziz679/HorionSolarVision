@@ -49,16 +49,15 @@ export async function getRecentSales() {
     .select(
       `
       id,
-      date,
-      total_amount,
+      sale_date,
+      total_price,
       clients (
-        first_name,
-        last_name,
+        name,
         email
       )
     `,
     )
-    .order("date", { ascending: false })
+    .order("sale_date", { ascending: false })
     .limit(5)
 
   if (error) {
@@ -68,9 +67,9 @@ export async function getRecentSales() {
 
   return (data || []).map((sale) => ({
     id: sale.id,
-    date: sale.date,
-    total_amount: sale.total_amount,
-    client_name: sale.clients ? `${sale.clients.first_name} ${sale.clients.last_name}`.trim() : "N/A",
+    date: sale.sale_date,
+    total_amount: sale.total_price,
+    client_name: sale.clients?.name ?? "N/A",
     client_email: sale.clients?.email ?? "N/A",
   }))
 }

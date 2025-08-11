@@ -10,13 +10,13 @@ export async function fetchSales() {
     .select(
       `
       id,
-      date,
-      total_amount,
+      sale_date,
+      total_price,
       created_at,
-      clients (id, first_name, last_name)
+      clients (id, name)
     `,
     )
-    .order("date", { ascending: false })
+    .order("sale_date", { ascending: false })
 
   if (error) {
     console.error("Database Error:", error)
@@ -25,15 +25,15 @@ export async function fetchSales() {
 
   return data.map((sale) => ({
     id: sale.id,
-    date: sale.date,
-    total_amount: sale.total_amount,
-    client_name: `${sale.clients.first_name} ${sale.clients.last_name}`.trim(),
+    date: sale.sale_date,
+    total_amount: sale.total_price,
+    client_name: sale.clients?.name || "N/A",
   }))
 }
 
-export async function fetchSaleById(id: number) {
+export async function fetchSaleById(id: string) {
   noStore()
-  if (isNaN(id)) return null
+  if (!id) return null
 
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
@@ -41,11 +41,8 @@ export async function fetchSaleById(id: number) {
     .select(
       `
       *,
-      sale_items (
-        *,
-        products (*)
-      ),
-      clients (*)
+      clients (*),
+      products (*)
     `,
     )
     .eq("id", id)

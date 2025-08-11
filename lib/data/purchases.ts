@@ -10,15 +10,15 @@ export async function fetchPurchases() {
     .select(
       `
       id,
-      date,
-      total_cost,
+      purchase_date,
+      total,
       quantity,
+      unit_price,
       created_at,
-      products (id, name),
-      suppliers (id, name)
+      products (id, name)
     `,
     )
-    .order("date", { ascending: false })
+    .order("purchase_date", { ascending: false })
 
   if (error) {
     console.error("Database Error:", error)
@@ -28,9 +28,9 @@ export async function fetchPurchases() {
   return data as PurchaseWithDetails[]
 }
 
-export async function fetchPurchaseById(id: number) {
+export async function fetchPurchaseById(id: string) {
   noStore()
-  if (isNaN(id)) return null
+  if (!id) return null
 
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
@@ -38,8 +38,7 @@ export async function fetchPurchaseById(id: number) {
     .select(
       `
       *,
-      products (id, name),
-      suppliers (id, name)
+      products (id, name)
     `,
     )
     .eq("id", id)

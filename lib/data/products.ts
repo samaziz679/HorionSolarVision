@@ -1,6 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { unstable_noStore as noStore } from "next/cache"
-import type { ProductWithSupplier } from "@/lib/supabase/types"
+import type { Product } from "@/lib/supabase/types"
 
 export async function fetchProducts() {
   noStore()
@@ -12,10 +12,14 @@ export async function fetchProducts() {
       id,
       name,
       description,
-      price,
-      stock_quantity,
-      created_at,
-      suppliers (id, name)
+      type,
+      quantity,
+      prix_achat,
+      prix_vente_detail_1,
+      prix_vente_detail_2,
+      prix_vente_gros,
+      unit,
+      created_at
     `,
     )
     .order("created_at", { ascending: false })
@@ -25,37 +29,28 @@ export async function fetchProducts() {
     throw new Error("Failed to fetch products.")
   }
 
-  return data as ProductWithSupplier[]
+  return data as Product[]
 }
 
-export async function fetchProductById(id: number) {
+export async function fetchProductById(id: string) {
   noStore()
-  if (isNaN(id)) return null
+  if (!id) return null
 
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase
-    .from("products")
-    .select(
-      `
-      *,
-      suppliers (id, name)
-    `,
-    )
-    .eq("id", id)
-    .single()
+  const { data, error } = await supabase.from("products").select("*").eq("id", id).single()
 
   if (error) {
     console.error("Database Error:", error)
     return null
   }
 
-  return data as ProductWithSupplier | null
+  return data as Product | null
 }
 
 export async function fetchProductsForForm() {
   noStore()
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.from("products").select("id, name, price")
+  const { data, error } = await supabase.from("products").select("id, name, prix_vente_detail_1")
 
   if (error) {
     console.error("Database Error:", error)

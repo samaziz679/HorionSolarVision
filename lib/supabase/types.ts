@@ -5,164 +5,151 @@ export type Database = {
     Tables: {
       clients: {
         Row: {
+          id: string
+          name: string
+          phone: string | null
+          email: string | null
           address: string | null
           created_at: string
-          email: string
-          first_name: string
-          id: number
-          last_name: string
-          phone: string | null
-          user_id: string | null
+          created_by: string | null
         }
         Insert: {
+          id?: string
+          name: string
+          phone?: string | null
+          email?: string | null
           address?: string | null
           created_at?: string
-          email: string
-          first_name: string
-          id?: number
-          last_name: string
-          phone?: string | null
-          user_id?: string | null
+          created_by?: string | null
         }
         Update: {
+          id?: string
+          name?: string
+          phone?: string | null
+          email?: string | null
           address?: string | null
           created_at?: string
-          email?: string
-          first_name?: string
-          id?: number
-          last_name?: string
-          phone?: string | null
-          user_id?: string | null
+          created_by?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "clients_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       expenses: {
         Row: {
+          id: string
+          description: string
+          category: string
           amount: number
-          category: string | null
-          created_at: string
-          date: string
-          description: string | null
-          id: number
-          user_id: string | null
+          expense_date: string
+          created_by: string | null
+          notes: string | null
         }
         Insert: {
+          id?: string
+          description: string
+          category: string
           amount: number
-          category?: string | null
-          created_at?: string
-          date: string
-          description?: string | null
-          id?: number
-          user_id?: string | null
+          expense_date?: string
+          created_by?: string | null
+          notes?: string | null
         }
         Update: {
+          id?: string
+          description?: string
+          category?: string
           amount?: number
-          category?: string | null
-          created_at?: string
-          date?: string
-          description?: string | null
-          id?: number
-          user_id?: string | null
+          expense_date?: string
+          created_by?: string | null
+          notes?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "expenses_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       products: {
         Row: {
-          category: string | null
-          created_at: string
-          description: string | null
-          id: number
+          id: string
           name: string
-          price: number
-          stock_quantity: number
-          supplier_id: number | null
-          user_id: string | null
+          type: string | null
+          quantity: number
+          prix_achat: number
+          prix_vente_detail_1: number
+          prix_vente_detail_2: number
+          prix_vente_gros: number
+          seuil_stock_bas: number
+          created_at: string
+          updated_at: string
+          created_by: string | null
+          unit: string | null
+          description: string | null
+          image: string | null
         }
         Insert: {
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          id?: number
+          id?: string
           name: string
-          price: number
-          stock_quantity: number
-          supplier_id?: number | null
-          user_id?: string | null
+          type?: string | null
+          quantity?: number
+          prix_achat?: number
+          prix_vente_detail_1?: number
+          prix_vente_detail_2?: number
+          prix_vente_gros?: number
+          seuil_stock_bas?: number
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+          unit?: string | null
+          description?: string | null
+          image?: string | null
         }
         Update: {
-          category?: string | null
-          created_at?: string
-          description?: string | null
-          id?: number
+          id?: string
           name?: string
-          price?: number
-          stock_quantity?: number
-          supplier_id?: number | null
-          user_id?: string | null
+          type?: string | null
+          quantity?: number
+          prix_achat?: number
+          prix_vente_detail_1?: number
+          prix_vente_detail_2?: number
+          prix_vente_gros?: number
+          seuil_stock_bas?: number
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+          unit?: string | null
+          description?: string | null
+          image?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "products_supplier_id_fkey"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "products_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       purchases: {
         Row: {
-          created_at: string
-          date: string
-          id: number
-          product_id: number
+          id: string
+          product_id: string | null
+          supplier_id: string | null
           quantity: number
-          supplier_id: number
-          total_cost: number
-          user_id: string | null
+          unit_price: number
+          total: number
+          purchase_date: string
+          created_by: string | null
+          notes: string | null
         }
         Insert: {
-          created_at?: string
-          date: string
-          id?: number
-          product_id: number
+          id?: string
+          product_id?: string | null
+          supplier_id?: string | null
           quantity: number
-          supplier_id: number
-          total_cost: number
-          user_id?: string | null
+          unit_price: number
+          total: number
+          purchase_date?: string
+          created_by?: string | null
+          notes?: string | null
         }
         Update: {
-          created_at?: string
-          date?: string
-          id?: number
-          product_id?: number
+          id?: string
+          product_id?: string | null
+          supplier_id?: string | null
           quantity?: number
-          supplier_id?: number
-          total_cost?: number
-          user_id?: string | null
+          unit_price?: number
+          total?: number
+          purchase_date?: string
+          created_by?: string | null
+          notes?: string | null
         }
         Relationships: [
           {
@@ -179,91 +166,50 @@ export type Database = {
             referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "purchases_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      sale_items: {
-        Row: {
-          created_at: string
-          id: number
-          product_id: number
-          quantity: number
-          sale_id: number
-          unit_price: number
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          product_id: number
-          quantity: number
-          sale_id: number
-          unit_price: number
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          product_id?: number
-          quantity?: number
-          sale_id?: number
-          unit_price?: number
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "sale_items_product_id_fkey"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sale_items_sale_id_fkey"
-            columns: ["sale_id"]
-            isOneToOne: false
-            referencedRelation: "sales"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "sale_items_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
         ]
       }
       sales: {
         Row: {
-          client_id: number
-          created_at: string
-          date: string
-          id: number
-          total_amount: number
-          user_id: string | null
+          id: string
+          product_id: string | null
+          client_id: string | null
+          quantity: number
+          price_plan: string
+          unit_price: number
+          total: number
+          sale_date: string
+          created_by: string | null
+          notes: string | null
+          quantity_sold: number
+          total_price: number
         }
         Insert: {
-          client_id: number
-          created_at?: string
-          date: string
-          id?: number
-          total_amount: number
-          user_id?: string | null
+          id?: string
+          product_id?: string | null
+          client_id?: string | null
+          quantity: number
+          price_plan: string
+          unit_price: number
+          total: number
+          sale_date?: string
+          created_by?: string | null
+          notes?: string | null
+          quantity_sold?: number
+          total_price?: number
         }
         Update: {
-          client_id?: number
-          created_at?: string
-          date?: string
-          id?: number
-          total_amount?: number
-          user_id?: string | null
+          id?: string
+          product_id?: string | null
+          client_id?: string | null
+          quantity?: number
+          price_plan?: string
+          unit_price?: number
+          total?: number
+          sale_date?: string
+          created_by?: string | null
+          notes?: string | null
+          quantity_sold?: number
+          total_price?: number
         }
         Relationships: [
           {
@@ -274,54 +220,43 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "sales_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "sales_product_id_fkey"
+            columns: ["product_id"]
             isOneToOne: false
-            referencedRelation: "users"
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
       }
       suppliers: {
         Row: {
-          address: string | null
-          contact_person: string | null
-          created_at: string
-          email: string
-          id: number
+          id: string
           name: string
-          phone_number: string | null
-          user_id: string | null
+          phone: string | null
+          email: string | null
+          address: string | null
+          created_at: string
+          created_by: string | null
         }
         Insert: {
-          address?: string | null
-          contact_person?: string | null
-          created_at?: string
-          email: string
-          id?: number
+          id?: string
           name: string
-          phone_number?: string | null
-          user_id?: string | null
+          phone?: string | null
+          email?: string | null
+          address?: string | null
+          created_at?: string
+          created_by?: string | null
         }
         Update: {
-          address?: string | null
-          contact_person?: string | null
-          created_at?: string
-          email?: string
-          id?: number
+          id?: string
           name?: string
-          phone_number?: string | null
-          user_id?: string | null
+          phone?: string | null
+          email?: string | null
+          address?: string | null
+          created_at?: string
+          created_by?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "suppliers_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -411,32 +346,39 @@ export type Enums<
     ? Database["public"]["Enums"][PublicEnumNameOrOptions]
     : never
 
-// Custom types
 export type Product = Tables<"products">
 export type Client = Tables<"clients">
 export type Sale = Tables<"sales">
-export type SaleItem = Tables<"sale_items">
 export type Supplier = Tables<"suppliers">
 export type Purchase = Tables<"purchases">
 export type Expense = Tables<"expenses">
 
-export type ProductWithSupplier = Product & {
-  suppliers: Supplier | null
+// Adding missing SaleItem type for compatibility
+export type SaleItem = {
+  id: string
+  sale_id: string
+  product_id: string
+  quantity: number
+  unit_price: number
+  created_at: string
+  products?: Product | null
 }
 
+export type SaleWithDetails = Sale & {
+  clients: Client | null
+  products: Product | null
+}
+
+// Adding missing SaleWithItems export
 export type SaleWithItems = Sale & {
-  sale_items: (SaleItem & {
-    products: Product | null
-  })[]
+  sale_items: SaleItem[]
   clients: Client | null
 }
 
-export type SaleWithDetails = SaleWithItems
-
-export type PurchaseWithRelations = Purchase & {
+export type PurchaseWithDetails = Purchase & {
   suppliers: Supplier | null
   products: Product | null
 }
 
-export type PurchaseWithItems = PurchaseWithRelations
-export type PurchaseWithDetails = PurchaseWithRelations
+// Adding missing PurchaseWithItems export
+export type PurchaseWithItems = PurchaseWithDetails
