@@ -10,14 +10,14 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Purchase, Product, Supplier } from "@/lib/supabase/types"
 
-export function PurchaseForm({
+export default function PurchaseForm({
   purchase,
   products,
   suppliers,
 }: {
   purchase?: Purchase
-  products: Product[]
-  suppliers: Supplier[]
+  products: Pick<Product, "id" | "name">[]
+  suppliers: Pick<Supplier, "id" | "name">[]
 }) {
   const initialState: State = { message: null, errors: {} }
   const action = purchase ? updatePurchase.bind(null, purchase.id) : createPurchase
@@ -25,7 +25,7 @@ export function PurchaseForm({
 
   useEffect(() => {
     if (state.message) {
-      if (Object.keys(state.errors ?? {}).length > 0) {
+      if (state.success === false) {
         toast.error(state.message)
       } else {
         toast.success(state.message)

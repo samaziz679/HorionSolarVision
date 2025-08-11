@@ -1,4 +1,3 @@
-// v2.1 Final - Corrected Naming
 "use server"
 
 import { z } from "zod"
@@ -11,13 +10,13 @@ const FormSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Supplier name is required."),
   contact_person: z.string().optional(),
-  email: z.string().email("Invalid email address.").optional().or(z.literal("")),
+  email: z.string().email("Invalid email address."),
   phone: z.string().optional(),
   address: z.string().optional(),
 })
 
-const CreateSupplier = FormSchema.omit({ id: true })
-const UpdateSupplier = FormSchema
+const CreateSupplierSchema = FormSchema.omit({ id: true })
+const UpdateSupplierSchema = FormSchema
 
 export type State = {
   errors?: {
@@ -31,16 +30,13 @@ export type State = {
   success?: boolean
 }
 
-export async function createSupplierAction(prevState: State, formData: FormData) {
+export async function createSupplier(prevState: State, formData: FormData) {
   const user = await getAuthUser()
   if (!user) {
-    return {
-      message: "Authentication error. Please sign in.",
-      success: false,
-    }
+    return { message: "Authentication error. Please sign in.", success: false }
   }
 
-  const validatedFields = CreateSupplier.safeParse({
+  const validatedFields = CreateSupplierSchema.safeParse({
     name: formData.get("name"),
     contact_person: formData.get("contact_person"),
     email: formData.get("email"),
@@ -77,13 +73,13 @@ export async function createSupplierAction(prevState: State, formData: FormData)
   redirect("/suppliers")
 }
 
-export async function updateSupplierAction(id: string, prevState: State, formData: FormData) {
+export async function updateSupplier(id: string, prevState: State, formData: FormData) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
-  const validatedFields = UpdateSupplier.safeParse({
+  const validatedFields = UpdateSupplierSchema.safeParse({
     id,
     name: formData.get("name"),
     contact_person: formData.get("contact_person"),

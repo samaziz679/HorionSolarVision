@@ -8,16 +8,23 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import type { Product } from "@/lib/supabase/types"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import type { Product, Supplier } from "@/lib/supabase/types"
 
-export function ProductForm({ product }: { product?: Product }) {
+export default function ProductForm({
+  product,
+  suppliers,
+}: {
+  product?: Product
+  suppliers: Pick<Supplier, "id" | "name">[]
+}) {
   const initialState: State = { message: null, errors: {} }
   const action = product ? updateProduct.bind(null, product.id) : createProduct
   const [state, dispatch] = useFormState(action, initialState)
 
   useEffect(() => {
     if (state.message) {
-      if (Object.keys(state.errors ?? {}).length > 0) {
+      if (state.success === false) {
         toast.error(state.message)
       } else {
         toast.success(state.message)
@@ -93,6 +100,29 @@ export function ProductForm({ product }: { product?: Product }) {
                 </p>
               ))}
           </div>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="supplier_id">Supplier</Label>
+        <Select name="supplier_id" defaultValue={product?.supplier_id?.toString()}>
+          <SelectTrigger aria-describedby="supplier-error">
+            <SelectValue placeholder="Select a supplier" />
+          </SelectTrigger>
+          <SelectContent>
+            {suppliers.map((supplier) => (
+              <SelectItem key={supplier.id} value={supplier.id.toString()}>
+                {supplier.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <div id="supplier-error" aria-live="polite" aria-atomic="true">
+          {state.errors?.supplier_id &&
+            state.errors.supplier_id.map((error: string) => (
+              <p className="mt-2 text-sm text-red-500" key={error}>
+                {error}
+              </p>
+            ))}
         </div>
       </div>
       <SubmitButton isEditing={!!product} />

@@ -10,14 +10,14 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Expense } from "@/lib/supabase/types"
 
-export function ExpenseForm({ expense }: { expense?: Expense }) {
+export default function ExpenseForm({ expense }: { expense?: Expense }) {
   const initialState: State = { message: null, errors: {} }
   const action = expense ? updateExpense.bind(null, expense.id) : createExpense
   const [state, dispatch] = useFormState(action, initialState)
 
   useEffect(() => {
     if (state.message) {
-      if (Object.keys(state.errors ?? {}).length > 0) {
+      if (state.success === false) {
         toast.error(state.message)
       } else {
         toast.success(state.message)

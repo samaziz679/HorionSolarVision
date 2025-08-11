@@ -1,8 +1,8 @@
-// v2.0 Final - Corrected
+// v3.0 Final - Corrected function names
 "use server"
 
 import { z } from "zod"
-import { createClient } from "@/lib/supabase/server"
+import { createClient as createSupabaseClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { getAuthUser } from "@/lib/auth"
@@ -16,8 +16,8 @@ const FormSchema = z.object({
   address: z.string().optional(),
 })
 
-const CreateClient = FormSchema.omit({ id: true })
-const UpdateClient = FormSchema
+const CreateClientSchema = FormSchema.omit({ id: true })
+const UpdateClientSchema = FormSchema
 
 export type State = {
   errors?: {
@@ -31,7 +31,7 @@ export type State = {
   success?: boolean
 }
 
-export async function createClientAction(prevState: State, formData: FormData) {
+export async function createClient(prevState: State, formData: FormData) {
   const user = await getAuthUser()
   if (!user) {
     return {
@@ -40,7 +40,7 @@ export async function createClientAction(prevState: State, formData: FormData) {
     }
   }
 
-  const validatedFields = CreateClient.safeParse({
+  const validatedFields = CreateClientSchema.safeParse({
     first_name: formData.get("first_name"),
     last_name: formData.get("last_name"),
     email: formData.get("email"),
@@ -57,7 +57,7 @@ export async function createClientAction(prevState: State, formData: FormData) {
   }
 
   const { first_name, last_name, email, phone, address } = validatedFields.data
-  const supabase = createClient()
+  const supabase = createSupabaseClient()
 
   const { error } = await supabase.from("clients").insert({
     first_name,
@@ -77,13 +77,13 @@ export async function createClientAction(prevState: State, formData: FormData) {
   redirect("/clients")
 }
 
-export async function updateClientAction(id: string, prevState: State, formData: FormData) {
+export async function updateClient(id: string, prevState: State, formData: FormData) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
-  const validatedFields = UpdateClient.safeParse({
+  const validatedFields = UpdateClientSchema.safeParse({
     id,
     first_name: formData.get("first_name"),
     last_name: formData.get("last_name"),
@@ -101,7 +101,7 @@ export async function updateClientAction(id: string, prevState: State, formData:
   }
 
   const { first_name, last_name, email, phone, address } = validatedFields.data
-  const supabase = createClient()
+  const supabase = createSupabaseClient()
 
   const { error } = await supabase
     .from("clients")
@@ -125,7 +125,7 @@ export async function deleteClientAction(id: string) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
-  const supabase = createClient()
+  const supabase = createSupabaseClient()
   const { error } = await supabase.from("clients").delete().eq("id", id).eq("user_id", user.id)
 
   if (error) {

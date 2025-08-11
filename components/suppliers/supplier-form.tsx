@@ -3,7 +3,7 @@
 import { useEffect } from "react"
 import { useFormState, useFormStatus } from "react-dom"
 import { toast } from "sonner"
-import { createSupplierAction, updateSupplierAction, type State } from "@/app/suppliers/actions"
+import { createSupplier, updateSupplier, type State } from "@/app/suppliers/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -12,12 +12,12 @@ import type { Supplier } from "@/lib/supabase/types"
 
 export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
   const initialState: State = { message: null, errors: {} }
-  const action = supplier ? updateSupplierAction.bind(null, supplier.id) : createSupplierAction
+  const action = supplier ? updateSupplier.bind(null, supplier.id) : createSupplier
   const [state, dispatch] = useFormState(action, initialState)
 
   useEffect(() => {
     if (state.message) {
-      if (Object.keys(state.errors ?? {}).length > 0) {
+      if (state.success === false) {
         toast.error(state.message)
       } else {
         toast.success(state.message)

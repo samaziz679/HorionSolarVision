@@ -10,14 +10,14 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { BankAccount } from "@/lib/supabase/types"
 
-export function BankingForm({ bankAccount }: { bankAccount?: BankAccount }) {
+export default function BankingForm({ bankAccount }: { bankAccount?: BankAccount }) {
   const initialState: State = { message: null, errors: {} }
   const action = bankAccount ? updateBankAccount.bind(null, bankAccount.id) : createBankAccount
   const [state, dispatch] = useFormState(action, initialState)
 
   useEffect(() => {
     if (state.message) {
-      if (Object.keys(state.errors ?? {}).length > 0) {
+      if (state.success === false) {
         toast.error(state.message)
       } else {
         toast.success(state.message)

@@ -10,14 +10,14 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Client } from "@/lib/supabase/types"
 
-export function ClientForm({ client }: { client?: Client }) {
+export default function ClientForm({ client }: { client?: Client }) {
   const initialState: State = { message: null, errors: {} }
   const action = client ? updateClient.bind(null, client.id) : createClient
   const [state, dispatch] = useFormState(action, initialState)
 
   useEffect(() => {
     if (state.message) {
-      if (Object.keys(state.errors ?? {}).length > 0) {
+      if (state.success === false) {
         toast.error(state.message)
       } else {
         toast.success(state.message)
