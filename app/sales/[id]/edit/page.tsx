@@ -22,7 +22,7 @@ type PageProps = {
 
 export default async function EditSalePage({ params }: PageProps) {
   const { id } = params
-  const sale = await fetchSaleById(Number(id))
+  const sale = await fetchSaleById(id)
   const products = await fetchProducts()
   const clients = await fetchClients()
 
@@ -38,8 +38,7 @@ export default async function EditSalePage({ params }: PageProps) {
 
   const clientOptions = clients.map((client: Client) => ({
     id: client.id,
-    first_name: client.first_name,
-    last_name: client.last_name,
+    name: client.name,
   }))
 
   return (

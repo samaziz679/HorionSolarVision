@@ -21,7 +21,7 @@ export default function DeleteExpenseDialog({ expenseId }: { expenseId: string }
   const handleDelete = async () => {
     setIsPending(true)
     try {
-      const result = await deleteExpense(Number.parseInt(expenseId))
+      const result = await deleteExpense(expenseId)
       if (result?.message) {
         alert(result.message)
       }

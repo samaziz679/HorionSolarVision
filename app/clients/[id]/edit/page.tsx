@@ -19,7 +19,7 @@ type PageProps = {
 
 export default async function EditClientPage({ params }: PageProps) {
   const { id } = params
-  const client = await fetchClientById(Number(id))
+  const client = await fetchClientById(id)
 
   if (!client) {
     notFound()

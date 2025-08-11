@@ -19,7 +19,7 @@ type PageProps = {
 
 export default async function EditExpensePage({ params }: PageProps) {
   const { id } = params
-  const expense = await fetchExpenseById(Number(id))
+  const expense = await fetchExpenseById(id)
 
   if (!expense) {
     notFound()

@@ -26,7 +26,7 @@ export default function DeleteSupplierDialog({ supplierId, isOpen, onClose }: De
   const handleDelete = async () => {
     setIsPending(true)
     try {
-      const result = await deleteSupplierAction(Number.parseInt(supplierId))
+      const result = await deleteSupplierAction(supplierId)
       if (result.success) {
         toast.success(result.message)
         onClose()

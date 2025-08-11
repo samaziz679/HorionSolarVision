@@ -21,7 +21,7 @@ type PageProps = {
 
 export default async function EditProductPage({ params }: PageProps) {
   const { id } = params
-  const product = await fetchProductById(Number(id))
+  const product = await fetchProductById(id)
   const suppliers = await fetchSuppliers()
 
   if (!product) {

@@ -26,7 +26,7 @@ export default function DeleteClientDialog({ clientId, isOpen, onClose }: Delete
   const handleDelete = async () => {
     setIsPending(true)
     try {
-      const result = await deleteClientAction(Number.parseInt(clientId))
+      const result = await deleteClientAction(clientId)
       if (result.success) {
         toast.success(result.message)
         onClose()
