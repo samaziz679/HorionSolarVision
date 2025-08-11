@@ -12,7 +12,6 @@ export async function fetchSales() {
       id,
       sale_date,
       total_price,
-      created_at,
       clients (id, name)
     `,
     )
