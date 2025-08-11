@@ -38,7 +38,7 @@ export default async function EditClientPage({ params }: PageProps) {
               <Link href="/dashboard">Dashboard</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          <BreadcrumbSeparator /> 
+          <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
               <Link href="/clients">Clients</Link>
