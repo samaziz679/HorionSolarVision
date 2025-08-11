@@ -65,19 +65,14 @@ export function EditSupplierForm({ supplier }: { supplier: Supplier }) {
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="contact_person">Contact Person</Label>
-        <Input id="contact_person" name="contact_person" type="text" defaultValue={supplier.contact_person ?? ""} />
-      </div>
-
-      <div className="grid gap-2">
         <Label htmlFor="email">Email</Label>
         <Input id="email" name="email" type="email" defaultValue={supplier.email ?? ""} />
         {state?.errors?.email && <p className="text-sm font-medium text-destructive">{state.errors.email[0]}</p>}
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="phone_number">Phone Number</Label>
-        <Input id="phone_number" name="phone_number" type="tel" defaultValue={supplier.phone_number ?? ""} />
+        <Label htmlFor="phone">Phone Number</Label>
+        <Input id="phone" name="phone" type="tel" defaultValue={supplier.phone ?? ""} />
       </div>
 
       <div className="grid gap-2">
