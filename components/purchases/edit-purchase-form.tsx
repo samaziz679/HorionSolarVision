@@ -60,7 +60,12 @@ export function EditPurchaseForm({
   }, [state])
 
   return (
-    <form action={handleSubmit}>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        handleSubmit(new FormData(e.currentTarget))
+      }}
+    >
       <div className="grid gap-4">
         <div className="grid gap-2">
           <Label htmlFor="supplier_id">Supplier</Label>
