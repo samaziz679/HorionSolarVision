@@ -10,10 +10,14 @@ const FormSchema = z.object({
   id: z.string(),
   name: z.string().min(1, "Product name is required."),
   description: z.string().optional(),
-  price: z.coerce.number().gt(0, "Price must be greater than 0."),
-  stock_quantity: z.coerce.number().int().nonnegative("Stock quantity must be a non-negative integer."),
-  category: z.string().optional(),
-  supplier_id: z.coerce.number().optional(),
+  prix_achat: z.coerce.number().gt(0, "Purchase price must be greater than 0."),
+  prix_vente_detail_1: z.coerce.number().gt(0, "Retail price 1 must be greater than 0."),
+  prix_vente_detail_2: z.coerce.number().optional(),
+  prix_vente_gros: z.coerce.number().optional(),
+  quantity: z.coerce.number().int().nonnegative("Quantity must be a non-negative integer."),
+  type: z.string().optional(),
+  unit: z.string().optional(),
+  seuil_stock_bas: z.coerce.number().int().optional(),
 })
 
 const CreateProductSchema = FormSchema.omit({ id: true })
@@ -23,10 +27,14 @@ export type State = {
   errors?: {
     name?: string[]
     description?: string[]
-    price?: string[]
-    stock_quantity?: string[]
-    category?: string[]
-    supplier_id?: string[]
+    prix_achat?: string[]
+    prix_vente_detail_1?: string[]
+    prix_vente_detail_2?: string[]
+    prix_vente_gros?: string[]
+    quantity?: string[]
+    type?: string[]
+    unit?: string[]
+    seuil_stock_bas?: string[]
   }
   message?: string | null
   success?: boolean
@@ -41,10 +49,14 @@ export async function createProduct(prevState: State, formData: FormData) {
   const validatedFields = CreateProductSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
-    price: formData.get("price"),
-    stock_quantity: formData.get("stock_quantity"),
-    category: formData.get("category"),
-    supplier_id: formData.get("supplier_id"),
+    prix_achat: formData.get("prix_achat"),
+    prix_vente_detail_1: formData.get("prix_vente_detail_1"),
+    prix_vente_detail_2: formData.get("prix_vente_detail_2"),
+    prix_vente_gros: formData.get("prix_vente_gros"),
+    quantity: formData.get("quantity"),
+    type: formData.get("type"),
+    unit: formData.get("unit"),
+    seuil_stock_bas: formData.get("seuil_stock_bas"),
   })
 
   if (!validatedFields.success) {
@@ -55,17 +67,32 @@ export async function createProduct(prevState: State, formData: FormData) {
     }
   }
 
-  const { name, description, price, stock_quantity, category, supplier_id } = validatedFields.data
+  const {
+    name,
+    description,
+    prix_achat,
+    prix_vente_detail_1,
+    prix_vente_detail_2,
+    prix_vente_gros,
+    quantity,
+    type,
+    unit,
+    seuil_stock_bas,
+  } = validatedFields.data
   const supabase = createClient()
 
   const { error } = await supabase.from("products").insert({
     name,
-    description: description || null,
-    price,
-    stock_quantity,
-    category: category || null,
-    supplier_id: supplier_id || null,
-    user_id: user.id,
+    description,
+    prix_achat,
+    prix_vente_detail_1,
+    prix_vente_detail_2,
+    prix_vente_gros,
+    quantity,
+    type,
+    unit,
+    seuil_stock_bas,
+    created_by: user.id,
   })
 
   if (error) {
@@ -77,20 +104,24 @@ export async function createProduct(prevState: State, formData: FormData) {
   redirect("/inventory")
 }
 
-export async function updateProduct(id: number, prevState: State, formData: FormData) {
+export async function updateProduct(id: string, prevState: State, formData: FormData) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
   const validatedFields = UpdateProductSchema.safeParse({
-    id: id.toString(),
+    id,
     name: formData.get("name"),
     description: formData.get("description"),
-    price: formData.get("price"),
-    stock_quantity: formData.get("stock_quantity"),
-    category: formData.get("category"),
-    supplier_id: formData.get("supplier_id"),
+    prix_achat: formData.get("prix_achat"),
+    prix_vente_detail_1: formData.get("prix_vente_detail_1"),
+    prix_vente_detail_2: formData.get("prix_vente_detail_2"),
+    prix_vente_gros: formData.get("prix_vente_gros"),
+    quantity: formData.get("quantity"),
+    type: formData.get("type"),
+    unit: formData.get("unit"),
+    seuil_stock_bas: formData.get("seuil_stock_bas"),
   })
 
   if (!validatedFields.success) {
@@ -101,21 +132,36 @@ export async function updateProduct(id: number, prevState: State, formData: Form
     }
   }
 
-  const { name, description, price, stock_quantity, category, supplier_id } = validatedFields.data
+  const {
+    name,
+    description,
+    prix_achat,
+    prix_vente_detail_1,
+    prix_vente_detail_2,
+    prix_vente_gros,
+    quantity,
+    type,
+    unit,
+    seuil_stock_bas,
+  } = validatedFields.data
   const supabase = createClient()
 
   const { error } = await supabase
     .from("products")
     .update({
       name,
-      description: description || null,
-      price,
-      stock_quantity,
-      category: category || null,
-      supplier_id: supplier_id || null,
+      description,
+      prix_achat,
+      prix_vente_detail_1,
+      prix_vente_detail_2,
+      prix_vente_gros,
+      quantity,
+      type,
+      unit,
+      seuil_stock_bas,
     })
     .eq("id", id)
-    .eq("user_id", user.id)
+    .eq("created_by", user.id)
 
   if (error) {
     console.error("Database Error:", error)
@@ -127,14 +173,14 @@ export async function updateProduct(id: number, prevState: State, formData: Form
   redirect("/inventory")
 }
 
-export async function deleteProduct(id: number) {
+export async function deleteProduct(id: string) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
   const supabase = createClient()
-  const { error } = await supabase.from("products").delete().eq("id", id).eq("user_id", user.id)
+  const { error } = await supabase.from("products").delete().eq("id", id).eq("created_by", user.id)
 
   if (error) {
     console.error("Database Error:", error)
