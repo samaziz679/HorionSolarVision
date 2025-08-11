@@ -10,14 +10,14 @@ export async function fetchSales() {
     .select(
       `
       id,
-      sale_date,
+      date,
       total_amount,
       created_at,
       products (id, name),
       clients (id, first_name, last_name)
     `,
     )
-    .order("sale_date", { ascending: false })
+    .order("date", { ascending: false })
 
   if (error) {
     console.error("Database Error:", error)
@@ -26,7 +26,7 @@ export async function fetchSales() {
 
   return data.map((sale) => ({
     id: sale.id,
-    date: sale.sale_date,
+    date: sale.date,
     total_amount: sale.total_amount,
     client_name: `${sale.clients.first_name} ${sale.clients.last_name}`.trim(),
   }))
