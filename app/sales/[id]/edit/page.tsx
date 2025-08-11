@@ -38,8 +38,7 @@ export default async function EditSalePage({ params }: PageProps) {
 
   const clientOptions = clients.map((client: Client) => ({
     id: client.id,
-    first_name: client.name.split(" ")[0] || client.name,
-    last_name: client.name.split(" ").slice(1).join(" ") || "",
+    name: client.name,
   }))
 
   const saleWithItems = {
