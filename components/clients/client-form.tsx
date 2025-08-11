@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { useFormState, useFormStatus } from "react-dom"
+import { useFormState, useFormStatus } from "react"
 import { toast } from "sonner"
 import { createClient, updateClient, type State } from "@/app/clients/actions"
 import { Button } from "@/components/ui/button"
