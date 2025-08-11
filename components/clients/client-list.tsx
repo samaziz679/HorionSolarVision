@@ -50,7 +50,7 @@ export default function ClientList({ clients }: ClientListProps) {
                     <span className="sr-only">Edit</span>
                   </Link>
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(client.id)}>
+                <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(client.id.toString())}>
                   <TrashIcon className="h-4 w-4" />
                   <span className="sr-only">Delete</span>
                 </Button>
