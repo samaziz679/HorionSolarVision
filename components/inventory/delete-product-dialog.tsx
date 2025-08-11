@@ -26,7 +26,7 @@ export default function DeleteProductDialog({ productId, isOpen, onClose }: Dele
   const handleDelete = async () => {
     setIsPending(true)
     try {
-      const result = await deleteProduct(productId)
+      const result = await deleteProduct(String(productId))
       if (result?.message) {
         toast.error(result.message)
       } else {
