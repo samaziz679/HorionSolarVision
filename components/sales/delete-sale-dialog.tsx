@@ -17,7 +17,7 @@ import { useState } from "react"
 interface DeleteSaleDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  saleId: number
+  saleId: string // Changed from number to string for UUID compatibility
 }
 
 export function DeleteSaleDialog({ open, onOpenChange, saleId }: DeleteSaleDialogProps) {
