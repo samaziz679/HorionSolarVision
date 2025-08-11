@@ -36,7 +36,7 @@ export function EditSupplierForm({ supplier }: { supplier: Supplier }) {
     const formData = new FormData(event.currentTarget)
 
     try {
-      const updateSupplierWithId = updateSupplier.bind(null, String(supplier.id))
+      const updateSupplierWithId = updateSupplier.bind(null, supplier.id)
       const result = await updateSupplierWithId(state, formData)
       setState(result)
     } catch (error) {
