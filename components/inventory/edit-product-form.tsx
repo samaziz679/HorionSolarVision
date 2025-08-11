@@ -5,7 +5,6 @@ import { updateProduct } from "@/app/inventory/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type { Product, Supplier } from "@/lib/supabase/types"
 import type { State } from "@/app/inventory/actions"
@@ -58,7 +57,7 @@ export default function EditProductForm({ product, suppliers }: { product: Produ
         <Label htmlFor="price">Price</Label>
         <Input
           id="price"
-          name="prix_vente_detail_1" // Changed name to match database field
+          name="prix_vente_detail_1"
           type="number"
           step="0.01"
           defaultValue={product.prix_vente_detail_1 ?? ""}
@@ -66,31 +65,12 @@ export default function EditProductForm({ product, suppliers }: { product: Produ
         />
         {state.errors?.prix_vente_detail_1 && (
           <p className="text-sm text-red-500 mt-1">{state.errors.prix_vente_detail_1[0]}</p>
-        )}{" "}
-        {/* Updated error field name */}
+        )}
       </div>
       <div>
         <Label htmlFor="stock_quantity">Stock Quantity</Label>
-        <Input id="stock_quantity" name="quantity" type="number" defaultValue={product.quantity ?? ""} required />{" "}
-        {/* Changed name to match database field */}
-        {state.errors?.quantity && <p className="text-sm text-red-500 mt-1">{state.errors.quantity[0]}</p>}{" "}
-        {/* Updated error field name */}
-      </div>
-      <div>
-        <Label htmlFor="supplier_id">Supplier</Label>
-        <Select name="supplier_id" defaultValue={product.supplier_id ? String(product.supplier_id) : ""}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a supplier" />
-          </SelectTrigger>
-          <SelectContent>
-            {suppliers.map((supplier) => (
-              <SelectItem key={supplier.id} value={String(supplier.id)}>
-                {supplier.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {state.errors?.supplier_id && <p className="text-sm text-red-500 mt-1">{state.errors.supplier_id[0]}</p>}
+        <Input id="stock_quantity" name="quantity" type="number" defaultValue={product.quantity ?? ""} required />
+        {state.errors?.quantity && <p className="text-sm text-red-500 mt-1">{state.errors.quantity[0]}</p>}
       </div>
       <SubmitButton isLoading={isLoading} />
     </form>
