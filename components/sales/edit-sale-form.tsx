@@ -48,7 +48,7 @@ export function EditSaleForm({
             <SelectContent>
               {clients.map((client) => (
                 <SelectItem key={client.id} value={String(client.id)}>
-                  {`${client.first_name} ${client.last_name}`}
+                  {client.name}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -56,7 +56,12 @@ export function EditSaleForm({
         </div>
         <div>
           <Label htmlFor="sale_date">Sale Date</Label>
-          <Input name="sale_date" type="date" defaultValue={new Date(sale.date).toISOString().split("T")[0]} required />
+          <Input
+            name="sale_date"
+            type="date"
+            defaultValue={new Date(sale.sale_date).toISOString().split("T")[0]}
+            required
+          />
         </div>
 
         {/* Item editing logic would go here, similar to SaleForm */}
