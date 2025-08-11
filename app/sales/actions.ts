@@ -6,17 +6,15 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 import { getAuthUser } from "@/lib/auth"
 
-const SaleItemSchema = z.object({
-  product_id: z.coerce.number().min(1, "Product is required."),
-  quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
-  unit_price: z.coerce.number().min(0, "Unit price cannot be negative."),
-})
-
 const FormSchema = z.object({
   id: z.string(),
-  client_id: z.coerce.number().min(1, "Client is required."),
-  date: z.string().min(1, "Sale date is required."),
-  sale_items: z.array(SaleItemSchema).min(1, "At least one item is required."),
+  product_id: z.string().min(1, "Product is required."),
+  client_id: z.string().min(1, "Client is required."),
+  quantity: z.coerce.number().min(1, "Quantity must be at least 1."),
+  price_plan: z.string().min(1, "Price plan is required."),
+  unit_price: z.coerce.number().min(0, "Unit price cannot be negative."),
+  sale_date: z.string().min(1, "Sale date is required."),
+  notes: z.string().optional(),
 })
 
 const CreateSaleSchema = FormSchema.omit({ id: true })
@@ -24,65 +22,16 @@ const UpdateSaleSchema = FormSchema
 
 export type State = {
   errors?: {
+    product_id?: string[]
     client_id?: string[]
-    date?: string[]
-    sale_items?: string[]
-    total_amount?: string[]
+    quantity?: string[]
+    price_plan?: string[]
+    unit_price?: string[]
+    sale_date?: string[]
+    notes?: string[]
   }
   message?: string | null
   success?: boolean
-}
-
-async function upsertSale(
-  data: z.infer<typeof CreateSaleSchema> | z.infer<typeof UpdateSaleSchema>,
-  user_id: string,
-  sale_id?: number,
-) {
-  const supabase = createClient()
-  const { client_id, date, sale_items } = data
-
-  const total_amount = sale_items.reduce((acc, item) => acc + item.quantity * item.unit_price, 0)
-
-  const { data: saleData, error: saleError } = await supabase
-    .from("sales")
-    .upsert({
-      id: sale_id,
-      client_id,
-      date,
-      total_amount,
-      user_id,
-    })
-    .select()
-    .single()
-
-  if (saleError) {
-    console.error("Sale Upsert Error:", saleError)
-    return { message: "Database Error: Failed to save sale.", success: false }
-  }
-
-  // If updating, first delete old items
-  if (sale_id) {
-    const { error: deleteError } = await supabase.from("sale_items").delete().eq("sale_id", sale_id)
-    if (deleteError) {
-      console.error("Sale Items Delete Error:", deleteError)
-      return { message: "Database Error: Failed to update sale items.", success: false }
-    }
-  }
-
-  const itemsToInsert = sale_items.map((item) => ({
-    ...item,
-    sale_id: saleData.id,
-    user_id,
-  }))
-
-  const { error: itemsError } = await supabase.from("sale_items").insert(itemsToInsert)
-
-  if (itemsError) {
-    console.error("Sale Items Insert Error:", itemsError)
-    return { message: "Database Error: Failed to save sale items.", success: false }
-  }
-
-  return { success: true, saleId: saleData.id }
 }
 
 export async function createSale(prevState: State, formData: FormData) {
@@ -91,12 +40,14 @@ export async function createSale(prevState: State, formData: FormData) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
-  const saleItems = JSON.parse(formData.get("sale_items") as string)
-
   const validatedFields = CreateSaleSchema.safeParse({
+    product_id: formData.get("product_id"),
     client_id: formData.get("client_id"),
-    date: formData.get("date"),
-    sale_items: saleItems,
+    quantity: formData.get("quantity"),
+    price_plan: formData.get("price_plan"),
+    unit_price: formData.get("unit_price"),
+    sale_date: formData.get("sale_date"),
+    notes: formData.get("notes"),
   })
 
   if (!validatedFields.success) {
@@ -107,28 +58,47 @@ export async function createSale(prevState: State, formData: FormData) {
     }
   }
 
-  const result = await upsertSale(validatedFields.data, user.id)
-  if (!result.success) {
-    return { message: result.message, success: false }
+  const total = validatedFields.data.quantity * validatedFields.data.unit_price
+  const supabase = createClient()
+
+  const { error } = await supabase.from("sales").insert({
+    product_id: validatedFields.data.product_id,
+    client_id: validatedFields.data.client_id,
+    quantity: validatedFields.data.quantity,
+    price_plan: validatedFields.data.price_plan,
+    unit_price: validatedFields.data.unit_price,
+    total: total,
+    sale_date: validatedFields.data.sale_date,
+    quantity_sold: validatedFields.data.quantity,
+    total_price: total,
+    created_by: user.id,
+    notes: validatedFields.data.notes,
+  })
+
+  if (error) {
+    console.error("Database Error:", error)
+    return { message: "Database Error: Failed to create sale.", success: false }
   }
 
   revalidatePath("/sales")
   redirect("/sales")
 }
 
-export async function updateSale(id: number, prevState: State, formData: FormData) {
+export async function updateSale(id: string, prevState: State, formData: FormData) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
-  const saleItems = JSON.parse(formData.get("sale_items") as string)
-
   const validatedFields = UpdateSaleSchema.safeParse({
-    id: id.toString(),
+    id: id,
+    product_id: formData.get("product_id"),
     client_id: formData.get("client_id"),
-    date: formData.get("date"),
-    sale_items: saleItems,
+    quantity: formData.get("quantity"),
+    price_plan: formData.get("price_plan"),
+    unit_price: formData.get("unit_price"),
+    sale_date: formData.get("sale_date"),
+    notes: formData.get("notes"),
   })
 
   if (!validatedFields.success) {
@@ -139,9 +109,29 @@ export async function updateSale(id: number, prevState: State, formData: FormDat
     }
   }
 
-  const result = await upsertSale(validatedFields.data, user.id, id)
-  if (!result.success) {
-    return { message: result.message, success: false }
+  const total = validatedFields.data.quantity * validatedFields.data.unit_price
+  const supabase = createClient()
+
+  const { error } = await supabase
+    .from("sales")
+    .update({
+      product_id: validatedFields.data.product_id,
+      client_id: validatedFields.data.client_id,
+      quantity: validatedFields.data.quantity,
+      price_plan: validatedFields.data.price_plan,
+      unit_price: validatedFields.data.unit_price,
+      total: total,
+      sale_date: validatedFields.data.sale_date,
+      quantity_sold: validatedFields.data.quantity,
+      total_price: total,
+      notes: validatedFields.data.notes,
+    })
+    .eq("id", id)
+    .eq("created_by", user.id)
+
+  if (error) {
+    console.error("Database Error:", error)
+    return { message: "Database Error: Failed to update sale.", success: false }
   }
 
   revalidatePath("/sales")
@@ -149,7 +139,7 @@ export async function updateSale(id: number, prevState: State, formData: FormDat
   redirect("/sales")
 }
 
-export async function deleteSale(id: number) {
+export async function deleteSale(id: string) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
@@ -157,16 +147,10 @@ export async function deleteSale(id: number) {
 
   const supabase = createClient()
 
-  // Must delete from sale_items first due to foreign key constraint
-  const { error: itemsError } = await supabase.from("sale_items").delete().eq("sale_id", id).eq("user_id", user.id)
-  if (itemsError) {
-    console.error("Database Error:", itemsError)
-    return { message: "Database Error: Failed to delete sale items.", success: false }
-  }
+  const { error } = await supabase.from("sales").delete().eq("id", id).eq("created_by", user.id)
 
-  const { error: saleError } = await supabase.from("sales").delete().eq("id", id).eq("user_id", user.id)
-  if (saleError) {
-    console.error("Database Error:", saleError)
+  if (error) {
+    console.error("Database Error:", error)
     return { message: "Database Error: Failed to delete sale.", success: false }
   }
 

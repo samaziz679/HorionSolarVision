@@ -61,7 +61,7 @@ export async function createSupplier(prevState: State, formData: FormData) {
     phone_number: phone_number || null,
     address: address || null,
     contact_person: contact_person || null,
-    user_id: user.id,
+    created_by: user.id,
   })
 
   if (error) {
@@ -73,14 +73,14 @@ export async function createSupplier(prevState: State, formData: FormData) {
   redirect("/suppliers")
 }
 
-export async function updateSupplier(id: number, prevState: State, formData: FormData) {
+export async function updateSupplier(id: string, prevState: State, formData: FormData) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
   const validatedFields = UpdateSupplierSchema.safeParse({
-    id: id.toString(),
+    id: id,
     name: formData.get("name"),
     email: formData.get("email"),
     phone_number: formData.get("phone_number"),
@@ -109,7 +109,7 @@ export async function updateSupplier(id: number, prevState: State, formData: For
       contact_person: contact_person || null,
     })
     .eq("id", id)
-    .eq("user_id", user.id)
+    .eq("created_by", user.id)
 
   if (error) {
     console.error("Database Error:", error)
@@ -121,14 +121,14 @@ export async function updateSupplier(id: number, prevState: State, formData: For
   redirect("/suppliers")
 }
 
-export async function deleteSupplierAction(id: number) {
+export async function deleteSupplierAction(id: string) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
   const supabase = createClient()
-  const { error } = await supabase.from("suppliers").delete().eq("id", id).eq("user_id", user.id)
+  const { error } = await supabase.from("suppliers").delete().eq("id", id).eq("created_by", user.id)
 
   if (error) {
     console.error("Database Error:", error)
