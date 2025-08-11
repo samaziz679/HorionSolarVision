@@ -22,7 +22,7 @@ export default async function EditBankingPage({ params }: PageProps) {
         <CardTitle>Edit Bank Account</CardTitle>
       </CardHeader>
       <CardContent>
-        <BankingForm bankingAccount={bankAccount} />
+        <BankingForm bankAccount={bankAccount} />
       </CardContent>
     </Card>
   )

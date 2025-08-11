@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { fetchSupplierById } from "@/lib/data/suppliers"
-import { EditSupplierForm } from "@/components/suppliers/edit-supplier-form"
+import SupplierForm from "@/components/suppliers/supplier-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type PageProps = {
@@ -10,11 +10,7 @@ type PageProps = {
 }
 
 export default async function EditSupplierPage({ params }: PageProps) {
-  const id = Number(params.id)
-  if (isNaN(id)) {
-    notFound()
-  }
-  const supplier = await fetchSupplierById(id)
+  const supplier = await fetchSupplierById(params.id)
 
   if (!supplier) {
     notFound()
@@ -26,7 +22,7 @@ export default async function EditSupplierPage({ params }: PageProps) {
         <CardTitle>Edit Supplier</CardTitle>
       </CardHeader>
       <CardContent>
-        <EditSupplierForm supplier={supplier} />
+        <SupplierForm supplier={supplier} />
       </CardContent>
     </Card>
   )

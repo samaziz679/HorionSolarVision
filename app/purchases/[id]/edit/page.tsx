@@ -12,16 +12,13 @@ type PageProps = {
 }
 
 export default async function EditPurchasePage({ params }: PageProps) {
-  const id = Number(params.id)
-  if (isNaN(id)) {
-    notFound()
-  }
-
-  const [purchase, products, suppliers] = await Promise.all([fetchPurchaseById(id), fetchProducts(), fetchSuppliers()])
-
+  const purchase = await fetchPurchaseById(params.id)
   if (!purchase) {
     notFound()
   }
+
+  const products = await fetchProducts()
+  const suppliers = await fetchSuppliers()
 
   return (
     <Card>

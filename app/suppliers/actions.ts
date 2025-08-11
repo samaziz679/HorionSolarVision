@@ -1,84 +1,138 @@
+// v2.1 Final - Corrected Naming
 "use server"
 
+import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
-import { z } from "zod"
+import { redirect } from "next/navigation"
+import { getAuthUser } from "@/lib/auth"
 
-const SupplierSchema = z.object({
+const FormSchema = z.object({
+  id: z.string(),
   name: z.string().min(1, "Supplier name is required."),
   contact_person: z.string().optional(),
   email: z.string().email("Invalid email address.").optional().or(z.literal("")),
-  phone_number: z.string().optional(),
+  phone: z.string().optional(),
   address: z.string().optional(),
 })
 
-export async function createSupplier(prevState: any, formData: FormData) {
-  const supabase = createClient()
-  const validatedFields = SupplierSchema.safeParse(Object.fromEntries(formData.entries()))
+const CreateSupplier = FormSchema.omit({ id: true })
+const UpdateSupplier = FormSchema
+
+export type State = {
+  errors?: {
+    name?: string[]
+    contact_person?: string[]
+    email?: string[]
+    phone?: string[]
+    address?: string[]
+  }
+  message?: string | null
+  success?: boolean
+}
+
+export async function createSupplierAction(prevState: State, formData: FormData) {
+  const user = await getAuthUser()
+  if (!user) {
+    return {
+      message: "Authentication error. Please sign in.",
+      success: false,
+    }
+  }
+
+  const validatedFields = CreateSupplier.safeParse({
+    name: formData.get("name"),
+    contact_person: formData.get("contact_person"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    address: formData.get("address"),
+  })
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: "Error: Please check the form fields.",
+      message: "Missing or invalid fields. Failed to create supplier.",
+      success: false,
     }
   }
 
-  const { data, error } = await supabase.from("suppliers").insert(validatedFields.data).select().single()
+  const { name, contact_person, email, phone, address } = validatedFields.data
+  const supabase = createClient()
+
+  const { error } = await supabase.from("suppliers").insert({
+    name,
+    contact_person,
+    email,
+    phone,
+    address,
+    user_id: user.id,
+  })
 
   if (error) {
-    return {
-      errors: {},
-      message: `Database Error: Failed to create supplier. ${error.message}`,
-    }
+    console.error("Database Error:", error)
+    return { message: "Database Error: Failed to create supplier.", success: false }
   }
 
   revalidatePath("/suppliers")
-  return {
-    errors: {},
-    message: `Successfully created supplier ${data.name}.`,
-  }
+  redirect("/suppliers")
 }
 
-export async function updateSupplier(id: string, prevState: any, formData: FormData) {
-  const supabase = createClient()
-  const validatedFields = SupplierSchema.safeParse(Object.fromEntries(formData.entries()))
+export async function updateSupplierAction(id: string, prevState: State, formData: FormData) {
+  const user = await getAuthUser()
+  if (!user) {
+    return { message: "Authentication error. Please sign in.", success: false }
+  }
+
+  const validatedFields = UpdateSupplier.safeParse({
+    id,
+    name: formData.get("name"),
+    contact_person: formData.get("contact_person"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    address: formData.get("address"),
+  })
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: "Error: Please check the form fields.",
+      message: "Missing or invalid fields. Failed to update supplier.",
+      success: false,
     }
   }
 
-  const { data, error } = await supabase.from("suppliers").update(validatedFields.data).eq("id", id).select().single()
+  const { name, contact_person, email, phone, address } = validatedFields.data
+  const supabase = createClient()
+
+  const { error } = await supabase
+    .from("suppliers")
+    .update({ name, contact_person, email, phone, address })
+    .eq("id", id)
+    .eq("user_id", user.id)
 
   if (error) {
-    return {
-      errors: {},
-      message: `Database Error: Failed to update supplier. ${error.message}`,
-    }
+    console.error("Database Error:", error)
+    return { message: "Database Error: Failed to update supplier.", success: false }
   }
 
   revalidatePath("/suppliers")
   revalidatePath(`/suppliers/${id}/edit`)
-  return {
-    errors: {},
-    message: `Successfully updated supplier ${data.name}.`,
-  }
+  redirect("/suppliers")
 }
 
-export async function deleteSupplier(id: string) {
+export async function deleteSupplierAction(id: string) {
+  const user = await getAuthUser()
+  if (!user) {
+    return { message: "Authentication error. Please sign in.", success: false }
+  }
+
   const supabase = createClient()
-  const { error } = await supabase.from("suppliers").delete().eq("id", id)
+  const { error } = await supabase.from("suppliers").delete().eq("id", id).eq("user_id", user.id)
 
   if (error) {
-    return {
-      message: `Database Error: Failed to delete supplier. ${error.message}`,
-    }
+    console.error("Database Error:", error)
+    return { message: "Database Error: Failed to delete supplier.", success: false }
   }
 
   revalidatePath("/suppliers")
-  return {
-    message: "Successfully deleted supplier.",
-  }
+  return { message: "Supplier deleted successfully.", success: true }
 }
