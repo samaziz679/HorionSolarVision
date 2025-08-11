@@ -11,7 +11,11 @@ type PageProps = {
 }
 
 export default async function EditProductPage({ params }: PageProps) {
-  const id = params.id
+  const id = Number(params.id)
+  if (isNaN(id)) {
+    notFound()
+  }
+
   const [product, suppliers] = await Promise.all([fetchProductById(id), fetchSuppliers()])
 
   if (!product) {
