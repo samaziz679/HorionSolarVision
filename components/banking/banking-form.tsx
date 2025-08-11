@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { useFormState, useFormStatus } from "react"
+import { useFormState, useFormStatus } from "react-dom"
 import { toast } from "sonner"
 import { createBankAccount, updateBankAccount, type State } from "@/app/banking/actions"
 import { Button } from "@/components/ui/button"

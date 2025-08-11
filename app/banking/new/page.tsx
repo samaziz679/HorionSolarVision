@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-import BankAccountForm from "@/components/banking/banking-form"
+import { BankingForm } from "@/components/banking/banking-form"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -36,7 +36,7 @@ export default function NewBankAccountPage() {
 
       <div className="space-y-6">
         <h1 className="text-2xl font-semibold">Create New Bank Account</h1>
-        <BankAccountForm />
+        <BankingForm />
       </div>
     </main>
   )

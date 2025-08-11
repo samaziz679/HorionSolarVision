@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { useFormState, useFormStatus } from "react"
+import { useFormState, useFormStatus } from "react-dom"
 import { toast } from "sonner"
 import { createClient, updateClient, type State } from "@/app/clients/actions"
 import { Button } from "@/components/ui/button"
@@ -60,7 +60,7 @@ export function ClientForm({ client }: { client?: Client }) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" defaultValue={client?.email} aria-describedby="email-error" />
+        <Input id="email" name="email" type="email" defaultValue={client?.email ?? ""} aria-describedby="email-error" />
         <div id="email-error" aria-live="polite" aria-atomic="true">
           {state.errors?.email &&
             state.errors.email.map((error: string) => (

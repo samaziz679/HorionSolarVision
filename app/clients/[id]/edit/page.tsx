@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { fetchClientById } from "@/lib/data/clients"
-import ClientForm from "@/components/clients/client-form"
+import { ClientForm } from "@/components/clients/client-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type PageProps = {

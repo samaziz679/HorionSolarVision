@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { fetchBankAccountById } from "@/lib/data/banking"
-import BankingForm from "@/components/banking/banking-form"
+import { BankingForm } from "@/components/banking/banking-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 type PageProps = {
