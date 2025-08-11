@@ -18,21 +18,14 @@ export default async function NewSalePage() {
   const productOptions = products.map((product) => ({
     id: product.id,
     name: product.name,
-    price: product.prix_vente_detail_1, // Using prix_vente_detail_1 instead of non-existent price field
+    prix_vente_detail_1: product.prix_vente_detail_1, // Using correct field name
     stock_quantity: product.quantity,
   }))
 
-  const clientOptions = clients.map((client) => {
-    const nameParts = client.name.split(" ")
-    const first_name = nameParts[0] || ""
-    const last_name = nameParts.slice(1).join(" ") || ""
-
-    return {
-      id: client.id,
-      first_name,
-      last_name,
-    }
-  })
+  const clientOptions = clients.map((client) => ({
+    id: client.id,
+    name: client.name, // Using single name field from database
+  }))
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
