@@ -15,7 +15,7 @@ import type { Product } from "@/lib/supabase/types"
 
 export default function ProductForm({ product }: { product?: Product }) {
   const [isLoading, setIsLoading] = useState(false)
-  const [state, setState] = useState({ message: null, errors: {} })
+  const [state, setState] = useState({ message: null, success: false, errors: {} })
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -24,9 +24,9 @@ export default function ProductForm({ product }: { product?: Product }) {
 
     try {
       if (product) {
-        await updateProduct(product.id, formData)
+        await updateProduct(product.id, { success: false }, formData)
       } else {
-        await createProduct(formData)
+        await createProduct({ success: false }, formData)
       }
       setState({ message: "Product saved successfully", success: true })
     } catch (error) {
