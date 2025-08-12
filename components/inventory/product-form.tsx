@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-import type { HTMLFormElement } from "react"
 import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { createProduct, updateProduct } from "@/app/inventory/actions"
@@ -15,7 +14,7 @@ export default function ProductForm({ product }: { product?: Product }) {
   const [isLoading, setIsLoading] = useState(false)
   const [state, setState] = useState({ errors: {} })
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setIsLoading(true)
     const formData = new FormData(event.currentTarget)
