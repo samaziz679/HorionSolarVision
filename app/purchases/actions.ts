@@ -114,7 +114,6 @@ export async function updatePurchase(id: string, prevState: State, formData: For
       total_amount: total,
     })
     .eq("id", id)
-    .eq("user_id", user.id)
 
   if (error) {
     console.error("Database Error:", error)
@@ -133,7 +132,8 @@ export async function deletePurchase(id: string) {
   }
 
   const supabase = createClient()
-  const { error } = await supabase.from("purchases").delete().eq("id", id).eq("user_id", user.id)
+
+  const { error } = await supabase.from("purchases").delete().eq("id", id)
 
   if (error) {
     console.error("Database Error:", error)

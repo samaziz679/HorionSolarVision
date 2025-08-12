@@ -127,7 +127,6 @@ export async function updateSale(id: string, prevState: State, formData: FormDat
       notes: validatedFields.data.notes,
     })
     .eq("id", id)
-    .eq("created_by", user.id)
 
   if (error) {
     console.error("Database Error:", error)
@@ -147,7 +146,7 @@ export async function deleteSale(id: string) {
 
   const supabase = createClient()
 
-  const { error } = await supabase.from("sales").delete().eq("id", id).eq("created_by", user.id)
+  const { error } = await supabase.from("sales").delete().eq("id", id)
 
   if (error) {
     console.error("Database Error:", error)

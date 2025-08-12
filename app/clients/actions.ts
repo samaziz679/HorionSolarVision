@@ -101,7 +101,6 @@ export async function updateClient(id: string, prevState: State, formData: FormD
     .from("clients")
     .update({ name, email, phone: phone || null, address: address || null })
     .eq("id", id)
-    .eq("created_by", user.id)
 
   if (error) {
     console.error("Database Error:", error)
@@ -120,7 +119,7 @@ export async function deleteClientAction(id: string) {
   }
 
   const supabase = createSupabaseClient()
-  const { error } = await supabase.from("clients").delete().eq("id", id).eq("created_by", user.id)
+  const { error } = await supabase.from("clients").delete().eq("id", id)
 
   if (error) {
     console.error("Database Error:", error)
