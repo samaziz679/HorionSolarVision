@@ -161,7 +161,6 @@ export async function updateProduct(id: string, prevState: State, formData: Form
       seuil_stock_bas,
     })
     .eq("id", id)
-    .eq("created_by", user.id)
 
   if (error) {
     console.error("Database Error:", error)
@@ -180,7 +179,7 @@ export async function deleteProduct(id: string) {
   }
 
   const supabase = createClient()
-  const { error } = await supabase.from("products").delete().eq("id", id).eq("created_by", user.id)
+  const { error } = await supabase.from("products").delete().eq("id", id)
 
   if (error) {
     console.error("Database Error:", error)
