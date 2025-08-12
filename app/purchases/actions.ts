@@ -60,11 +60,12 @@ export async function createPurchase(prevState: State, formData: FormData) {
   const supabase = createClient()
 
   const { error } = await supabase.from("purchases").insert({
-    user_id: user.id,
+    created_by: user.id,
     product_id,
     supplier_id,
     quantity,
-    total_amount: total,
+    unit_price,
+    total,
     purchase_date,
   })
 
@@ -110,8 +111,9 @@ export async function updatePurchase(id: string, prevState: State, formData: For
       product_id,
       supplier_id,
       quantity,
+      unit_price,
+      total,
       purchase_date,
-      total_amount: total,
     })
     .eq("id", id)
 
