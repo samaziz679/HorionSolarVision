@@ -26,9 +26,9 @@ export default function ClientForm({ client }: { client?: Client }) {
     const formData = new FormData(event.currentTarget)
 
     if (client) {
-      await updateClient(client.id, formData)
+      await updateClient(client.id, { success: false }, formData)
     } else {
-      await createClient(formData)
+      await createClient({ success: false }, formData)
     }
     // Note: redirect() in server actions will handle navigation
     setIsLoading(false)
@@ -45,7 +45,73 @@ export default function ClientForm({ client }: { client?: Client }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* ... existing form fields ... */}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
+            First Name
+          </label>
+          <input
+            type="text"
+            id="firstName"
+            name="firstName"
+            defaultValue={clientName.firstName}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
+            Last Name
+          </label>
+          <input
+            type="text"
+            id="lastName"
+            name="lastName"
+            defaultValue={clientName.lastName}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          />
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          Email
+        </label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          defaultValue={client?.email || ""}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          required
+        />
+      </div>
+
+      <div>
+        <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+          Phone
+        </label>
+        <input
+          type="tel"
+          id="phone"
+          name="phone"
+          defaultValue={client?.phone || ""}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="address" className="block text-sm font-medium text-gray-700">
+          Address
+        </label>
+        <textarea
+          id="address"
+          name="address"
+          rows={3}
+          defaultValue={client?.address || ""}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+        />
+      </div>
 
       <Button type="submit" disabled={isLoading} className="w-full">
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
