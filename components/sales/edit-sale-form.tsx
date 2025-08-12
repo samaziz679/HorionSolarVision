@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useFormState, useFormStatus } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -8,17 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useEffect } from "react"
 import type { Product, Client, SaleWithItems } from "@/lib/supabase/types"
 import { Loader2 } from "lucide-react"
+import { updateSale } from "@/app/sales/actions"
 
-// Assume an updateSale action exists in app/sales/actions.ts
-// import { updateSale } from '@/app/sales/actions'
+function SubmitButton() {
+  const { pending } = useFormStatus()
 
-const initialState = { message: null, errors: {} }
-
-function SubmitButton({ isLoading }: { isLoading: boolean }) {
   return (
-    <Button type="submit" disabled={isLoading} className="w-full mt-4">
-      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {isLoading ? "Updating..." : "Update Sale"}
+    <Button type="submit" disabled={pending} className="w-full mt-4">
+      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {pending ? "Updating..." : "Update Sale"}
     </Button>
   )
 }
@@ -32,14 +30,14 @@ export function EditSaleForm({
   products: Product[]
   clients: Client[]
 }) {
-  const [isLoading, setIsLoading] = useState(false)
+  const [state, formAction] = useFormState(updateSale.bind(null, sale.id), { message: null, errors: {} })
 
   useEffect(() => {
     // toast logic here
   }, [])
 
   return (
-    <form>
+    <form action={formAction}>
       <div className="grid gap-4">
         <div>
           <Label htmlFor="client_id">Client</Label>
@@ -72,7 +70,7 @@ export function EditSaleForm({
           `sale.sale_items` into a state variable and providing UI to modify them.
         </p>
 
-        <SubmitButton isLoading={isLoading} />
+        <SubmitButton />
       </div>
     </form>
   )

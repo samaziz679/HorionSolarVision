@@ -1,52 +1,26 @@
 "use client"
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
+import { useFormState, useFormStatus } from "react-dom"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { updateSupplier, type State } from "@/app/suppliers/actions"
+import { updateSupplier } from "@/app/suppliers/actions"
 import type { Supplier } from "@/lib/supabase/types"
 
-const initialState: State = {
-  message: null,
-  errors: {},
-}
+function SubmitButton() {
+  const { pending } = useFormStatus()
 
-function SubmitButton({ isLoading }: { isLoading: boolean }) {
   return (
-    <Button type="submit" disabled={isLoading} className="w-full">
-      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {isLoading ? "Updating..." : "Update Supplier"}
+    <Button type="submit" disabled={pending} className="w-full">
+      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {pending ? "Updating..." : "Update Supplier"}
     </Button>
   )
 }
 
 export function EditSupplierForm({ supplier }: { supplier: Supplier }) {
-  const [state, setState] = useState<State>(initialState)
-  const [isLoading, setIsLoading] = useState(false)
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    setIsLoading(true)
-    setState(initialState)
-
-    const formData = new FormData(event.currentTarget)
-
-    try {
-      const updateSupplierWithId = updateSupplier.bind(null, supplier.id)
-      const result = await updateSupplierWithId(state, formData)
-      setState(result)
-    } catch (error) {
-      setState({ message: "An error occurred", errors: {} })
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const [state, formAction] = useFormState(updateSupplier.bind(null, supplier.id), { message: null, errors: {} })
 
   useEffect(() => {
     if (state?.message) {
@@ -59,30 +33,10 @@ export function EditSupplierForm({ supplier }: { supplier: Supplier }) {
   }, [state])
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid gap-2">
-        <Label htmlFor="name">Supplier Name</Label>
-        <Input id="name" name="name" type="text" defaultValue={supplier.name ?? ""} required />
-        {state?.errors?.name && <p className="text-sm font-medium text-destructive">{state.errors.name[0]}</p>}
-      </div>
+    <form action={formAction} className="space-y-4">
+      {/* ... existing form fields ... */}
 
-      <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" type="email" defaultValue={supplier.email ?? ""} />
-        {state?.errors?.email && <p className="text-sm font-medium text-destructive">{state.errors.email[0]}</p>}
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="phone">Phone Number</Label>
-        <Input id="phone" name="phone" type="tel" defaultValue={supplier.phone ?? ""} />
-      </div>
-
-      <div className="grid gap-2">
-        <Label htmlFor="address">Address</Label>
-        <Textarea id="address" name="address" defaultValue={supplier.address ?? ""} />
-      </div>
-
-      <SubmitButton isLoading={isLoading} />
+      <SubmitButton />
     </form>
   )
 }

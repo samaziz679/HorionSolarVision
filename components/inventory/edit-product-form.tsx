@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useFormState, useFormStatus } from "react-dom"
 import { Loader2 } from "lucide-react"
 import { updateProduct } from "@/app/inventory/actions"
 import { Button } from "@/components/ui/button"
@@ -8,66 +8,55 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Product } from "@/lib/supabase/types"
-import type { State } from "@/app/inventory/actions"
 
-function SubmitButton({ isLoading }: { isLoading: boolean }) {
+function SubmitButton() {
+  const { pending } = useFormStatus()
+
   return (
-    <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
-      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {isLoading ? "Updating..." : "Update Product"}
+    <Button type="submit" disabled={pending} className="w-full md:w-auto">
+      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {pending ? "Updating..." : "Update Product"}
     </Button>
   )
 }
 
 export default function EditProductForm({ product }: { product: Product }) {
-  const [state, setState] = useState<State>({ message: null, errors: {} })
-  const [isLoading, setIsLoading] = useState(false)
+  const updateProductWithId = updateProduct.bind(null, product.id)
+  const [state] = useFormState(updateProductWithId, { message: null, errors: {} })
 
-  const handleSubmit = async (formData: FormData) => {
-    setIsLoading(true)
-    setState({ message: null, errors: {} })
-
-    try {
-      const updateProductWithId = updateProduct.bind(null, product.id)
-      const result = await updateProductWithId(state, formData)
-      setState(result)
-    } catch (error) {
-      setState({ message: "An error occurred", errors: {} })
-    } finally {
-      setIsLoading(false)
-    }
+  const renderErrors = (errors: string[] | undefined) => {
+    if (!errors || !Array.isArray(errors)) return null
+    return errors.map((error: string) => (
+      <p className="text-sm text-red-500 mt-1" key={error}>
+        {error}
+      </p>
+    ))
   }
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault()
-        handleSubmit(new FormData(e.currentTarget))
-      }}
-      className="space-y-4 max-w-lg"
-    >
+    <form action={updateProductWithId} className="space-y-4 max-w-lg">
       <div>
         <Label htmlFor="name">Product Name</Label>
         <Input id="name" name="name" defaultValue={product.name ?? ""} required />
-        {state.errors?.name && <p className="text-sm text-red-500 mt-1">{state.errors.name[0]}</p>}
+        {renderErrors(state.errors?.name)}
       </div>
 
       <div>
         <Label htmlFor="description">Description</Label>
         <Textarea id="description" name="description" defaultValue={product.description ?? ""} />
-        {state.errors?.description && <p className="text-sm text-red-500 mt-1">{state.errors.description[0]}</p>}
+        {renderErrors(state.errors?.description)}
       </div>
 
       <div>
         <Label htmlFor="type">Product Type</Label>
         <Input id="type" name="type" defaultValue={product.type ?? ""} />
-        {state.errors?.type && <p className="text-sm text-red-500 mt-1">{state.errors.type[0]}</p>}
+        {renderErrors(state.errors?.type)}
       </div>
 
       <div>
         <Label htmlFor="unit">Unit</Label>
         <Input id="unit" name="unit" defaultValue={product.unit ?? ""} placeholder="e.g., kg, pieces, liters" />
-        {state.errors?.unit && <p className="text-sm text-red-500 mt-1">{state.errors.unit[0]}</p>}
+        {renderErrors(state.errors?.unit)}
       </div>
 
       <div>
@@ -80,7 +69,7 @@ export default function EditProductForm({ product }: { product: Product }) {
           defaultValue={product.prix_achat ?? ""}
           required
         />
-        {state.errors?.prix_achat && <p className="text-sm text-red-500 mt-1">{state.errors.prix_achat[0]}</p>}
+        {renderErrors(state.errors?.prix_achat)}
       </div>
 
       <div>
@@ -93,9 +82,7 @@ export default function EditProductForm({ product }: { product: Product }) {
           defaultValue={product.prix_vente_detail_1 ?? ""}
           required
         />
-        {state.errors?.prix_vente_detail_1 && (
-          <p className="text-sm text-red-500 mt-1">{state.errors.prix_vente_detail_1[0]}</p>
-        )}
+        {renderErrors(state.errors?.prix_vente_detail_1)}
       </div>
 
       <div>
@@ -107,9 +94,7 @@ export default function EditProductForm({ product }: { product: Product }) {
           step="0.01"
           defaultValue={product.prix_vente_detail_2 ?? ""}
         />
-        {state.errors?.prix_vente_detail_2 && (
-          <p className="text-sm text-red-500 mt-1">{state.errors.prix_vente_detail_2[0]}</p>
-        )}
+        {renderErrors(state.errors?.prix_vente_detail_2)}
       </div>
 
       <div>
@@ -121,15 +106,13 @@ export default function EditProductForm({ product }: { product: Product }) {
           step="0.01"
           defaultValue={product.prix_vente_gros ?? ""}
         />
-        {state.errors?.prix_vente_gros && (
-          <p className="text-sm text-red-500 mt-1">{state.errors.prix_vente_gros[0]}</p>
-        )}
+        {renderErrors(state.errors?.prix_vente_gros)}
       </div>
 
       <div>
         <Label htmlFor="quantity">Stock Quantity</Label>
         <Input id="quantity" name="quantity" type="number" defaultValue={product.quantity ?? ""} required />
-        {state.errors?.quantity && <p className="text-sm text-red-500 mt-1">{state.errors.quantity[0]}</p>}
+        {renderErrors(state.errors?.quantity)}
       </div>
 
       <div>
@@ -141,9 +124,7 @@ export default function EditProductForm({ product }: { product: Product }) {
           defaultValue={product.seuil_stock_bas ?? ""}
           placeholder="Alert when stock falls below this number"
         />
-        {state.errors?.seuil_stock_bas && (
-          <p className="text-sm text-red-500 mt-1">{state.errors.seuil_stock_bas[0]}</p>
-        )}
+        {renderErrors(state.errors?.seuil_stock_bas)}
       </div>
 
       {state.message && (
@@ -152,7 +133,7 @@ export default function EditProductForm({ product }: { product: Product }) {
         </div>
       )}
 
-      <SubmitButton isLoading={isLoading} />
+      <SubmitButton />
     </form>
   )
 }

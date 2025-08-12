@@ -1,8 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
+
+import { useEffect } from "react"
+import { useFormState, useFormStatus } from "react-dom"
 import { Loader2 } from "lucide-react"
-import { createSale, updateSale, type State } from "@/app/sales/actions"
+import { createSale, updateSale } from "@/app/sales/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -17,8 +20,8 @@ type SaleFormProps = {
 }
 
 export default function SaleForm({ sale, products, clients }: SaleFormProps) {
-  const [state, setState] = useState<State>({ message: null, errors: {} })
-  const [isLoading, setIsLoading] = useState(false)
+  const action = sale ? updateSale.bind(null, sale.id) : createSale
+  const [state, formAction] = useFormState(action, { message: null, errors: {} })
 
   const [selectedProduct, setSelectedProduct] = useState(sale?.product_id || "")
   const [quantity, setQuantity] = useState(sale?.quantity || 1)
@@ -41,26 +44,6 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
 
   const totalAmount = quantity * unitPrice
 
-  const handleSubmit = async (formData: FormData) => {
-    setIsLoading(true)
-    setState({ message: null, errors: {} })
-
-    formData.set("product_id", selectedProduct)
-    formData.set("quantity", quantity.toString())
-    formData.set("price_plan", pricePlan)
-    formData.set("unit_price", unitPrice.toString())
-
-    try {
-      const action = sale ? updateSale.bind(null, sale.id) : createSale
-      const result = await action(state, formData)
-      setState(result)
-    } catch (error) {
-      setState({ message: "An error occurred", errors: {} })
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const renderErrors = (errors: string[] | undefined) => {
     if (!errors || !Array.isArray(errors)) return null
     return errors.map((error: string) => (
@@ -71,13 +54,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   }
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault()
-        handleSubmit(new FormData(e.currentTarget))
-      }}
-      className="space-y-6"
-    >
+    <form action={formAction} className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="client_id">Client</Label>
@@ -206,10 +183,18 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
         </div>
       </div>
 
-      <Button type="submit" disabled={isLoading} className="w-full">
-        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {isLoading ? (sale ? "Updating..." : "Creating...") : sale ? "Update Sale" : "Create Sale"}
-      </Button>
+      <SubmitButton isEditing={!!sale} />
     </form>
+  )
+}
+
+function SubmitButton({ isEditing }: { isEditing: boolean }) {
+  const { pending } = useFormStatus()
+
+  return (
+    <Button type="submit" disabled={pending} className="w-full">
+      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {pending ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Sale" : "Create Sale"}
+    </Button>
   )
 }
