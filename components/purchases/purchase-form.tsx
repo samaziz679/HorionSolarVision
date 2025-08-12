@@ -2,8 +2,7 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
-import { toast } from "sonner"
+import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { createPurchase, updatePurchase } from "@/app/purchases/actions"
 import { Button } from "@/components/ui/button"
@@ -23,12 +22,12 @@ export default function PurchaseForm({
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [quantity, setQuantity] = useState(purchase?.quantity || 0)
-  const [unitPrice, setUnitPrice] = useState(purchase?.unit_price || 0)
+  const [unitPrice, setUnitPrice] = useState(0)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsLoading(true)
-    const formData = new FormData(event.currentTarget)
+    const formData = new FormData(event.currentTarget as HTMLFormElement)
 
     if (purchase) {
       await updatePurchase(purchase.id, { success: false }, formData)
@@ -38,12 +37,6 @@ export default function PurchaseForm({
     // Note: redirect() in server actions will handle navigation
     setIsLoading(false)
   }
-
-  useEffect(() => {
-    if (purchase) {
-      toast.success("Purchase loaded successfully")
-    }
-  }, [purchase])
 
   const renderErrors = (errors: string[] | undefined) => {
     if (!errors || !Array.isArray(errors)) return null
@@ -111,7 +104,7 @@ export default function PurchaseForm({
           type="number"
           step="0.01"
           min="0"
-          defaultValue={purchase?.unit_price || ""}
+          defaultValue=""
           onChange={(e) => setUnitPrice(Number(e.target.value))}
           required
         />

@@ -55,10 +55,17 @@ export async function createPurchase(prevState: State, formData: FormData) {
     }
   }
 
+  const { product_id, supplier_id, quantity, unit_price, total, purchase_date } = validatedFields.data
+
   const supabase = createClient()
+
   const { error } = await supabase.from("purchases").insert({
-    ...validatedFields.data,
-    created_by: user.id,
+    user_id: user.id,
+    product_id,
+    supplier_id,
+    quantity,
+    total_amount: total,
+    purchase_date,
   })
 
   if (error) {
@@ -99,9 +106,15 @@ export async function updatePurchase(id: string, prevState: State, formData: For
 
   const { error } = await supabase
     .from("purchases")
-    .update({ product_id, supplier_id, quantity, unit_price, total, purchase_date })
+    .update({
+      product_id,
+      supplier_id,
+      quantity,
+      purchase_date,
+      total_amount: total,
+    })
     .eq("id", id)
-    .eq("created_by", user.id)
+    .eq("user_id", user.id)
 
   if (error) {
     console.error("Database Error:", error)
@@ -120,7 +133,7 @@ export async function deletePurchase(id: string) {
   }
 
   const supabase = createClient()
-  const { error } = await supabase.from("purchases").delete().eq("id", id).eq("created_by", user.id)
+  const { error } = await supabase.from("purchases").delete().eq("id", id).eq("user_id", user.id)
 
   if (error) {
     console.error("Database Error:", error)
