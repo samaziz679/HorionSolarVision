@@ -18,7 +18,7 @@ export default function EditProductForm({ product }: { product: Product }) {
     setIsLoading(true)
     const formData = new FormData(event.currentTarget)
 
-    await updateProduct(product.id, formData)
+    await updateProduct(product.id, { success: false }, formData)
     // Note: redirect() in server actions will handle navigation
     setIsLoading(false)
   }
