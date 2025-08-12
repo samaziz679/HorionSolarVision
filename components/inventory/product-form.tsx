@@ -17,7 +17,7 @@ export default function ProductForm({ product }: { product?: Product }) {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
     setIsLoading(true)
-    const formData = new FormData(event.currentTarget)
+    const formData = new FormData(event.currentTarget as HTMLFormElement)
 
     if (product) {
       await updateProduct(product.id, { success: false }, formData)
