@@ -22,14 +22,17 @@ export async function getDashboardStats() {
     .from("products")
     .select("*", { count: "exact", head: true })
 
-  if (salesError || purchasesError || clientsError || productsError) {
-    console.error("Error fetching dashboard stats:", {
-      salesError,
-      purchasesError,
-      clientsError,
-      productsError,
-    })
-    throw new Error("Could not fetch dashboard statistics.")
+  if (salesError) {
+    console.error("Error fetching sales count:", salesError)
+  }
+  if (purchasesError) {
+    console.error("Error fetching purchases count:", purchasesError)
+  }
+  if (clientsError) {
+    console.error("Error fetching clients count:", clientsError)
+  }
+  if (productsError) {
+    console.error("Error fetching products count:", productsError)
   }
 
   return {
@@ -46,23 +49,21 @@ export async function getRecentSales() {
 
   const { data, error } = await supabase
     .from("sales")
-    .select(
-      `
+    .select(`
       id,
       sale_date,
       total_price,
-      clients (
+      clients!sales_client_id_fkey (
         name,
         email
       )
-    `,
-    )
+    `)
     .order("sale_date", { ascending: false })
     .limit(5)
 
   if (error) {
     console.error("Error fetching recent sales:", error)
-    throw new Error("Could not fetch recent sales.")
+    return []
   }
 
   return (data || []).map((sale) => ({
