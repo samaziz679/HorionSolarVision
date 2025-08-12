@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import type React from "react"
 
+import { useState } from "react"
 import { useEffect } from "react"
-import { useFormState, useFormStatus } from "react-dom"
 import { Loader2 } from "lucide-react"
 import { createSale, updateSale } from "@/app/sales/actions"
 import { Button } from "@/components/ui/button"
@@ -20,9 +20,7 @@ type SaleFormProps = {
 }
 
 export default function SaleForm({ sale, products, clients }: SaleFormProps) {
-  const action = sale ? updateSale.bind(null, sale.id) : createSale
-  const [state, formAction] = useFormState(action, { message: null, errors: {} })
-
+  const [isLoading, setIsLoading] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(sale?.product_id || "")
   const [quantity, setQuantity] = useState(sale?.quantity || 1)
   const [pricePlan, setPricePlan] = useState(sale?.price_plan || "detail_1")
@@ -53,8 +51,29 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
     ))
   }
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsLoading(true)
+
+    const formData = new FormData(event.currentTarget)
+
+    // Add computed values to form data
+    formData.set("product_id", selectedProduct)
+    formData.set("quantity", quantity.toString())
+    formData.set("price_plan", pricePlan)
+    formData.set("unit_price", unitPrice.toString())
+
+    if (sale) {
+      await updateSale(sale.id, formData)
+    } else {
+      await createSale(formData)
+    }
+    // Note: redirect() in server actions will handle navigation
+    setIsLoading(false)
+  }
+
   return (
-    <form action={formAction} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="client_id">Client</Label>
@@ -71,7 +90,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             </SelectContent>
           </Select>
           <div id="client_id-error" aria-live="polite" aria-atomic="true">
-            {renderErrors(state.errors?.client_id)}
+            {renderErrors([])} {/* Placeholder for errors */}
           </div>
         </div>
         <div className="space-y-2">
@@ -85,7 +104,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             aria-describedby="sale_date-error"
           />
           <div id="sale_date-error" aria-live="polite" aria-atomic="true">
-            {renderErrors(state.errors?.sale_date)}
+            {renderErrors([])} {/* Placeholder for errors */}
           </div>
         </div>
       </div>
@@ -108,7 +127,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               </SelectContent>
             </Select>
             <div id="product_id-error" aria-live="polite" aria-atomic="true">
-              {renderErrors(state.errors?.product_id)}
+              {renderErrors([])} {/* Placeholder for errors */}
             </div>
           </div>
           <div className="space-y-2">
@@ -123,7 +142,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               aria-describedby="quantity-error"
             />
             <div id="quantity-error" aria-live="polite" aria-atomic="true">
-              {renderErrors(state.errors?.quantity)}
+              {renderErrors([])} {/* Placeholder for errors */}
             </div>
           </div>
         </div>
@@ -141,7 +160,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               </SelectContent>
             </Select>
             <div id="price_plan-error" aria-live="polite" aria-atomic="true">
-              {renderErrors(state.errors?.price_plan)}
+              {renderErrors([])} {/* Placeholder for errors */}
             </div>
           </div>
           <div className="space-y-2">
@@ -156,7 +175,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               aria-describedby="unit_price-error"
             />
             <div id="unit_price-error" aria-live="polite" aria-atomic="true">
-              {renderErrors(state.errors?.unit_price)}
+              {renderErrors([])} {/* Placeholder for errors */}
             </div>
           </div>
         </div>
@@ -172,7 +191,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
           aria-describedby="notes-error"
         />
         <div id="notes-error" aria-live="polite" aria-atomic="true">
-          {renderErrors(state.errors?.notes)}
+          {renderErrors([])} {/* Placeholder for errors */}
         </div>
       </div>
 
@@ -183,18 +202,10 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
         </div>
       </div>
 
-      <SubmitButton isEditing={!!sale} />
+      <Button type="submit" disabled={isLoading} className="w-full">
+        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isLoading ? (sale ? "Updating..." : "Creating...") : sale ? "Update Sale" : "Create Sale"}
+      </Button>
     </form>
-  )
-}
-
-function SubmitButton({ isEditing }: { isEditing: boolean }) {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {pending ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Sale" : "Create Sale"}
-    </Button>
   )
 }

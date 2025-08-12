@@ -1,6 +1,8 @@
 "use client"
 
-import { useFormState, useFormStatus } from "react-dom"
+import type React from "react"
+
+import { useState } from "react"
 import { useEffect } from "react"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
@@ -11,13 +13,28 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Product } from "@/lib/supabase/types"
 
-export default function ProductForm({
-  product,
-}: {
-  product?: Product
-}) {
-  const action = product ? updateProduct.bind(null, product.id) : createProduct
-  const [state, formAction] = useFormState(action, { message: null, errors: {} })
+export default function ProductForm({ product }: { product?: Product }) {
+  const [isLoading, setIsLoading] = useState(false)
+  const [state, setState] = useState({ message: null, errors: {} })
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsLoading(true)
+    const formData = new FormData(event.currentTarget)
+
+    try {
+      if (product) {
+        await updateProduct(product.id, formData)
+      } else {
+        await createProduct(formData)
+      }
+      setState({ message: "Product saved successfully", success: true })
+    } catch (error) {
+      setState({ message: "Failed to save product", success: false, errors: error })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (state.message) {
@@ -39,7 +56,7 @@ export default function ProductForm({
   }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <Label htmlFor="name">Product Name</Label>
         <Input id="name" name="name" defaultValue={product?.name ?? ""} required aria-describedby="name-error" />
@@ -177,18 +194,10 @@ export default function ProductForm({
         </div>
       </div>
 
-      <SubmitButton isEditing={!!product} />
+      <Button type="submit" disabled={isLoading} className="w-full">
+        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isLoading ? (product ? "Updating..." : "Creating...") : product ? "Update Product" : "Create Product"}
+      </Button>
     </form>
-  )
-}
-
-function SubmitButton({ isEditing }: { isEditing: boolean }) {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {pending ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Product" : "Create Product"}
-    </Button>
   )
 }

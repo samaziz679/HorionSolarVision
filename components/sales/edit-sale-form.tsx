@@ -1,25 +1,14 @@
 "use client"
 
-import { useFormState, useFormStatus } from "react-dom"
+import type React from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useEffect } from "react"
 import type { Product, Client, SaleWithItems } from "@/lib/supabase/types"
 import { Loader2 } from "lucide-react"
 import { updateSale } from "@/app/sales/actions"
-
-function SubmitButton() {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button type="submit" disabled={pending} className="w-full mt-4">
-      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {pending ? "Updating..." : "Update Sale"}
-    </Button>
-  )
-}
 
 export function EditSaleForm({
   sale,
@@ -30,14 +19,20 @@ export function EditSaleForm({
   products: Product[]
   clients: Client[]
 }) {
-  const [state, formAction] = useFormState(updateSale.bind(null, sale.id), { message: null, errors: {} })
+  const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    // toast logic here
-  }, [])
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsLoading(true)
+    const formData = new FormData(event.currentTarget)
+
+    await updateSale(sale.id, formData)
+    // Note: redirect() in server actions will handle navigation
+    setIsLoading(false)
+  }
 
   return (
-    <form action={formAction}>
+    <form onSubmit={handleSubmit}>
       <div className="grid gap-4">
         <div>
           <Label htmlFor="client_id">Client</Label>
@@ -70,7 +65,10 @@ export function EditSaleForm({
           `sale.sale_items` into a state variable and providing UI to modify them.
         </p>
 
-        <SubmitButton />
+        <Button type="submit" disabled={isLoading} className="w-full mt-4">
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isLoading ? "Updating..." : "Update Sale"}
+        </Button>
       </div>
     </form>
   )

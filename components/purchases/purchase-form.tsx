@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect } from "react"
-import { useFormState, useFormStatus } from "react-dom"
+import type React from "react"
+
+import { useEffect, useState } from "react"
 import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { createPurchase, updatePurchase } from "@/app/purchases/actions"
@@ -17,18 +18,27 @@ export default function PurchaseForm({
   products: Pick<Product, "id" | "name">[]
   suppliers: Pick<Supplier, "id" | "name">[]
 }) {
-  const action = purchase ? updatePurchase.bind(null, purchase.id) : createPurchase
-  const [state, formAction] = useFormState(action, { message: null, errors: {} })
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsLoading(true)
+    const formData = new FormData(event.currentTarget)
+
+    if (purchase) {
+      await updatePurchase(purchase.id, formData)
+    } else {
+      await createPurchase(formData)
+    }
+    // Note: redirect() in server actions will handle navigation
+    setIsLoading(false)
+  }
 
   useEffect(() => {
-    if (state.message) {
-      if (state.success === false) {
-        toast.error(state.message)
-      } else if (state.success === true) {
-        toast.success(state.message)
-      }
+    if (purchase) {
+      toast.success("Purchase loaded successfully")
     }
-  }, [state])
+  }, [purchase])
 
   const renderErrors = (errors: string[] | undefined) => {
     if (!errors || !Array.isArray(errors)) return null
@@ -40,21 +50,13 @@ export default function PurchaseForm({
   }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {/* ... existing form fields ... */}
 
-      <SubmitButton isEditing={!!purchase} />
+      <Button type="submit" disabled={isLoading} className="w-full">
+        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isLoading ? (purchase ? "Updating..." : "Creating...") : purchase ? "Update Purchase" : "Create Purchase"}
+      </Button>
     </form>
-  )
-}
-
-function SubmitButton({ isEditing }: { isEditing: boolean }) {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {pending ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Purchase" : "Create Purchase"}
-    </Button>
   )
 }

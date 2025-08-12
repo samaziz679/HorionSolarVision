@@ -1,26 +1,28 @@
 "use client"
 
-import { useEffect } from "react"
-import { useFormState, useFormStatus } from "react-dom"
-import { toast } from "sonner"
+import type React from "react"
+import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { createSupplier, updateSupplier } from "@/app/suppliers/actions"
 import { Button } from "@/components/ui/button"
 import type { Supplier } from "@/lib/supabase/types"
 
 export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
-  const action = supplier ? updateSupplier.bind(null, supplier.id) : createSupplier
-  const [state, formAction] = useFormState(action, { message: null, errors: {} })
+  const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    if (state.message) {
-      if (state.success === false) {
-        toast.error(state.message)
-      } else if (state.success === true) {
-        toast.success(state.message)
-      }
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsLoading(true)
+    const formData = new FormData(event.currentTarget)
+
+    if (supplier) {
+      await updateSupplier(supplier.id, formData)
+    } else {
+      await createSupplier(formData)
     }
-  }, [state])
+    // Note: redirect() in server actions will handle navigation
+    setIsLoading(false)
+  }
 
   const renderErrors = (errors: string[] | undefined) => {
     if (!errors || !Array.isArray(errors)) return null
@@ -32,21 +34,13 @@ export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
   }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {/* ... existing form fields ... */}
 
-      <SubmitButton isEditing={!!supplier} />
+      <Button type="submit" disabled={isLoading} className="w-full">
+        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isLoading ? (supplier ? "Updating..." : "Creating...") : supplier ? "Update Supplier" : "Create Supplier"}
+      </Button>
     </form>
-  )
-}
-
-function SubmitButton({ isEditing }: { isEditing: boolean }) {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {pending ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Supplier" : "Create Supplier"}
-    </Button>
   )
 }

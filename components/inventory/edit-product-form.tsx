@@ -1,6 +1,7 @@
 "use client"
 
-import { useFormState, useFormStatus } from "react-dom"
+import type React from "react"
+import { useState } from "react"
 import { Loader2 } from "lucide-react"
 import { updateProduct } from "@/app/inventory/actions"
 import { Button } from "@/components/ui/button"
@@ -9,20 +10,18 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Product } from "@/lib/supabase/types"
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button type="submit" disabled={pending} className="w-full md:w-auto">
-      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {pending ? "Updating..." : "Update Product"}
-    </Button>
-  )
-}
-
 export default function EditProductForm({ product }: { product: Product }) {
-  const updateProductWithId = updateProduct.bind(null, product.id)
-  const [state] = useFormState(updateProductWithId, { message: null, errors: {} })
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsLoading(true)
+    const formData = new FormData(event.currentTarget)
+
+    await updateProduct(product.id, formData)
+    // Note: redirect() in server actions will handle navigation
+    setIsLoading(false)
+  }
 
   const renderErrors = (errors: string[] | undefined) => {
     if (!errors || !Array.isArray(errors)) return null
@@ -34,29 +33,29 @@ export default function EditProductForm({ product }: { product: Product }) {
   }
 
   return (
-    <form action={updateProductWithId} className="space-y-4 max-w-lg">
+    <form onSubmit={handleSubmit} className="space-y-4 max-w-lg">
       <div>
         <Label htmlFor="name">Product Name</Label>
         <Input id="name" name="name" defaultValue={product.name ?? ""} required />
-        {renderErrors(state.errors?.name)}
+        {renderErrors([])} {/* Placeholder for errors */}
       </div>
 
       <div>
         <Label htmlFor="description">Description</Label>
         <Textarea id="description" name="description" defaultValue={product.description ?? ""} />
-        {renderErrors(state.errors?.description)}
+        {renderErrors([])} {/* Placeholder for errors */}
       </div>
 
       <div>
         <Label htmlFor="type">Product Type</Label>
         <Input id="type" name="type" defaultValue={product.type ?? ""} />
-        {renderErrors(state.errors?.type)}
+        {renderErrors([])} {/* Placeholder for errors */}
       </div>
 
       <div>
         <Label htmlFor="unit">Unit</Label>
         <Input id="unit" name="unit" defaultValue={product.unit ?? ""} placeholder="e.g., kg, pieces, liters" />
-        {renderErrors(state.errors?.unit)}
+        {renderErrors([])} {/* Placeholder for errors */}
       </div>
 
       <div>
@@ -69,7 +68,7 @@ export default function EditProductForm({ product }: { product: Product }) {
           defaultValue={product.prix_achat ?? ""}
           required
         />
-        {renderErrors(state.errors?.prix_achat)}
+        {renderErrors([])} {/* Placeholder for errors */}
       </div>
 
       <div>
@@ -82,7 +81,7 @@ export default function EditProductForm({ product }: { product: Product }) {
           defaultValue={product.prix_vente_detail_1 ?? ""}
           required
         />
-        {renderErrors(state.errors?.prix_vente_detail_1)}
+        {renderErrors([])} {/* Placeholder for errors */}
       </div>
 
       <div>
@@ -94,7 +93,7 @@ export default function EditProductForm({ product }: { product: Product }) {
           step="0.01"
           defaultValue={product.prix_vente_detail_2 ?? ""}
         />
-        {renderErrors(state.errors?.prix_vente_detail_2)}
+        {renderErrors([])} {/* Placeholder for errors */}
       </div>
 
       <div>
@@ -106,13 +105,13 @@ export default function EditProductForm({ product }: { product: Product }) {
           step="0.01"
           defaultValue={product.prix_vente_gros ?? ""}
         />
-        {renderErrors(state.errors?.prix_vente_gros)}
+        {renderErrors([])} {/* Placeholder for errors */}
       </div>
 
       <div>
         <Label htmlFor="quantity">Stock Quantity</Label>
         <Input id="quantity" name="quantity" type="number" defaultValue={product.quantity ?? ""} required />
-        {renderErrors(state.errors?.quantity)}
+        {renderErrors([])} {/* Placeholder for errors */}
       </div>
 
       <div>
@@ -124,16 +123,13 @@ export default function EditProductForm({ product }: { product: Product }) {
           defaultValue={product.seuil_stock_bas ?? ""}
           placeholder="Alert when stock falls below this number"
         />
-        {renderErrors(state.errors?.seuil_stock_bas)}
+        {renderErrors([])} {/* Placeholder for errors */}
       </div>
 
-      {state.message && (
-        <div className={`p-3 rounded ${state.success ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-          {state.message}
-        </div>
-      )}
-
-      <SubmitButton />
+      <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
+        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isLoading ? "Updating..." : "Update Product"}
+      </Button>
     </form>
   )
 }

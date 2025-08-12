@@ -1,23 +1,11 @@
 "use client"
-import { useEffect } from "react"
-import { useFormState, useFormStatus } from "react-dom"
+import type React from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { updatePurchase } from "@/app/purchases/actions"
-import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 
 import type { Product, Supplier, PurchaseWithItems } from "@/lib/supabase/types"
-
-function SubmitButton() {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-      {pending ? "Updating..." : "Update Purchase"}
-    </Button>
-  )
-}
 
 export function EditPurchaseForm({
   purchase,
@@ -28,23 +16,26 @@ export function EditPurchaseForm({
   products: Product[]
   suppliers: Supplier[]
 }) {
-  const [state, formAction] = useFormState(updatePurchase.bind(null, purchase.id), { message: null, errors: {} })
+  const [isLoading, setIsLoading] = useState(false)
 
-  useEffect(() => {
-    if (state.message) {
-      if (Object.keys(state.errors ?? {}).length > 0) {
-        toast.error(state.message)
-      } else {
-        toast.success(state.message)
-      }
-    }
-  }, [state])
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    setIsLoading(true)
+    const formData = new FormData(event.currentTarget)
+
+    await updatePurchase(purchase.id, formData)
+    // Note: redirect() in server actions will handle navigation
+    setIsLoading(false)
+  }
 
   return (
-    <form action={formAction}>
+    <form onSubmit={handleSubmit}>
       {/* ... existing form fields ... */}
 
-      <SubmitButton />
+      <Button type="submit" disabled={isLoading} className="w-full">
+        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isLoading ? "Updating..." : "Update Purchase"}
+      </Button>
     </form>
   )
 }
