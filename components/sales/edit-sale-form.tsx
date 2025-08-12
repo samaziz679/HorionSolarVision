@@ -26,7 +26,7 @@ export function EditSaleForm({
     setIsLoading(true)
     const formData = new FormData(event.currentTarget)
 
-    await updateSale(sale.id, formData)
+    await updateSale(sale.id, { success: false }, formData)
     // Note: redirect() in server actions will handle navigation
     setIsLoading(false)
   }

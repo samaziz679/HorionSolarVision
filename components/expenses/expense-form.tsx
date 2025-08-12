@@ -16,9 +16,9 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
     const formData = new FormData(event.currentTarget)
 
     if (expense) {
-      await updateExpense(expense.id, formData)
+      await updateExpense(expense.id, { success: false }, formData)
     } else {
-      await createExpense(formData)
+      await createExpense({ success: false }, formData)
     }
     // Note: redirect() in server actions will handle navigation
     setIsLoading(false)

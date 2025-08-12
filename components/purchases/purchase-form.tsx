@@ -26,9 +26,9 @@ export default function PurchaseForm({
     const formData = new FormData(event.currentTarget)
 
     if (purchase) {
-      await updatePurchase(purchase.id, formData)
+      await updatePurchase(purchase.id, { success: false }, formData)
     } else {
-      await createPurchase(formData)
+      await createPurchase({ success: false }, formData)
     }
     // Note: redirect() in server actions will handle navigation
     setIsLoading(false)

@@ -23,7 +23,7 @@ export function EditPurchaseForm({
     setIsLoading(true)
     const formData = new FormData(event.currentTarget)
 
-    await updatePurchase(purchase.id, formData)
+    await updatePurchase(purchase.id, { success: false }, formData)
     // Note: redirect() in server actions will handle navigation
     setIsLoading(false)
   }

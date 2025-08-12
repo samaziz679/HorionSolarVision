@@ -64,9 +64,9 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
     formData.set("unit_price", unitPrice.toString())
 
     if (sale) {
-      await updateSale(sale.id, formData)
+      await updateSale(sale.id, { success: false }, formData)
     } else {
-      await createSale(formData)
+      await createSale({ success: false }, formData)
     }
     // Note: redirect() in server actions will handle navigation
     setIsLoading(false)

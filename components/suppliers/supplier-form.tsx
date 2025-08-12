@@ -16,9 +16,9 @@ export default function SupplierForm({ supplier }: { supplier?: Supplier }) {
     const formData = new FormData(event.currentTarget)
 
     if (supplier) {
-      await updateSupplier(supplier.id, formData)
+      await updateSupplier(supplier.id, { success: false }, formData)
     } else {
-      await createSupplier(formData)
+      await createSupplier({ success: false }, formData)
     }
     // Note: redirect() in server actions will handle navigation
     setIsLoading(false)

@@ -15,7 +15,7 @@ export function EditSupplierForm({ supplier }: { supplier: Supplier }) {
     setIsLoading(true)
     const formData = new FormData(event.currentTarget)
 
-    await updateSupplier(supplier.id, formData)
+    await updateSupplier(supplier.id, { success: false }, formData)
     // Note: redirect() in server actions will handle navigation
     setIsLoading(false)
   }
