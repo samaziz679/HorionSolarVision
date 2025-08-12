@@ -1,10 +1,8 @@
 "use client"
 
 import type React from "react"
-
+import type { HTMLFormElement } from "react"
 import { useState } from "react"
-import { useEffect } from "react"
-import { toast } from "sonner"
 import { Loader2 } from "lucide-react"
 import { createProduct, updateProduct } from "@/app/inventory/actions"
 import { Button } from "@/components/ui/button"
@@ -15,36 +13,20 @@ import type { Product } from "@/lib/supabase/types"
 
 export default function ProductForm({ product }: { product?: Product }) {
   const [isLoading, setIsLoading] = useState(false)
-  const [state, setState] = useState({ message: null, success: false, errors: {} })
+  const [state, setState] = useState({ errors: {} })
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsLoading(true)
     const formData = new FormData(event.currentTarget)
 
-    try {
-      if (product) {
-        await updateProduct(product.id, { success: false }, formData)
-      } else {
-        await createProduct({ success: false }, formData)
-      }
-      setState({ message: "Product saved successfully", success: true })
-    } catch (error) {
-      setState({ message: "Failed to save product", success: false, errors: error })
-    } finally {
-      setIsLoading(false)
+    if (product) {
+      await updateProduct(product.id, { success: false }, formData)
+    } else {
+      await createProduct({ success: false }, formData)
     }
+    setIsLoading(false)
   }
-
-  useEffect(() => {
-    if (state.message) {
-      if (state.success === false) {
-        toast.error(state.message)
-      } else if (state.success === true) {
-        toast.success(state.message)
-      }
-    }
-  }, [state])
 
   const renderErrors = (errors: string[] | undefined) => {
     if (!errors || !Array.isArray(errors)) return null
