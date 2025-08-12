@@ -4,6 +4,7 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -19,7 +20,8 @@ const initialState: State = {
 function SubmitButton({ isLoading }: { isLoading: boolean }) {
   return (
     <Button type="submit" disabled={isLoading} className="w-full">
-      {isLoading ? "Updating Supplier..." : "Update Supplier"}
+      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {isLoading ? "Updating..." : "Update Supplier"}
     </Button>
   )
 }

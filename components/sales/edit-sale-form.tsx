@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useEffect } from "react"
 import type { Product, Client, SaleWithItems } from "@/lib/supabase/types"
+import { Loader2 } from "lucide-react"
 
 // Assume an updateSale action exists in app/sales/actions.ts
 // import { updateSale } from '@/app/sales/actions'
@@ -16,7 +17,8 @@ const initialState = { message: null, errors: {} }
 function SubmitButton({ isLoading }: { isLoading: boolean }) {
   return (
     <Button type="submit" disabled={isLoading} className="w-full mt-4">
-      {isLoading ? "Updating Sale..." : "Update Sale"}
+      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+      {isLoading ? "Updating..." : "Update Sale"}
     </Button>
   )
 }

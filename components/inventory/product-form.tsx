@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 import { createProduct, updateProduct, type State } from "@/app/inventory/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -26,6 +27,7 @@ export default function ProductForm({
       const result = await action(state, formData)
       setState(result)
     } catch (error) {
+      console.error("Form submission error:", error)
       setState({ message: "An error occurred", errors: {} })
     } finally {
       setIsLoading(false)
@@ -42,6 +44,15 @@ export default function ProductForm({
     }
   }, [state])
 
+  const renderErrors = (errors: string[] | undefined) => {
+    if (!errors || !Array.isArray(errors)) return null
+    return errors.map((error: string) => (
+      <p className="mt-2 text-sm text-red-500" key={error}>
+        {error}
+      </p>
+    ))
+  }
+
   return (
     <form
       onSubmit={(e) => {
@@ -54,12 +65,7 @@ export default function ProductForm({
         <Label htmlFor="name">Product Name</Label>
         <Input id="name" name="name" defaultValue={product?.name ?? ""} required aria-describedby="name-error" />
         <div id="name-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.name &&
-            state.errors.name.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.name)}
         </div>
       </div>
 
@@ -72,12 +78,7 @@ export default function ProductForm({
           aria-describedby="description-error"
         />
         <div id="description-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.description &&
-            state.errors.description.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.description)}
         </div>
       </div>
 
@@ -85,12 +86,7 @@ export default function ProductForm({
         <Label htmlFor="type">Product Type</Label>
         <Input id="type" name="type" defaultValue={product?.type ?? ""} aria-describedby="type-error" />
         <div id="type-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.type &&
-            state.errors.type.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.type)}
         </div>
       </div>
 
@@ -104,12 +100,7 @@ export default function ProductForm({
           aria-describedby="unit-error"
         />
         <div id="unit-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.unit &&
-            state.errors.unit.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.unit)}
         </div>
       </div>
 
@@ -125,12 +116,7 @@ export default function ProductForm({
           aria-describedby="prix_achat-error"
         />
         <div id="prix_achat-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.prix_achat &&
-            state.errors.prix_achat.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.prix_achat)}
         </div>
       </div>
 
@@ -147,12 +133,7 @@ export default function ProductForm({
             aria-describedby="prix_vente_detail_1-error"
           />
           <div id="prix_vente_detail_1-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.prix_vente_detail_1 &&
-              state.errors.prix_vente_detail_1.map((error: string) => (
-                <p className="mt-2 text-sm text-red-500" key={error}>
-                  {error}
-                </p>
-              ))}
+            {renderErrors(state.errors?.prix_vente_detail_1)}
           </div>
         </div>
         <div className="space-y-2">
@@ -166,12 +147,7 @@ export default function ProductForm({
             aria-describedby="quantity-error"
           />
           <div id="quantity-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.quantity &&
-              state.errors.quantity.map((error: string) => (
-                <p className="mt-2 text-sm text-red-500" key={error}>
-                  {error}
-                </p>
-              ))}
+            {renderErrors(state.errors?.quantity)}
           </div>
         </div>
       </div>
@@ -188,12 +164,7 @@ export default function ProductForm({
             aria-describedby="prix_vente_detail_2-error"
           />
           <div id="prix_vente_detail_2-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.prix_vente_detail_2 &&
-              state.errors.prix_vente_detail_2.map((error: string) => (
-                <p className="mt-2 text-sm text-red-500" key={error}>
-                  {error}
-                </p>
-              ))}
+            {renderErrors(state.errors?.prix_vente_detail_2)}
           </div>
         </div>
         <div className="space-y-2">
@@ -207,12 +178,7 @@ export default function ProductForm({
             aria-describedby="prix_vente_gros-error"
           />
           <div id="prix_vente_gros-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.prix_vente_gros &&
-              state.errors.prix_vente_gros.map((error: string) => (
-                <p className="mt-2 text-sm text-red-500" key={error}>
-                  {error}
-                </p>
-              ))}
+            {renderErrors(state.errors?.prix_vente_gros)}
           </div>
         </div>
       </div>
@@ -228,12 +194,7 @@ export default function ProductForm({
           aria-describedby="seuil_stock_bas-error"
         />
         <div id="seuil_stock_bas-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.seuil_stock_bas &&
-            state.errors.seuil_stock_bas.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.seuil_stock_bas)}
         </div>
       </div>
 
@@ -245,6 +206,7 @@ export default function ProductForm({
 function SubmitButton({ isEditing, isLoading }: { isEditing: boolean; isLoading: boolean }) {
   return (
     <Button type="submit" disabled={isLoading} className="w-full">
+      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
       {isLoading ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Product" : "Create Product"}
     </Button>
   )

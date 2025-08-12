@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Loader2 } from "lucide-react"
 import { updateProduct } from "@/app/inventory/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +13,7 @@ import type { State } from "@/app/inventory/actions"
 function SubmitButton({ isLoading }: { isLoading: boolean }) {
   return (
     <Button type="submit" disabled={isLoading} className="w-full md:w-auto">
+      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
       {isLoading ? "Updating..." : "Update Product"}
     </Button>
   )

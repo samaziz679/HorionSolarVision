@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Loader2 } from "lucide-react"
 import { createSale, updateSale, type State } from "@/app/sales/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -60,6 +61,15 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
     }
   }
 
+  const renderErrors = (errors: string[] | undefined) => {
+    if (!errors || !Array.isArray(errors)) return null
+    return errors.map((error: string) => (
+      <p className="mt-2 text-sm text-red-500" key={error}>
+        {error}
+      </p>
+    ))
+  }
+
   return (
     <form
       onSubmit={(e) => {
@@ -84,12 +94,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             </SelectContent>
           </Select>
           <div id="client_id-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.client_id &&
-              state.errors.client_id.map((error: string) => (
-                <p className="mt-2 text-sm text-red-500" key={error}>
-                  {error}
-                </p>
-              ))}
+            {renderErrors(state.errors?.client_id)}
           </div>
         </div>
         <div className="space-y-2">
@@ -103,12 +108,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             aria-describedby="sale_date-error"
           />
           <div id="sale_date-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.sale_date &&
-              state.errors.sale_date.map((error: string) => (
-                <p className="mt-2 text-sm text-red-500" key={error}>
-                  {error}
-                </p>
-              ))}
+            {renderErrors(state.errors?.sale_date)}
           </div>
         </div>
       </div>
@@ -131,12 +131,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               </SelectContent>
             </Select>
             <div id="product_id-error" aria-live="polite" aria-atomic="true">
-              {state.errors?.product_id &&
-                state.errors.product_id.map((error: string) => (
-                  <p className="mt-2 text-sm text-red-500" key={error}>
-                    {error}
-                  </p>
-                ))}
+              {renderErrors(state.errors?.product_id)}
             </div>
           </div>
           <div className="space-y-2">
@@ -151,12 +146,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               aria-describedby="quantity-error"
             />
             <div id="quantity-error" aria-live="polite" aria-atomic="true">
-              {state.errors?.quantity &&
-                state.errors.quantity.map((error: string) => (
-                  <p className="mt-2 text-sm text-red-500" key={error}>
-                    {error}
-                  </p>
-                ))}
+              {renderErrors(state.errors?.quantity)}
             </div>
           </div>
         </div>
@@ -174,12 +164,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               </SelectContent>
             </Select>
             <div id="price_plan-error" aria-live="polite" aria-atomic="true">
-              {state.errors?.price_plan &&
-                state.errors.price_plan.map((error: string) => (
-                  <p className="mt-2 text-sm text-red-500" key={error}>
-                    {error}
-                  </p>
-                ))}
+              {renderErrors(state.errors?.price_plan)}
             </div>
           </div>
           <div className="space-y-2">
@@ -194,12 +179,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               aria-describedby="unit_price-error"
             />
             <div id="unit_price-error" aria-live="polite" aria-atomic="true">
-              {state.errors?.unit_price &&
-                state.errors.unit_price.map((error: string) => (
-                  <p className="mt-2 text-sm text-red-500" key={error}>
-                    {error}
-                  </p>
-                ))}
+              {renderErrors(state.errors?.unit_price)}
             </div>
           </div>
         </div>
@@ -215,12 +195,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
           aria-describedby="notes-error"
         />
         <div id="notes-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.notes &&
-            state.errors.notes.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.notes)}
         </div>
       </div>
 
@@ -232,7 +207,8 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
       </div>
 
       <Button type="submit" disabled={isLoading} className="w-full">
-        {isLoading ? (sale ? "Updating Sale..." : "Creating Sale...") : sale ? "Update Sale" : "Create Sale"}
+        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {isLoading ? (sale ? "Updating..." : "Creating...") : sale ? "Update Sale" : "Create Sale"}
       </Button>
     </form>
   )

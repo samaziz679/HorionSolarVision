@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 import { createPurchase, updatePurchase, type State } from "@/app/purchases/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -46,6 +47,15 @@ export default function PurchaseForm({
     }
   }, [state])
 
+  const renderErrors = (errors: string[] | undefined) => {
+    if (!errors || !Array.isArray(errors)) return null
+    return errors.map((error: string) => (
+      <p className="mt-2 text-sm text-red-500" key={error}>
+        {error}
+      </p>
+    ))
+  }
+
   return (
     <form
       onSubmit={(e) => {
@@ -69,12 +79,7 @@ export default function PurchaseForm({
           </SelectContent>
         </Select>
         <div id="supplier_id-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.supplier_id &&
-            state.errors.supplier_id.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.supplier_id)}
         </div>
       </div>
       <div className="space-y-2">
@@ -92,12 +97,7 @@ export default function PurchaseForm({
           </SelectContent>
         </Select>
         <div id="product_id-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.product_id &&
-            state.errors.product_id.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.product_id)}
         </div>
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -112,12 +112,7 @@ export default function PurchaseForm({
             aria-describedby="quantity-error"
           />
           <div id="quantity-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.quantity &&
-              state.errors.quantity.map((error: string) => (
-                <p className="mt-2 text-sm text-red-500" key={error}>
-                  {error}
-                </p>
-              ))}
+            {renderErrors(state.errors?.quantity)}
           </div>
         </div>
         <div className="space-y-2">
@@ -132,12 +127,7 @@ export default function PurchaseForm({
             aria-describedby="total-error"
           />
           <div id="total-error" aria-live="polite" aria-atomic="true">
-            {state.errors?.total &&
-              state.errors.total.map((error: string) => (
-                <p className="mt-2 text-sm text-red-500" key={error}>
-                  {error}
-                </p>
-              ))}
+            {renderErrors(state.errors?.total)}
           </div>
         </div>
       </div>
@@ -152,12 +142,7 @@ export default function PurchaseForm({
           aria-describedby="purchase_date-error"
         />
         <div id="purchase_date-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.purchase_date &&
-            state.errors.purchase_date.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.purchase_date)}
         </div>
       </div>
       <SubmitButton isEditing={!!purchase} isLoading={isLoading} />
@@ -168,6 +153,7 @@ export default function PurchaseForm({
 function SubmitButton({ isEditing, isLoading }: { isEditing: boolean; isLoading: boolean }) {
   return (
     <Button type="submit" disabled={isLoading} className="w-full">
+      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
       {isLoading ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Purchase" : "Create Purchase"}
     </Button>
   )

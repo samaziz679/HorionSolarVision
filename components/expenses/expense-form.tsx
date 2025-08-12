@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { toast } from "sonner"
+import { Loader2 } from "lucide-react"
 import { createExpense, updateExpense, type State } from "@/app/expenses/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -38,6 +39,15 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
     }
   }, [state])
 
+  const renderErrors = (errors: string[] | undefined) => {
+    if (!errors || !Array.isArray(errors)) return null
+    return errors.map((error: string) => (
+      <p className="mt-2 text-sm text-red-500" key={error}>
+        {error}
+      </p>
+    ))
+  }
+
   return (
     <form
       onSubmit={(e) => {
@@ -56,12 +66,7 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
           aria-describedby="category-error"
         />
         <div id="category-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.category &&
-            state.errors.category.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.category)}
         </div>
       </div>
       <div className="space-y-2">
@@ -76,12 +81,7 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
           aria-describedby="amount-error"
         />
         <div id="amount-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.amount &&
-            state.errors.amount.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.amount)}
         </div>
       </div>
       <div className="space-y-2">
@@ -95,12 +95,7 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
           aria-describedby="expense_date-error"
         />
         <div id="expense_date-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.expense_date &&
-            state.errors.expense_date.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.expense_date)}
         </div>
       </div>
       <div className="space-y-2">
@@ -112,12 +107,7 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
           aria-describedby="description-error"
         />
         <div id="description-error" aria-live="polite" aria-atomic="true">
-          {state.errors?.description &&
-            state.errors.description.map((error: string) => (
-              <p className="mt-2 text-sm text-red-500" key={error}>
-                {error}
-              </p>
-            ))}
+          {renderErrors(state.errors?.description)}
         </div>
       </div>
       <SubmitButton isEditing={!!expense} isLoading={isLoading} />
@@ -128,6 +118,7 @@ export default function ExpenseForm({ expense }: { expense?: Expense }) {
 function SubmitButton({ isEditing, isLoading }: { isEditing: boolean; isLoading: boolean }) {
   return (
     <Button type="submit" disabled={isLoading} className="w-full">
+      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
       {isLoading ? (isEditing ? "Updating..." : "Creating...") : isEditing ? "Update Expense" : "Create Expense"}
     </Button>
   )
