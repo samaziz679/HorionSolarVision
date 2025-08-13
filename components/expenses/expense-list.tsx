@@ -15,8 +15,8 @@ export default function ExpenseList({ expenses }: { expenses: Expense[] }) {
           <TableRow>
             <TableHead>Date</TableHead>
             <TableHead>Description</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead className="text-right">Amount</TableHead>
+            <TableHead>Catégorie</TableHead>
+            <TableHead className="text-right">Montant</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -29,7 +29,7 @@ export default function ExpenseList({ expenses }: { expenses: Expense[] }) {
               <TableCell className="text-right">{formatCurrency(expense.amount)}</TableCell>
               <TableCell className="flex gap-2">
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/expenses/${expense.id}/edit`}>Edit</Link>
+                  <Link href={`/expenses/${expense.id}/edit`}>Modifier</Link>
                 </Button>
                 <DeleteExpenseDialog expenseId={expense.id.toString()} />
               </TableCell>

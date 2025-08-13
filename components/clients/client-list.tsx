@@ -31,9 +31,9 @@ export default function ClientList({ clients }: ClientListProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Name</TableHead>
+            <TableHead>Nom</TableHead>
             <TableHead>Email</TableHead>
-            <TableHead>Phone</TableHead>
+            <TableHead>Téléphone</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -47,12 +47,12 @@ export default function ClientList({ clients }: ClientListProps) {
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/clients/${client.id}/edit`}>
                     <PencilIcon className="h-4 w-4" />
-                    <span className="sr-only">Edit</span>
+                    <span className="sr-only">Modifier</span>
                   </Link>
                 </Button>
                 <Button variant="destructive" size="sm" onClick={() => handleDeleteClick(client.id.toString())}>
                   <TrashIcon className="h-4 w-4" />
-                  <span className="sr-only">Delete</span>
+                  <span className="sr-only">Supprimer</span>
                 </Button>
               </TableCell>
             </TableRow>

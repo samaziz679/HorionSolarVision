@@ -21,7 +21,7 @@ export default async function ClientsPage() {
           <BreadcrumbList>
             <BreadcrumbItem>
               <BreadcrumbLink asChild>
-                <Link href="/dashboard">Dashboard</Link>
+                <Link href="/dashboard">Tableau de bord</Link>
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
@@ -31,7 +31,7 @@ export default async function ClientsPage() {
           </BreadcrumbList>
         </Breadcrumb>
         <Button asChild className="ml-auto">
-          <Link href="/clients/new">Add New Client</Link>
+          <Link href="/clients/new">Ajouter Nouveau Client</Link>
         </Button>
       </div>
       <Card>

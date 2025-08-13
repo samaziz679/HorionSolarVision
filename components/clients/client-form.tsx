@@ -48,7 +48,7 @@ export default function ClientForm({ client }: { client?: Client }) {
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-            First Name
+            Prénom
           </label>
           <input
             type="text"
@@ -61,7 +61,7 @@ export default function ClientForm({ client }: { client?: Client }) {
         </div>
         <div>
           <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-            Last Name
+            Nom de famille
           </label>
           <input
             type="text"
@@ -75,7 +75,7 @@ export default function ClientForm({ client }: { client?: Client }) {
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-          Email
+          E-mail
         </label>
         <input
           type="email"
@@ -89,7 +89,7 @@ export default function ClientForm({ client }: { client?: Client }) {
 
       <div>
         <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
-          Phone
+          Téléphone
         </label>
         <input
           type="tel"
@@ -102,7 +102,7 @@ export default function ClientForm({ client }: { client?: Client }) {
 
       <div>
         <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-          Address
+          Adresse
         </label>
         <textarea
           id="address"
@@ -115,7 +115,7 @@ export default function ClientForm({ client }: { client?: Client }) {
 
       <Button type="submit" disabled={isLoading} className="w-full">
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {isLoading ? (client ? "Updating..." : "Creating...") : client ? "Update Client" : "Create Client"}
+        {isLoading ? (client ? "Mise à jour..." : "Création...") : client ? "Modifier Client" : "Créer Client"}
       </Button>
     </form>
   )
