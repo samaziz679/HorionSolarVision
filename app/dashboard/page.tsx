@@ -1,14 +1,13 @@
 "use client"
 
 import { useEffect } from "react"
-import { useRouter } from "next/navigation"
 
 export default function DashboardRedirect() {
-  const router = useRouter()
-
   useEffect(() => {
-    router.replace("/en/dashboard")
-  }, [router])
+    if (typeof window !== "undefined") {
+      window.location.replace("/en/dashboard")
+    }
+  }, [])
 
   return (
     <div className="flex items-center justify-center min-h-screen">
