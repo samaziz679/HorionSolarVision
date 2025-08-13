@@ -1,23 +1,13 @@
-"use client"
-
 import Link from "next/link"
 import { Home, LineChart, Package, Package2, ShoppingCart, Users, DollarSign, Truck } from "lucide-react"
-import { useTranslations } from "next-intl"
-import { usePathname } from "next/navigation"
 import UserButton from "@/components/auth/user-button"
 
-export function Sidebar() {
-  const t = useTranslations()
-  const pathname = usePathname()
-
-  const locale = pathname.split("/")[1]
-  const currentPath = pathname.replace(`/${locale}`, "")
-
+export default function Sidebar() {
   return (
     <div className="hidden border-r bg-muted/40 md:block">
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
-          <Link href={`/${locale}/dashboard`} className="flex items-center gap-2 font-semibold">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
             <Package2 className="h-6 w-6" />
             <span className="">Solar Vision ERP</span>
           </Link>
@@ -26,76 +16,60 @@ export function Sidebar() {
         <div className="flex-1">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
             <Link
-              href={`/${locale}/dashboard`}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                currentPath === "/dashboard" ? "bg-muted text-primary" : "text-muted-foreground"
-              }`}
+              href="/dashboard"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <Home className="h-4 w-4" />
-              {t("navigation.dashboard")}
+              Dashboard
             </Link>
             <Link
-              href={`/${locale}/inventory`}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                currentPath === "/inventory" ? "bg-muted text-primary" : "text-muted-foreground"
-              }`}
+              href="/inventory"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <Package className="h-4 w-4" />
-              {t("navigation.inventory")}
+              Inventory
             </Link>
             <Link
-              href={`/${locale}/sales`}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                currentPath === "/sales" ? "bg-muted text-primary" : "text-muted-foreground"
-              }`}
+              href="/sales"
+              className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
             >
               <ShoppingCart className="h-4 w-4" />
-              {t("navigation.sales")}
+              Sales
             </Link>
             <Link
-              href={`/${locale}/purchases`}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                currentPath === "/purchases" ? "bg-muted text-primary" : "text-muted-foreground"
-              }`}
+              href="/purchases"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <Truck className="h-4 w-4" />
-              {t("navigation.purchases")}
+              Purchases
             </Link>
             <Link
-              href={`/${locale}/clients`}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                currentPath === "/clients" ? "bg-muted text-primary" : "text-muted-foreground"
-              }`}
+              href="/clients"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <Users className="h-4 w-4" />
-              {t("navigation.clients")}
+              Clients
             </Link>
             <Link
-              href={`/${locale}/suppliers`}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                currentPath === "/suppliers" ? "bg-muted text-primary" : "text-muted-foreground"
-              }`}
+              href="/suppliers"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <Users className="h-4 w-4" />
-              {t("navigation.suppliers")}
+              Suppliers
             </Link>
             <Link
-              href={`/${locale}/expenses`}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                currentPath === "/expenses" ? "bg-muted text-primary" : "text-muted-foreground"
-              }`}
+              href="/expenses"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <DollarSign className="h-4 w-4" />
-              {t("navigation.expenses")}
+              Expenses
             </Link>
             <Link
-              href={`/${locale}/reports`}
-              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-                currentPath === "/reports" ? "bg-muted text-primary" : "text-muted-foreground"
-              }`}
+              href="/reports"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
             >
               <LineChart className="h-4 w-4" />
-              {t("navigation.reports")}
+              Reports
             </Link>
           </nav>
         </div>
@@ -103,5 +77,3 @@ export function Sidebar() {
     </div>
   )
 }
-
-export default Sidebar
