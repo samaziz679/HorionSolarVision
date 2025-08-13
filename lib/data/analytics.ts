@@ -218,40 +218,138 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       })
     }
 
-    // Generate recommendations based on data
-    const recommendations = []
+    const { data: salesWithProducts } = await supabase
+      .from("sales")
+      .select(`
+        total_amount,
+        sale_items (
+          quantity,
+          unit_price,
+          products (
+            name
+          )
+        )
+      `)
+      .gte("created_at", startOfMonth.toISOString())
+      .lte("created_at", endOfMonth.toISOString())
 
-    if (netProfit < 0) {
-      recommendations.push({
-        title: "Améliorer la Rentabilité",
-        description: "Votre marge est négative. Révisez vos prix ou réduisez les coûts.",
-        priority: "high" as const,
-      })
-    }
+    // Calculate real top products from sales data
+    const productSales: Record<string, { sales: number; revenue: number }> = {}
 
-    if (lowStockItems.length > 0) {
-      recommendations.push({
-        title: "Réapprovisionner le Stock",
-        description: `${lowStockItems.length} produits sont en rupture ou stock faible.`,
-        priority: "high" as const,
+    salesWithProducts?.forEach((sale) => {
+      sale.sale_items?.forEach((item) => {
+        const productName = item.products?.name || "Produit Inconnu"
+        if (!productSales[productName]) {
+          productSales[productName] = { sales: 0, revenue: 0 }
+        }
+        productSales[productName].sales += item.quantity || 0
+        productSales[productName].revenue += (item.quantity || 0) * (item.unit_price || 0)
       })
-    }
+    })
 
-    if (revenueGrowth < 0) {
-      recommendations.push({
-        title: "Stimuler les Ventes",
-        description: "Les ventes sont en baisse. Considérez une campagne marketing.",
-        priority: "medium" as const,
-      })
-    }
+    const topProducts = Object.entries(productSales)
+      .sort(([, a], [, b]) => b.revenue - a.revenue)
+      .slice(0, 5)
+      .map(([name, data]) => ({ name, ...data }))
 
-    if (totalExpenses / totalRevenue > 0.8) {
-      recommendations.push({
-        title: "Optimiser les Coûts",
-        description: "Vos dépenses représentent plus de 80% du CA. Analysez les coûts.",
-        priority: "medium" as const,
+    const { data: clientSalesData } = await supabase
+      .from("sales")
+      .select(`
+        total_amount,
+        clients (
+          name
+        )
+      `)
+      .gte("created_at", startOfMonth.toISOString())
+      .lte("created_at", endOfMonth.toISOString())
+
+    const clientSales: Record<string, { totalSales: number; orders: number }> = {}
+
+    clientSalesData?.forEach((sale) => {
+      const clientName = sale.clients?.name || "Client Inconnu"
+      if (!clientSales[clientName]) {
+        clientSales[clientName] = { totalSales: 0, orders: 0 }
+      }
+      clientSales[clientName].totalSales += sale.total_amount || 0
+      clientSales[clientName].orders += 1
+    })
+
+    const topClients = Object.entries(clientSales)
+      .sort(([, a], [, b]) => b.totalSales - a.totalSales)
+      .slice(0, 5)
+      .map(([name, data]) => ({ name, ...data }))
+
+    const { data: recentSales } = await supabase
+      .from("sales")
+      .select(`
+        created_at,
+        sale_items (
+          quantity,
+          products (
+            name
+          )
+        )
+      `)
+      .order("created_at", { ascending: false })
+      .limit(10)
+
+    const { data: recentPurchases } = await supabase
+      .from("purchases")
+      .select(`
+        created_at,
+        purchase_items (
+          quantity,
+          products (
+            name
+          )
+        )
+      `)
+      .order("created_at", { ascending: false })
+      .limit(10)
+
+    const recentStockMovements = []
+
+    // Add recent sales (stock out)
+    recentSales?.forEach((sale) => {
+      sale.sale_items?.forEach((item) => {
+        const daysAgo = Math.floor((Date.now() - new Date(sale.created_at).getTime()) / (1000 * 60 * 60 * 24))
+        const dateText = daysAgo === 0 ? "Aujourd'hui" : daysAgo === 1 ? "Hier" : `Il y a ${daysAgo} jours`
+
+        recentStockMovements.push({
+          product: item.products?.name || "Produit Inconnu",
+          type: "Vente",
+          quantity: -(item.quantity || 0),
+          date: dateText,
+        })
       })
-    }
+    })
+
+    // Add recent purchases (stock in)
+    recentPurchases?.forEach((purchase) => {
+      purchase.purchase_items?.forEach((item) => {
+        const daysAgo = Math.floor((Date.now() - new Date(purchase.created_at).getTime()) / (1000 * 60 * 60 * 24))
+        const dateText = daysAgo === 0 ? "Aujourd'hui" : daysAgo === 1 ? "Hier" : `Il y a ${daysAgo} jours`
+
+        recentStockMovements.push({
+          product: item.products?.name || "Produit Inconnu",
+          type: "Achat",
+          quantity: item.quantity || 0,
+          date: dateText,
+        })
+      })
+    })
+
+    // Sort by most recent and limit to 5
+    recentStockMovements.sort((a, b) => {
+      const aDate =
+        a.date === "Aujourd'hui" ? 0 : a.date === "Hier" ? 1 : Number.parseInt(a.date.match(/\d+/)?.[0] || "999")
+      const bDate =
+        b.date === "Aujourd'hui" ? 0 : b.date === "Hier" ? 1 : Number.parseInt(b.date.match(/\d+/)?.[0] || "999")
+      return aDate - bDate
+    })
+
+    const totalInventoryValue = inventory?.reduce((sum, product) => sum + product.quantity * product.price, 0) || 1
+    const inventoryTurnover = totalInventoryValue > 0 ? Math.round((totalCOGS / totalInventoryValue) * 12 * 10) / 10 : 0
 
     return {
       totalRevenue,
@@ -261,29 +359,16 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
       activeClients,
       clientGrowth: newClientsThisMonth,
       inventoryValue,
-      inventoryTurnover: 12, // Simplified calculation
+      inventoryTurnover,
       outOfStockItems,
       currentPeriod: `${currentDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}`,
       revenueBreakdown: [{ category: "Ventes Directes", amount: totalRevenue, percentage: 100 }],
       expenseBreakdown,
       cashFlow,
       lowStockItems: lowStockItems.slice(0, 5),
-      recentStockMovements: [
-        { product: "Panneau Solaire 300W", type: "Vente", quantity: -2, date: "Aujourd'hui" },
-        { product: "Batterie 12V", type: "Achat", quantity: 50, date: "Hier" },
-        { product: "Onduleur 5kW", type: "Vente", quantity: -1, date: "Il y a 2 jours" },
-      ],
-      topProducts: [
-        { name: "Panneau Solaire 300W", sales: 15, revenue: 450000 },
-        { name: "Batterie 12V", sales: 25, revenue: 350000 },
-        { name: "Onduleur 5kW", sales: 8, revenue: 800000 },
-      ],
-      topClients:
-        clients?.slice(0, 5).map((client) => ({
-          name: client.name,
-          totalSales: Math.floor(Math.random() * 500000) + 100000,
-          orders: Math.floor(Math.random() * 10) + 1,
-        })) || [],
+      recentStockMovements: recentStockMovements.slice(0, 5),
+      topProducts,
+      topClients,
       salesTarget: {
         target: 2000000,
         achieved: totalRevenue,
@@ -294,7 +379,13 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
         achieved: newClientsThisMonth,
         percentage: Math.min(Math.round((newClientsThisMonth / 10) * 100), 100),
       },
-      recommendations,
+      recommendations: [
+        {
+          title: "Configurer la Base de Données",
+          description: "Connectez votre base de données pour voir les analyses en temps réel.",
+          priority: "high",
+        },
+      ],
     }
   } catch (error) {
     console.error("Error fetching analytics data:", error)
