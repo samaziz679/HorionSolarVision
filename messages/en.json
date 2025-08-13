@@ -1,0 +1,127 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "actions": "Actions",
+    "status": "Status",
+    "date": "Date",
+    "amount": "Amount",
+    "total": "Total",
+    "name": "Name",
+    "description": "Description",
+    "price": "Price",
+    "quantity": "Quantity",
+    "email": "Email",
+    "phone": "Phone",
+    "address": "Address",
+    "notes": "Notes",
+    "created": "Created",
+    "updated": "Updated"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "inventory": "Inventory",
+    "sales": "Sales",
+    "purchases": "Purchases",
+    "clients": "Clients",
+    "suppliers": "Suppliers",
+    "expenses": "Expenses",
+    "reports": "Reports"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "totalSales": "Total Sales",
+    "totalClients": "Total Clients",
+    "totalPurchases": "Total Purchases",
+    "totalProducts": "Total Products",
+    "salesRecorded": "Total sales recorded",
+    "activeClients": "Active clients",
+    "purchaseOrders": "Purchase orders",
+    "productsInInventory": "Products in inventory",
+    "recentSales": "Recent Sales",
+    "recentSalesDescription": "Your most recent sales transactions.",
+    "quickStats": "Quick Stats",
+    "quickStatsDescription": "Overview of your business.",
+    "totalTransactions": "Total transactions",
+    "itemsInInventory": "Items in inventory",
+    "activeCustomers": "Active customers",
+    "customer": "Customer",
+    "type": "Type",
+    "completed": "Completed",
+    "sale": "Sale"
+  },
+  "inventory": {
+    "title": "Inventory",
+    "addProduct": "Add Product",
+    "editProduct": "Edit Product",
+    "productName": "Product Name",
+    "productType": "Product Type",
+    "unit": "Unit",
+    "purchasePrice": "Purchase Price",
+    "retailPrice1": "Retail Price 1",
+    "retailPrice2": "Retail Price 2",
+    "wholesalePrice": "Wholesale Price",
+    "stockQuantity": "Stock Quantity",
+    "lowStockThreshold": "Low Stock Threshold",
+    "inStock": "In Stock",
+    "lowStock": "Low Stock",
+    "outOfStock": "Out of Stock"
+  },
+  "sales": {
+    "title": "Sales",
+    "newSale": "New Sale",
+    "editSale": "Edit Sale",
+    "clientName": "Client Name",
+    "saleDate": "Sale Date",
+    "totalAmount": "Total Amount"
+  },
+  "purchases": {
+    "title": "Purchases",
+    "newPurchase": "New Purchase",
+    "editPurchase": "Edit Purchase",
+    "supplier": "Supplier",
+    "purchaseDate": "Purchase Date",
+    "unitPrice": "Unit Price"
+  },
+  "clients": {
+    "title": "Clients",
+    "newClient": "New Client",
+    "editClient": "Edit Client",
+    "firstName": "First Name",
+    "lastName": "Last Name",
+    "company": "Company"
+  },
+  "suppliers": {
+    "title": "Suppliers",
+    "newSupplier": "New Supplier",
+    "editSupplier": "Edit Supplier",
+    "supplierName": "Supplier Name",
+    "contactPerson": "Contact Person"
+  },
+  "expenses": {
+    "title": "Expenses",
+    "newExpense": "New Expense",
+    "editExpense": "Edit Expense",
+    "category": "Category",
+    "expenseDate": "Expense Date"
+  },
+  "reports": {
+    "title": "Reports",
+    "salesReport": "Sales Report",
+    "inventoryReport": "Inventory Report",
+    "expenseReport": "Expense Report",
+    "profitLoss": "Profit & Loss"
+  },
+  "auth": {
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "email": "Email",
+    "password": "Password",
+    "signInWithEmail": "Sign in with Email"
+  }
+}
