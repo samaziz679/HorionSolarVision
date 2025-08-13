@@ -1,6 +1,7 @@
 import createMiddleware from "next-intl/middleware"
 import { updateSession } from "@/lib/supabase/middleware"
 import type { NextRequest } from "next/server"
+import { NextResponse } from "next/server"
 
 const intlMiddleware = createMiddleware({
   locales: ["en", "fr"],
@@ -8,6 +9,11 @@ const intlMiddleware = createMiddleware({
 })
 
 export async function middleware(request: NextRequest) {
+  if (request.nextUrl.pathname === "/dashboard") {
+    const locale = request.cookies.get("NEXT_LOCALE")?.value || "en"
+    return NextResponse.redirect(new URL(`/${locale}/dashboard`, request.url))
+  }
+
   const response = intlMiddleware(request)
   return await updateSession(request, response)
 }
