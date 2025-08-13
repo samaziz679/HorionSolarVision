@@ -74,3 +74,50 @@ export async function getRecentSales() {
     client_email: sale.clients?.email ?? "N/A",
   }))
 }
+
+export async function getDashboardData(supabase: any) {
+  noStore()
+
+  // Get counts
+  const { count: totalSales } = await supabase.from("sales").select("*", { count: "exact", head: true })
+
+  const { count: totalProducts } = await supabase.from("products").select("*", { count: "exact", head: true })
+
+  const { count: totalClients } = await supabase.from("clients").select("*", { count: "exact", head: true })
+
+  const { count: totalSuppliers } = await supabase.from("suppliers").select("*", { count: "exact", head: true })
+
+  // Get recent sales
+  const { data: recentSalesData } = await supabase
+    .from("sales")
+    .select(`
+      id,
+      sale_date,
+      total_price,
+      clients!sales_client_id_fkey (
+        name
+      )
+    `)
+    .order("sale_date", { ascending: false })
+    .limit(5)
+
+  // Get low stock items
+  const { data: lowStockData } = await supabase.from("products").select("name, quantity").lt("quantity", 10).limit(5)
+
+  const recentSales = (recentSalesData || []).map((sale: any) => ({
+    id: sale.id,
+    total_amount: sale.total_price,
+    client_name: sale.clients?.name ?? "Unknown Client",
+  }))
+
+  const lowStockItems = lowStockData || []
+
+  return {
+    totalSales: totalSales ?? 0,
+    totalProducts: totalProducts ?? 0,
+    totalClients: totalClients ?? 0,
+    totalSuppliers: totalSuppliers ?? 0,
+    recentSales,
+    lowStockItems,
+  }
+}

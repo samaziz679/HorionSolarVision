@@ -44,9 +44,9 @@ export default function LoginForm() {
     return (
       <div className="text-center">
         <Mail className="mx-auto h-12 w-12 text-green-500" />
-        <h2 className="mt-4 text-xl font-semibold">Check your email</h2>
+        <h2 className="mt-4 text-xl font-semibold">Vérifiez votre email</h2>
         <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-          A magic link has been sent to your email address. Click the link to log in.
+          Un lien magique a été envoyé à votre adresse email. Cliquez sur le lien pour vous connecter.
         </p>
       </div>
     )
@@ -55,13 +55,13 @@ export default function LoginForm() {
   return (
     <div className="w-full max-w-sm">
       <div className="text-center mb-6">
-        <h1 className="text-3xl font-bold">Log In</h1>
-        <p className="text-gray-500 dark:text-gray-400">Enter your email to receive a magic link.</p>
+        <h1 className="text-3xl font-bold">Connexion</h1>
+        <p className="text-gray-500 dark:text-gray-400">Entrez votre email pour recevoir un lien magique.</p>
       </div>
       <form onSubmit={handleLogin} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
-          <Input id="email" name="email" type="email" placeholder="you@example.com" required disabled={isSubmitting} />
+          <Input id="email" name="email" type="email" placeholder="vous@exemple.com" required disabled={isSubmitting} />
         </div>
         {error && (
           <div className="flex items-center gap-x-2 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-600">
@@ -70,7 +70,7 @@ export default function LoginForm() {
           </div>
         )}
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Sending Magic Link..." : "Send Magic Link"}
+          {isSubmitting ? "Envoi du lien magique..." : "Envoyer le lien magique"}
         </Button>
       </form>
     </div>
