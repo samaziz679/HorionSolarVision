@@ -32,16 +32,16 @@ export default function ProductList({ products }: { products: Product[] }) {
   const columns: ColumnDef<Product>[] = [
     {
       accessorKey: "name",
-      header: "Name",
+      header: "Nom",
     },
     {
       accessorKey: "prix_vente_detail_1",
-      header: "Price",
+      header: "Prix",
       cell: ({ row }) => formatMoney(row.original.prix_vente_detail_1),
     },
     {
       accessorKey: "quantity",
-      header: "Quantity",
+      header: "Quantité",
     },
     {
       id: "actions",
@@ -52,7 +52,7 @@ export default function ProductList({ products }: { products: Product[] }) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
+                  <span className="sr-only">Ouvrir menu</span>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -60,12 +60,12 @@ export default function ProductList({ products }: { products: Product[] }) {
                 <DropdownMenuItem asChild>
                   <Link href={`/inventory/${product.id}/edit`}>
                     <Pencil className="mr-2 h-4 w-4" />
-                    Edit
+                    Modifier
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleDeleteClick(product.id)}>
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
+                  Supprimer
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -116,7 +116,7 @@ export default function ProductList({ products }: { products: Product[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No products found.
+                  Aucun produit trouvé.
                 </TableCell>
               </TableRow>
             )}
@@ -125,10 +125,10 @@ export default function ProductList({ products }: { products: Product[] }) {
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          Previous
+          Précédent
         </Button>
         <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          Next
+          Suivant
         </Button>
       </div>
       {selectedProductId && (

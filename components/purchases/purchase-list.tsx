@@ -14,10 +14,10 @@ export default function PurchaseList({ purchases }: { purchases: PurchaseWithDet
         <TableHeader>
           <TableRow>
             <TableHead>Date</TableHead>
-            <TableHead>Supplier</TableHead>
-            <TableHead>Product</TableHead>
-            <TableHead>Quantity</TableHead>
-            <TableHead className="text-right">Total Cost</TableHead>
+            <TableHead>Fournisseur</TableHead>
+            <TableHead>Produit</TableHead>
+            <TableHead>Quantité</TableHead>
+            <TableHead className="text-right">Coût Total</TableHead>
             <TableHead className="w-[100px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -31,7 +31,7 @@ export default function PurchaseList({ purchases }: { purchases: PurchaseWithDet
               <TableCell className="text-right">{formatCurrency(purchase.total)}</TableCell>
               <TableCell className="flex gap-2">
                 <Button asChild variant="outline" size="sm">
-                  <Link href={`/purchases/${purchase.id}/edit`}>Edit</Link>
+                  <Link href={`/purchases/${purchase.id}/edit`}>Modifier</Link>
                 </Button>
                 <DeletePurchaseDialog purchaseId={purchase.id.toString()} />
               </TableCell>

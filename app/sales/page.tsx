@@ -11,17 +11,17 @@ export default async function SalesPage() {
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
       <div className="flex items-center">
-        <h1 className="font-semibold text-lg md:text-2xl">Sales</h1>
+        <h1 className="font-semibold text-lg md:text-2xl">Ventes</h1>
         <Button asChild size="sm" className="ml-auto gap-1">
           <Link href="/sales/new">
-            New Sale
+            Nouvelle Vente
             <PlusCircle className="h-4 w-4" />
           </Link>
         </Button>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Recent Sales</CardTitle>
+          <CardTitle>Ventes récentes</CardTitle>
         </CardHeader>
         <CardContent>
           <SalesList sales={sales} />

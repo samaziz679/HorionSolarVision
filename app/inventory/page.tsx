@@ -11,11 +11,11 @@ export default async function InventoryPage() {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Inventory</CardTitle>
+        <CardTitle>Inventaire</CardTitle>
         <Button asChild>
           <Link href="/inventory/new">
             <PlusCircle className="mr-2 h-4 w-4" />
-            Add Product
+            Ajouter Produit
           </Link>
         </Button>
       </CardHeader>

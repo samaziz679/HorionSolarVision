@@ -26,10 +26,10 @@ export function SalesList({ sales }: { sales: SaleForList[] }) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Sale ID</TableHead>
+            <TableHead>ID Vente</TableHead>
             <TableHead>Date</TableHead>
             <TableHead>Client</TableHead>
-            <TableHead className="text-right">Total Amount</TableHead>
+            <TableHead className="text-right">Montant Total</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -37,22 +37,22 @@ export function SalesList({ sales }: { sales: SaleForList[] }) {
           {sales.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} className="text-center">
-                No sales found.
+                Aucune vente trouvée.
               </TableCell>
             </TableRow>
           ) : (
             sales.map((sale) => (
               <TableRow key={sale.id}>
                 <TableCell>
-                  <Badge variant="outline">SALE-{sale.id.slice(0, 8)}</Badge>
+                  <Badge variant="outline">VENTE-{sale.id.slice(0, 8)}</Badge>
                 </TableCell>
-                <TableCell>{new Date(sale.date).toLocaleDateString()}</TableCell>
+                <TableCell>{new Date(sale.date).toLocaleDateString("fr-FR")}</TableCell>
                 <TableCell>{sale.client_name}</TableCell>
                 <TableCell className="text-right">{formatMoney(sale.total_amount)}</TableCell>
                 <TableCell className="text-right">
                   <Button variant="ghost" size="icon" onClick={() => handleEdit(sale.id)}>
                     <Pencil className="h-4 w-4" />
-                    <span className="sr-only">Edit Sale</span>
+                    <span className="sr-only">Modifier la Vente</span>
                   </Button>
                 </TableCell>
               </TableRow>
