@@ -1,16 +1,11 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/sonner"
-
-const inter = Inter({ subsets: ["latin"] })
+import "./globals.css" // Import globals.css at the top of the file
 
 export const metadata: Metadata = {
   title: "Solar Vision ERP",
   description: "Manage your solar business with ease.",
-    generator: 'v0.dev'
+  generator: "v0.dev",
 }
 
 export default function RootLayout({
@@ -18,14 +13,5 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
-          <Toaster richColors />
-        </ThemeProvider>
-      </body>
-    </html>
-  )
+  return children
 }

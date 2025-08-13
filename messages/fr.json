@@ -122,6 +122,8 @@
     "signOut": "Se déconnecter",
     "email": "Email",
     "password": "Mot de passe",
-    "signInWithEmail": "Se connecter avec l'email"
+    "signInWithEmail": "Se connecter avec l'email",
+    "welcomeBack": "Bon retour",
+    "signInMessage": "Connectez-vous à votre compte pour continuer"
   }
 }
