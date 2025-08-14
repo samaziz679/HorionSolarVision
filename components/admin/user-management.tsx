@@ -20,8 +20,58 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
 import { Plus, Edit, Shield, Clock } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
-import { logAudit, type UserProfile, type UserRole, type UserStatus, type AuditLog } from "@/lib/auth/rbac"
+import { createBrowserClient } from "@supabase/ssr"
+import {
+  getAllUsers,
+  updateUserRole,
+  updateUserStatus,
+  type UserProfile,
+  type UserRole,
+  type UserStatus,
+} from "@/lib/auth/rbac-client"
+import type { Database } from "@/lib/supabase/types"
+
+interface AuditLog {
+  id: string
+  user_id: string
+  action: string
+  table_name: string | null
+  record_id: string | null
+  old_values: any
+  new_values: any
+  created_at: string
+}
+
+const createClient = () => {
+  return createBrowserClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+  )
+}
+
+async function logAudit(action: string, tableName: string, recordId: string, oldValues: any, newValues: any) {
+  if (typeof window === "undefined") return
+
+  try {
+    const supabase = createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+
+    if (!user) return
+
+    await supabase.from("audit_logs").insert({
+      user_id: user.id,
+      action,
+      table_name: tableName,
+      record_id: recordId,
+      old_values: oldValues,
+      new_values: newValues,
+    })
+  } catch (error) {
+    console.error("Error logging audit:", error)
+  }
+}
 
 export function UserManagement() {
   const [users, setUsers] = useState<UserProfile[]>([])
@@ -46,11 +96,8 @@ export function UserManagement() {
 
   async function loadUsers() {
     try {
-      const supabase = createClient()
-      const { data, error } = await supabase.from("user_profiles").select("*").order("created_at", { ascending: false })
-
-      if (error) throw error
-      setUsers(data || [])
+      const userList = await getAllUsers()
+      setUsers(userList)
     } catch (error) {
       console.error("Error loading users:", error)
       toast({
@@ -130,19 +177,19 @@ export function UserManagement() {
     if (!selectedUser) return
 
     try {
-      const supabase = createClient()
       const oldValues = { role: selectedUser.role, status: selectedUser.status }
 
-      const { error } = await supabase
-        .from("user_profiles")
-        .update({
-          role: editUserRole,
-          status: editUserStatus,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", selectedUser.id)
+      // Update role if changed
+      if (editUserRole !== selectedUser.role) {
+        const success = await updateUserRole(selectedUser.id, editUserRole)
+        if (!success) throw new Error("Failed to update role")
+      }
 
-      if (error) throw error
+      // Update status if changed
+      if (editUserStatus !== selectedUser.status) {
+        const success = await updateUserStatus(selectedUser.id, editUserStatus)
+        if (!success) throw new Error("Failed to update status")
+      }
 
       await logAudit("UPDATE_USER", "user_profiles", selectedUser.id, oldValues, {
         role: editUserRole,
