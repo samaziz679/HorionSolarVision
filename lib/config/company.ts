@@ -9,9 +9,11 @@ export const companyConfig = {
   favicon: "/favicon.ico",
 
   // Contact Information
-  email: "contact@solarvision.bf",
-  phone: "+226 XX XX XX XX",
-  address: "Ouagadougou, Burkina Faso",
+  contact: {
+    email: "contact@solarvision.bf",
+    phone: "+226 XX XX XX XX",
+    address: "Ouagadougou, Burkina Faso",
+  },
 
   // Business Settings
   currency: "FCFA",
