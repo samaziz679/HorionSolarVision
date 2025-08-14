@@ -178,6 +178,28 @@ export function Header() {
           </nav>
         </SheetContent>
       </Sheet>
+
+      <Link href="/dashboard" className="flex items-center gap-2 text-white hover:text-white/90 transition-colors">
+        <div className="flex items-center gap-2">
+          {company.logo ? (
+            <Image
+              src={company.logo || "/placeholder.svg"}
+              alt={`${company.name} Logo`}
+              width={32}
+              height={32}
+              className="h-8 w-8 object-contain bg-white/10 rounded p-1"
+              onError={(e) => {
+                // Fallback to icon if logo fails to load
+                e.currentTarget.style.display = "none"
+                e.currentTarget.nextElementSibling?.classList.remove("hidden")
+              }}
+            />
+          ) : null}
+          <Package2 className={`h-6 w-6 text-white ${company.logo ? "hidden" : ""}`} />
+        </div>
+        <span className="font-semibold text-lg hidden sm:block">{company.name}</span>
+      </Link>
+
       <Breadcrumb className="hidden md:flex">
         <BreadcrumbList>
           <BreadcrumbItem>
