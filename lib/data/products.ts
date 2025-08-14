@@ -19,6 +19,7 @@ export async function fetchProducts() {
       prix_vente_detail_2,
       prix_vente_gros,
       unit,
+      image,
       created_at
     `,
     )
