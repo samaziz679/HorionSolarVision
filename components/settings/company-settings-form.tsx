@@ -1,22 +1,59 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, Save, ImageIcon } from "lucide-react"
-import { companyConfig } from "@/lib/config/company"
 import { updateCompanySettings } from "@/app/settings/actions"
 import { useToast } from "@/hooks/use-toast"
+import { createClient } from "@/lib/supabase/client"
+
+interface CompanySettings {
+  name: string
+  tagline: string
+  logo: string
+  currency: string
+  email: string
+  phone: string
+  address: string
+}
 
 export function CompanySettingsForm() {
   const [isLoading, setIsLoading] = useState(false)
-  const [logoPreview, setLogoPreview] = useState<string | null>(companyConfig.logo)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [settings, setSettings] = useState<CompanySettings | null>(null)
   const { toast } = useToast()
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const supabase = createClient()
+        const { data } = await supabase.from("company_settings").select("*").single()
+
+        if (data) {
+          const companySettings = {
+            name: data.name,
+            tagline: data.tagline,
+            logo: data.logo,
+            currency: data.currency,
+            email: data.email,
+            phone: data.phone,
+            address: data.address,
+          }
+          setSettings(companySettings)
+          setLogoPreview(companySettings.logo)
+        }
+      } catch (error) {
+        console.error("Error loading company settings:", error)
+      }
+    }
+
+    loadSettings()
+  }, [])
 
   const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -56,6 +93,10 @@ export function CompanySettingsForm() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  if (!settings) {
+    return <div>Chargement des paramètres...</div>
   }
 
   return (
@@ -117,7 +158,7 @@ export function CompanySettingsForm() {
               <Input
                 id="name"
                 name="name"
-                defaultValue={companyConfig.name}
+                defaultValue={settings.name}
                 placeholder="Nom de votre entreprise"
                 required
               />
@@ -127,13 +168,13 @@ export function CompanySettingsForm() {
               <Input
                 id="tagline"
                 name="tagline"
-                defaultValue={companyConfig.tagline}
+                defaultValue={settings.tagline}
                 placeholder="Slogan de votre entreprise"
               />
             </div>
             <div>
               <Label htmlFor="currency">Devise</Label>
-              <Input id="currency" name="currency" defaultValue={companyConfig.currency} placeholder="FCFA" required />
+              <Input id="currency" name="currency" defaultValue={settings.currency} placeholder="FCFA" required />
             </div>
           </CardContent>
         </Card>
@@ -152,20 +193,20 @@ export function CompanySettingsForm() {
               id="email"
               name="email"
               type="email"
-              defaultValue={companyConfig.contact.email}
+              defaultValue={settings.email}
               placeholder="contact@votre-entreprise.com"
             />
           </div>
           <div>
             <Label htmlFor="phone">Téléphone</Label>
-            <Input id="phone" name="phone" defaultValue={companyConfig.contact.phone} placeholder="+226 XX XX XX XX" />
+            <Input id="phone" name="phone" defaultValue={settings.phone} placeholder="+226 XX XX XX XX" />
           </div>
           <div className="md:col-span-2">
             <Label htmlFor="address">Adresse</Label>
             <Textarea
               id="address"
               name="address"
-              defaultValue={companyConfig.contact.address}
+              defaultValue={settings.address}
               placeholder="Adresse complète de votre entreprise"
               rows={3}
             />

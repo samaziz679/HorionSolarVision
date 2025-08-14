@@ -1,25 +1,19 @@
-export const companyConfig = {
-  // Company Information
+import { createClient } from "@/lib/supabase/server"
+
+// Default company configuration (fallback values)
+const defaultConfig = {
   name: "Solar Vision ERP",
   fullName: "Solar Vision - Système de Gestion d'Entreprise",
   tagline: "Bienvenue dans le système ERP Solar Vision",
-
-  // Branding
-  logo: "/images/company/logo.png", // Place your logo here
+  logo: "/images/company/logo.png",
   favicon: "/favicon.ico",
-
-  // Contact Information
   contact: {
     email: "contact@solarvision.bf",
     phone: "+226 XX XX XX XX",
     address: "Ouagadougou, Burkina Faso",
   },
-
-  // Business Settings
   currency: "FCFA",
   defaultLanguage: "fr",
-
-  // Theme Colors (can be customized per company)
   theme: {
     primary: "rgb(251 146 60)", // Solar orange
     secondary: "rgb(14 165 233)", // Sky blue
@@ -30,10 +24,36 @@ export const companyConfig = {
   },
 }
 
-// Helper function to get company config
-export const getCompanyConfig = () => companyConfig
+export async function getCompanyConfig() {
+  try {
+    const supabase = createClient()
+    const { data: settings } = await supabase.from("company_settings").select("*").single()
 
-// Helper function to update company config (for admin settings)
-export const updateCompanyConfig = (updates: Partial<typeof companyConfig>) => {
-  Object.assign(companyConfig, updates)
+    if (settings) {
+      return {
+        ...defaultConfig,
+        name: settings.name,
+        tagline: settings.tagline,
+        logo: settings.logo,
+        currency: settings.currency,
+        contact: {
+          email: settings.email,
+          phone: settings.phone,
+          address: settings.address,
+        },
+        theme: {
+          ...defaultConfig.theme,
+          primary: settings.theme_primary || defaultConfig.theme.primary,
+          secondary: settings.theme_secondary || defaultConfig.theme.secondary,
+          accent: settings.theme_accent || defaultConfig.theme.accent,
+        },
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching company config:", error)
+  }
+
+  return defaultConfig
 }
+
+export const companyConfig = defaultConfig

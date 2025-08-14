@@ -2,11 +2,12 @@
 
 import { put } from "@vercel/blob"
 import { revalidatePath } from "next/cache"
-import { writeFile } from "fs/promises"
-import { join } from "path"
+import { createClient } from "@/lib/supabase/server"
 
 export async function updateCompanySettings(formData: FormData) {
   try {
+    const supabase = createClient()
+
     const name = formData.get("name") as string
     const tagline = formData.get("tagline") as string
     const currency = formData.get("currency") as string
@@ -15,7 +16,10 @@ export async function updateCompanySettings(formData: FormData) {
     const address = formData.get("address") as string
     const logoFile = formData.get("logo") as File
 
-    let logoUrl = "/images/company/logo.png" // Default logo path
+    // Get current settings to preserve logo if not updating
+    const { data: currentSettings } = await supabase.from("company_settings").select("logo").single()
+
+    let logoUrl = currentSettings?.logo || "/images/company/logo.png"
 
     // Handle logo upload if provided
     if (logoFile && logoFile.size > 0) {
@@ -27,34 +31,30 @@ export async function updateCompanySettings(formData: FormData) {
         logoUrl = blob.url
       } catch (error) {
         console.error("Error uploading logo:", error)
-        // Continue with default logo if upload fails
+        // Continue with current logo if upload fails
       }
     }
 
-    // Update the company config file
-    const configContent = `export const companyConfig = {
-  name: "${name}",
-  tagline: "${tagline}",
-  logo: "${logoUrl}",
-  currency: "${currency}",
-  contact: {
-    email: "${email}",
-    phone: "${phone}",
-    address: "${address}",
-  },
-  theme: {
-    primary: "hsl(24, 95%, 53%)", // Solar orange
-    secondary: "hsl(197, 71%, 73%)", // Sky blue
-    accent: "hsl(45, 93%, 58%)", // Solar yellow
-  },
-}`
+    // Update or insert company settings
+    const { error } = await supabase.from("company_settings").upsert({
+      name,
+      tagline,
+      logo: logoUrl,
+      currency,
+      email,
+      phone,
+      address,
+      updated_at: new Date().toISOString(),
+    })
 
-    // Write to the config file
-    const configPath = join(process.cwd(), "lib/config/company.ts")
-    await writeFile(configPath, configContent, "utf8")
+    if (error) {
+      console.error("Database error:", error)
+      return { success: false, error: "Erreur lors de la mise à jour des paramètres" }
+    }
 
     revalidatePath("/")
     revalidatePath("/settings")
+    revalidatePath("/dashboard")
 
     return { success: true }
   } catch (error) {
