@@ -37,10 +37,14 @@ export function Header() {
   }
 
   return (
-    <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
+    <header className="flex h-14 items-center gap-4 border-b gradient-solar px-4 lg:h-[60px] lg:px-6 shadow-lg">
       <Sheet>
         <SheetTrigger asChild>
-          <Button variant="outline" size="icon" className="shrink-0 md:hidden bg-transparent">
+          <Button
+            variant="outline"
+            size="icon"
+            className="shrink-0 md:hidden bg-white/20 border-white/30 text-white hover:bg-white/30"
+          >
             <PanelLeft className="h-5 w-5" />
             <span className="sr-only">Basculer le menu de navigation</span>
           </Button>
@@ -48,13 +52,15 @@ export function Header() {
         <SheetContent side="left" className="flex flex-col">
           <nav className="grid gap-2 text-lg font-medium">
             <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold mb-4">
-              <Package2 className="h-6 w-6" />
-              <span className="sr-only">Solar Vision ERP</span>
+              <Package2 className="h-6 w-6 text-solar-orange" />
+              <span className="text-solar-orange">Solar Vision ERP</span>
             </Link>
             <Link
               href="/dashboard"
-              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground ${
-                pathname === "/dashboard" ? "bg-muted text-foreground" : "text-muted-foreground"
+              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground transition-colors ${
+                pathname === "/dashboard"
+                  ? "bg-solar-orange/10 text-solar-orange border-l-4 border-solar-orange"
+                  : "text-muted-foreground hover:text-solar-orange"
               }`}
             >
               <Home className="h-5 w-5" />
@@ -62,8 +68,10 @@ export function Header() {
             </Link>
             <Link
               href="/inventory"
-              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground ${
-                pathname === "/inventory" ? "bg-muted text-foreground" : "text-muted-foreground"
+              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground transition-colors ${
+                pathname === "/inventory"
+                  ? "bg-solar-orange/10 text-solar-orange border-l-4 border-solar-orange"
+                  : "text-muted-foreground hover:text-solar-orange"
               }`}
             >
               <Package className="h-5 w-5" />
@@ -71,8 +79,10 @@ export function Header() {
             </Link>
             <Link
               href="/sales"
-              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground ${
-                pathname === "/sales" ? "bg-muted text-foreground" : "text-muted-foreground"
+              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground transition-colors ${
+                pathname === "/sales"
+                  ? "bg-solar-orange/10 text-solar-orange border-l-4 border-solar-orange"
+                  : "text-muted-foreground hover:text-solar-orange"
               }`}
             >
               <ShoppingCart className="h-5 w-5" />
@@ -80,8 +90,10 @@ export function Header() {
             </Link>
             <Link
               href="/purchases"
-              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground ${
-                pathname === "/purchases" ? "bg-muted text-foreground" : "text-muted-foreground"
+              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground transition-colors ${
+                pathname === "/purchases"
+                  ? "bg-solar-orange/10 text-solar-orange border-l-4 border-solar-orange"
+                  : "text-muted-foreground hover:text-solar-orange"
               }`}
             >
               <Truck className="h-5 w-5" />
@@ -89,8 +101,10 @@ export function Header() {
             </Link>
             <Link
               href="/clients"
-              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground ${
-                pathname === "/clients" ? "bg-muted text-foreground" : "text-muted-foreground"
+              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground transition-colors ${
+                pathname === "/clients"
+                  ? "bg-solar-orange/10 text-solar-orange border-l-4 border-solar-orange"
+                  : "text-muted-foreground hover:text-solar-orange"
               }`}
             >
               <Users className="h-5 w-5" />
@@ -98,8 +112,10 @@ export function Header() {
             </Link>
             <Link
               href="/suppliers"
-              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground ${
-                pathname === "/suppliers" ? "bg-muted text-foreground" : "text-muted-foreground"
+              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground transition-colors ${
+                pathname === "/suppliers"
+                  ? "bg-solar-orange/10 text-solar-orange border-l-4 border-solar-orange"
+                  : "text-muted-foreground hover:text-solar-orange"
               }`}
             >
               <Users className="h-5 w-5" />
@@ -107,8 +123,10 @@ export function Header() {
             </Link>
             <Link
               href="/expenses"
-              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground ${
-                pathname === "/expenses" ? "bg-muted text-foreground" : "text-muted-foreground"
+              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground transition-colors ${
+                pathname === "/expenses"
+                  ? "bg-solar-orange/10 text-solar-orange border-l-4 border-solar-orange"
+                  : "text-muted-foreground hover:text-solar-orange"
               }`}
             >
               <DollarSign className="h-5 w-5" />
@@ -116,8 +134,10 @@ export function Header() {
             </Link>
             <Link
               href="/reports"
-              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground ${
-                pathname === "/reports" ? "bg-muted text-foreground" : "text-muted-foreground"
+              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground transition-colors ${
+                pathname === "/reports"
+                  ? "bg-solar-orange/10 text-solar-orange border-l-4 border-solar-orange"
+                  : "text-muted-foreground hover:text-solar-orange"
               }`}
             >
               <LineChart className="h-5 w-5" />
@@ -130,12 +150,14 @@ export function Header() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">Tableau de bord</Link>
+              <Link href="/dashboard" className="text-white/90 hover:text-white transition-colors">
+                Tableau de bord
+              </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
-          <BreadcrumbSeparator />
+          <BreadcrumbSeparator className="text-white/70" />
           <BreadcrumbItem>
-            <BreadcrumbPage>{getPageTitleInFrench(pageTitle)}</BreadcrumbPage>
+            <BreadcrumbPage className="text-white font-medium">{getPageTitleInFrench(pageTitle)}</BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
