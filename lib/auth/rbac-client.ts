@@ -56,34 +56,54 @@ const createClient = () => {
 }
 
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {
-  if (typeof window === "undefined") return null
+  if (typeof window === "undefined") {
+    console.log("RBAC Debug: Running on server side, returning null")
+    return null
+  }
 
   try {
     const supabase = createClient()
+    console.log("RBAC Debug: Created Supabase client")
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    if (!user) return null
+    console.log("RBAC Debug: Auth user:", user ? { id: user.id, email: user.email } : "No user")
 
-    console.log("Fetching user role for user:", user.id)
-
-    const { data: userRole, error } = await supabase.from("user_roles").select("*").eq("user_id", user.id).single()
-
-    if (error) {
-      console.error("Error fetching user role:", error)
+    if (!user) {
+      console.log("RBAC Debug: No authenticated user found")
       return null
     }
 
-    console.log("Found user role:", userRole)
+    console.log("RBAC Debug: Fetching user role for user:", user.id)
 
-    return {
-      ...userRole,
-      email: userRole.email || user.email || "", // Use email from user_roles table first
-      full_name: userRole.full_name || "", // Added full_name field
+    const { data: userRole, error } = await supabase.from("user_roles").select("*").eq("user_id", user.id).single()
+
+    console.log("RBAC Debug: Database query result:", { data: userRole, error })
+
+    if (error) {
+      console.error("RBAC Debug: Error fetching user role:", error)
+      return null
     }
+
+    if (!userRole) {
+      console.log("RBAC Debug: No user role found in database")
+      return null
+    }
+
+    const profile = {
+      ...userRole,
+      email: userRole.email || user.email || "",
+      full_name: userRole.full_name || "",
+    }
+
+    console.log("RBAC Debug: Final user profile:", profile)
+    console.log("RBAC Debug: Profile status check:", profile.status, "=== 'active':", profile.status === "active")
+
+    return profile
   } catch (error) {
-    console.error("Error fetching user profile:", error)
+    console.error("RBAC Debug: Exception in getCurrentUserProfile:", error)
     return null
   }
 }

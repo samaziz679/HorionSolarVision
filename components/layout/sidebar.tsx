@@ -53,25 +53,40 @@ export function Sidebar() {
   useEffect(() => {
     async function loadUserRole() {
       try {
-        console.log("Loading user role...")
+        console.log("Sidebar Debug: Starting to load user role...")
         const profile = await getCurrentUserProfileClient()
-        console.log("User profile:", profile)
+        console.log("Sidebar Debug: Received user profile:", profile)
 
-        if (profile && profile.status === "active") {
+        if (!profile) {
+          console.log("Sidebar Debug: No profile found, using default navigation")
+          setAllowedItems(DEFAULT_NAVIGATION_ITEMS)
+          setIsLoading(false)
+          return
+        }
+
+        console.log("Sidebar Debug: Profile status:", profile.status)
+        console.log("Sidebar Debug: Profile role:", profile.role)
+
+        if (profile.status === "active") {
           setUserRole(profile.role)
-          console.log("User role:", profile.role)
+          console.log("Sidebar Debug: User role set to:", profile.role)
 
           // Filter navigation items based on user role
           const permissions = ROLE_PERMISSIONS[profile.role]
+          console.log("Sidebar Debug: Role permissions:", permissions)
+
           const filtered = NAVIGATION_ITEMS.filter((item) => permissions.modules.includes(item.module as any))
-          console.log("Filtered navigation items:", filtered)
+          console.log(
+            "Sidebar Debug: Filtered navigation items:",
+            filtered.map((item) => item.label),
+          )
           setAllowedItems(filtered)
         } else {
-          console.log("No active user profile, using default navigation")
+          console.log("Sidebar Debug: User not active (status:", profile.status, "), using default navigation")
           setAllowedItems(DEFAULT_NAVIGATION_ITEMS)
         }
       } catch (error) {
-        console.error("Error loading user role:", error)
+        console.error("Sidebar Debug: Error loading user role:", error)
         setAllowedItems(DEFAULT_NAVIGATION_ITEMS)
       } finally {
         setIsLoading(false)
@@ -133,9 +148,7 @@ export function Sidebar() {
           </nav>
           {userRole && (
             <div className="mt-auto p-4 border-t">
-              <div className="text-xs text-muted-foreground">
-                Rôle: <span className="font-medium capitalize">{userRole}</span>
-              </div>
+              <div className="text-xs text-muted-foreground">Rôle: {userRole}</div>
             </div>
           )}
         </div>
