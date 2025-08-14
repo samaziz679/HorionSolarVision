@@ -2,6 +2,8 @@ import { Suspense } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CompanySettingsForm } from "@/components/settings/company-settings-form"
 
+export const dynamic = "force-dynamic"
+
 export default function SettingsPage() {
   return (
     <div className="space-y-6">
