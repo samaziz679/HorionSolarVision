@@ -35,9 +35,15 @@ export function Header() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
+    if (typeof window === "undefined") {
+      setIsLoading(false)
+      return
+    }
+
     const loadCompanyConfig = async () => {
       try {
         const config = await getCompanyConfigBrowser()
+        console.log("Loaded company config:", config)
         setCompany(config)
       } catch (err) {
         console.error("Error loading company config:", err)
@@ -46,7 +52,8 @@ export function Header() {
       }
     }
 
-    loadCompanyConfig()
+    const timer = setTimeout(loadCompanyConfig, 100)
+    return () => clearTimeout(timer)
   }, [])
 
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
