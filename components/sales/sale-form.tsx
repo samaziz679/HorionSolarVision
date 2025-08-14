@@ -158,29 +158,24 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
 
         {selectedProductData && (
           <div className="space-y-2">
-            <div className="text-sm text-gray-600">Debug: Image URL = {selectedProductData.image || "No image"}</div>
             {selectedProductData.image ? (
               <div className="flex justify-center">
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
                   <div className="text-center">
                     <img
                       src={selectedProductData.image || "/placeholder.svg"}
                       alt={selectedProductData.name}
-                      className="mx-auto h-32 w-32 rounded-lg object-cover shadow-sm"
+                      className="mx-auto h-24 w-24 rounded-lg object-cover shadow-sm"
                       onError={(e) => {
-                        console.error("Image failed to load:", selectedProductData.image)
                         e.currentTarget.style.display = "none"
                       }}
-                      onLoad={() => {
-                        console.log("Image loaded successfully:", selectedProductData.image)
-                      }}
                     />
-                    <p className="mt-2 text-sm font-medium text-gray-700">{selectedProductData.name}</p>
+                    <p className="mt-2 text-xs font-medium text-gray-600">{selectedProductData.name}</p>
                   </div>
                 </div>
               </div>
             ) : (
-              <div className="text-center text-sm text-gray-500 py-4">Aucune image disponible pour ce produit</div>
+              <div className="text-center text-xs text-gray-400 py-2">Aucune image disponible</div>
             )}
           </div>
         )}
