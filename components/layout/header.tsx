@@ -5,7 +5,7 @@ import Image from "next/image"
 import { Home, LineChart, Package, Package2, PanelLeft, ShoppingCart, Users, DollarSign, Truck } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { getCompanyConfigClient, companyConfig } from "@/lib/config/company"
+import { getCompanyConfigClient, type CompanyConfig } from "@/lib/config/company-client"
 
 import {
   Breadcrumb,
@@ -22,7 +22,16 @@ import UserButton from "@/components/auth/user-button"
 export function Header() {
   const pathname = usePathname()
   const pageTitle = pathname.split("/").pop()?.replace("-", " ") || "tableau de bord"
-  const [company, setCompany] = useState(companyConfig)
+  const [company, setCompany] = useState<CompanyConfig>({
+    name: "Solar Vision ERP",
+    tagline: "Bienvenue dans le système ERP Solar Vision",
+    currency: "FCFA",
+    contact: {
+      email: "contact@solarvision.bf",
+      phone: "+226 70 12 34 56",
+      address: "Ouagadougou, Burkina Faso",
+    },
+  })
 
   useEffect(() => {
     getCompanyConfigClient().then(setCompany)
