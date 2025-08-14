@@ -2,18 +2,13 @@ import type React from "react"
 import type { Metadata } from "next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
-import { getCompanyConfig } from "@/lib/config/company"
+import { CompanyProvider } from "@/components/providers/company-provider"
 import "./globals.css"
 
-const company = getCompanyConfig()
-
 export const metadata: Metadata = {
-  title: company.name,
-  description: company.tagline,
+  title: "Solar Vision ERP",
+  description: "Système de gestion d'entreprise",
   generator: "v0.dev",
-  icons: {
-    icon: company.favicon,
-  },
 }
 
 export default function RootLayout({
@@ -22,10 +17,10 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang={company.defaultLanguage} suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          {children}
+          <CompanyProvider>{children}</CompanyProvider>
           <Toaster />
         </ThemeProvider>
       </body>

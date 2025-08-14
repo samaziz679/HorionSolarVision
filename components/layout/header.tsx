@@ -4,7 +4,6 @@ import Link from "next/link"
 import Image from "next/image"
 import { Home, LineChart, Package, Package2, PanelLeft, ShoppingCart, Users, DollarSign, Truck } from "lucide-react"
 import { usePathname } from "next/navigation"
-import { useEffect, useState } from "react"
 
 import {
   Breadcrumb,
@@ -17,44 +16,12 @@ import {
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import UserButton from "@/components/auth/user-button"
-import { getCompanyConfigBrowser, type CompanyConfig } from "@/lib/config/company-browser"
+import { useCompany } from "@/components/providers/company-provider"
 
 export function Header() {
   const pathname = usePathname()
   const pageTitle = pathname.split("/").pop()?.replace("-", " ") || "tableau de bord"
-  const [company, setCompany] = useState<CompanyConfig>({
-    name: "Solar Vision ERP",
-    slogan: "Bienvenue dans le système ERP Solar Vision",
-    currency: "FCFA",
-    contact: {
-      email: "contact@solarvision.bf",
-      phone: "+226 70 12 34 56",
-      address: "Ouagadougou, Burkina Faso",
-    },
-  })
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      setIsLoading(false)
-      return
-    }
-
-    const loadCompanyConfig = async () => {
-      try {
-        const config = await getCompanyConfigBrowser()
-        console.log("Loaded company config:", config)
-        setCompany(config)
-      } catch (err) {
-        console.error("Error loading company config:", err)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    const timer = setTimeout(loadCompanyConfig, 100)
-    return () => clearTimeout(timer)
-  }, [])
+  const company = useCompany()
 
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -71,9 +38,6 @@ export function Header() {
     }
     return translations[title] || capitalize(title)
   }
-
-  const displayName = isLoading ? "Chargement..." : company.name
-  const displayLogo = isLoading ? null : company.logo
 
   return (
     <header className="flex h-14 items-center gap-4 border-b gradient-solar px-4 lg:h-[60px] lg:px-6 shadow-lg">
@@ -92,23 +56,22 @@ export function Header() {
           <nav className="grid gap-2 text-lg font-medium">
             <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold mb-4">
               <div className="flex items-center gap-2">
-                {displayLogo ? (
+                {company.logo ? (
                   <Image
-                    src={displayLogo || "/placeholder.svg"}
+                    src={company.logo || "/placeholder.svg"}
                     alt={`${company.name} Logo`}
                     width={32}
                     height={32}
                     className="h-8 w-8 object-contain"
                     onError={(e) => {
-                      console.error("Logo failed to load:", displayLogo)
                       e.currentTarget.style.display = "none"
                       e.currentTarget.nextElementSibling?.classList.remove("hidden")
                     }}
                   />
                 ) : null}
-                <Package2 className={`h-6 w-6 text-solar-orange ${displayLogo ? "hidden" : ""}`} />
+                <Package2 className={`h-6 w-6 text-solar-orange ${company.logo ? "hidden" : ""}`} />
               </div>
-              <span className="text-solar-orange">{displayName}</span>
+              <span className="text-solar-orange">{company.name}</span>
             </Link>
             {/* ... existing navigation links ... */}
             <Link
@@ -205,23 +168,22 @@ export function Header() {
 
       <Link href="/dashboard" className="flex items-center gap-2 text-white hover:text-white/90 transition-colors">
         <div className="flex items-center gap-2">
-          {displayLogo ? (
+          {company.logo ? (
             <Image
-              src={displayLogo || "/placeholder.svg"}
+              src={company.logo || "/placeholder.svg"}
               alt={`${company.name} Logo`}
               width={32}
               height={32}
               className="h-8 w-8 object-contain bg-white/10 rounded p-1"
               onError={(e) => {
-                console.error("Logo failed to load:", displayLogo)
                 e.currentTarget.style.display = "none"
                 e.currentTarget.nextElementSibling?.classList.remove("hidden")
               }}
             />
           ) : null}
-          <Package2 className={`h-6 w-6 text-white ${displayLogo ? "hidden" : ""}`} />
+          <Package2 className={`h-6 w-6 text-white ${company.logo ? "hidden" : ""}`} />
         </div>
-        <span className="font-semibold text-lg hidden sm:block">{displayName}</span>
+        <span className="font-semibold text-lg hidden sm:block">{company.name}</span>
       </Link>
 
       <Breadcrumb className="hidden md:flex">
