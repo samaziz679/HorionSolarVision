@@ -15,7 +15,7 @@ import { formatCurrency } from "@/lib/currency"
 
 type SaleFormProps = {
   sale?: Sale
-  products: Pick<Product, "id" | "name" | "prix_vente_detail_1" | "prix_vente_detail_2" | "prix_vente_gros">[]
+  products: Pick<Product, "id" | "name" | "prix_vente_detail_1" | "prix_vente_detail_2" | "prix_vente_gros" | "image">[]
   clients: Pick<Client, "id" | "name">[]
 }
 
@@ -31,6 +31,8 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
     detail_2: "prix_vente_detail_2" as const,
     gros: "prix_vente_gros" as const,
   }
+
+  const selectedProductData = products.find((p) => p.id === selectedProduct)
 
   useEffect(() => {
     const product = products.find((p) => p.id === selectedProduct)
@@ -147,6 +149,24 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             </div>
           </div>
         </div>
+
+        {selectedProductData && selectedProductData.image && (
+          <div className="flex justify-center">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div className="text-center">
+                <img
+                  src={selectedProductData.image || "/placeholder.svg"}
+                  alt={selectedProductData.name}
+                  className="mx-auto h-32 w-32 rounded-lg object-cover shadow-sm"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none"
+                  }}
+                />
+                <p className="mt-2 text-sm font-medium text-gray-700">{selectedProductData.name}</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
