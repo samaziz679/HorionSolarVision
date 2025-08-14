@@ -24,6 +24,11 @@ const defaultConfig: CompanyConfig = {
 }
 
 export async function getCompanyConfigClient(): Promise<CompanyConfig> {
+  if (typeof window === "undefined") {
+    console.log("Server-side detected, returning default config")
+    return defaultConfig
+  }
+
   try {
     const supabase = createClient()
     const { data, error } = await supabase.from("company_settings").select("*").single()
