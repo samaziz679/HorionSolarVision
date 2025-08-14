@@ -40,32 +40,65 @@ const NAVIGATION_ITEMS: NavigationItem[] = [
   { href: "/admin/users", label: "Gestion Utilisateurs", icon: Shield, module: "admin" },
 ]
 
+const DEFAULT_NAVIGATION_ITEMS = NAVIGATION_ITEMS.filter((item) =>
+  ["dashboard", "sales", "clients"].includes(item.module),
+)
+
 export function Sidebar() {
   const pathname = usePathname()
   const [userRole, setUserRole] = useState<UserRole | null>(null)
-  const [allowedItems, setAllowedItems] = useState<NavigationItem[]>([])
+  const [allowedItems, setAllowedItems] = useState<NavigationItem[]>(DEFAULT_NAVIGATION_ITEMS)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
     async function loadUserRole() {
       try {
+        console.log("Loading user role...")
         const profile = await getCurrentUserProfileClient()
+        console.log("User profile:", profile)
+
         if (profile && profile.status === "active") {
           setUserRole(profile.role)
+          console.log("User role:", profile.role)
 
           // Filter navigation items based on user role
           const permissions = ROLE_PERMISSIONS[profile.role]
           const filtered = NAVIGATION_ITEMS.filter((item) => permissions.modules.includes(item.module as any))
+          console.log("Filtered navigation items:", filtered)
           setAllowedItems(filtered)
+        } else {
+          console.log("No active user profile, using default navigation")
+          setAllowedItems(DEFAULT_NAVIGATION_ITEMS)
         }
       } catch (error) {
         console.error("Error loading user role:", error)
-        // Fallback to basic navigation for vendeur
-        setAllowedItems(NAVIGATION_ITEMS.filter((item) => ["dashboard", "sales", "clients"].includes(item.module)))
+        setAllowedItems(DEFAULT_NAVIGATION_ITEMS)
+      } finally {
+        setIsLoading(false)
       }
     }
 
     loadUserRole()
   }, [])
+
+  if (isLoading) {
+    return (
+      <div className="hidden border-r bg-muted/40 md:block">
+        <div className="flex h-full max-h-screen flex-col gap-2">
+          <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+            <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+              <Package2 className="h-6 w-6" />
+              <span className="">Solar Vision ERP</span>
+            </Link>
+            <UserButton />
+          </div>
+          <div className="flex-1 p-4">
+            <div className="text-sm text-muted-foreground">Chargement...</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="hidden border-r bg-muted/40 md:block">
