@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Home, LineChart, Package, Package2, ShoppingCart, Users, DollarSign, Truck } from "lucide-react"
+import { Home, LineChart, Package, Package2, ShoppingCart, Users, DollarSign, Truck, Settings } from "lucide-react"
 import { usePathname } from "next/navigation"
 import UserButton from "@/components/auth/user-button"
 
@@ -91,6 +91,15 @@ export function Sidebar() {
             >
               <LineChart className="h-4 w-4" />
               Rapports
+            </Link>
+            <Link
+              href="/settings"
+              className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+                pathname === "/settings" ? "bg-muted text-primary" : "text-muted-foreground"
+              }`}
+            >
+              <Settings className="h-4 w-4" />
+              Paramètres
             </Link>
           </nav>
         </div>
