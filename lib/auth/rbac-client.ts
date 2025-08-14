@@ -8,9 +8,11 @@ export interface UserProfile {
   id: string
   user_id: string
   role: UserRole
+  status: UserStatus // Added missing status field
   created_at: string
   created_by?: string
   email?: string // Will be fetched from auth.users
+  full_name?: string // Added missing full_name field
 }
 
 export const ROLE_PERMISSIONS = {
@@ -77,7 +79,8 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
 
     return {
       ...userRole,
-      email: user.email || "",
+      email: userRole.email || user.email || "", // Use email from user_roles table first
+      full_name: userRole.full_name || "", // Added full_name field
     }
   } catch (error) {
     console.error("Error fetching user profile:", error)
@@ -106,6 +109,7 @@ export async function getAllUsers(): Promise<UserProfile[]> {
         return {
           ...userRole,
           email: authUser.user?.email || "",
+          full_name: authUser.user?.full_name || "", // Added full_name field
         }
       }),
     )
