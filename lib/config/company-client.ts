@@ -28,11 +28,14 @@ export async function getCompanyConfigClient(): Promise<CompanyConfig> {
     const supabase = createClient()
     const { data, error } = await supabase.from("company_settings").select("*").single()
 
+    console.log("Company settings query result:", { data, error })
+
     if (error || !data) {
+      console.log("Using default config because:", error?.message || "No data found")
       return defaultConfig
     }
 
-    return {
+    const config = {
       name: data.company_name || defaultConfig.name,
       tagline: data.tagline || defaultConfig.tagline,
       currency: data.currency || defaultConfig.currency,
@@ -43,6 +46,9 @@ export async function getCompanyConfigClient(): Promise<CompanyConfig> {
         address: data.address || defaultConfig.contact.address,
       },
     }
+
+    console.log("Returning company config:", config)
+    return config
   } catch (error) {
     console.error("Error fetching company config:", error)
     return defaultConfig
