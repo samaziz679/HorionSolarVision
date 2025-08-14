@@ -35,6 +35,12 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   const selectedProductData = products.find((p) => p.id === selectedProduct)
 
   useEffect(() => {
+    console.log("All products:", products)
+    console.log("Selected product ID:", selectedProduct)
+    console.log("Selected product data:", selectedProductData)
+    if (selectedProductData) {
+      console.log("Selected product image:", selectedProductData.image)
+    }
     const product = products.find((p) => p.id === selectedProduct)
     if (product) {
       const priceProperty = pricePlanMapping[pricePlan as keyof typeof pricePlanMapping]
@@ -150,21 +156,32 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
           </div>
         </div>
 
-        {selectedProductData && selectedProductData.image && (
-          <div className="flex justify-center">
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="text-center">
-                <img
-                  src={selectedProductData.image || "/placeholder.svg"}
-                  alt={selectedProductData.name}
-                  className="mx-auto h-32 w-32 rounded-lg object-cover shadow-sm"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none"
-                  }}
-                />
-                <p className="mt-2 text-sm font-medium text-gray-700">{selectedProductData.name}</p>
+        {selectedProductData && (
+          <div className="space-y-2">
+            <div className="text-sm text-gray-600">Debug: Image URL = {selectedProductData.image || "No image"}</div>
+            {selectedProductData.image ? (
+              <div className="flex justify-center">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="text-center">
+                    <img
+                      src={selectedProductData.image || "/placeholder.svg"}
+                      alt={selectedProductData.name}
+                      className="mx-auto h-32 w-32 rounded-lg object-cover shadow-sm"
+                      onError={(e) => {
+                        console.error("Image failed to load:", selectedProductData.image)
+                        e.currentTarget.style.display = "none"
+                      }}
+                      onLoad={() => {
+                        console.log("Image loaded successfully:", selectedProductData.image)
+                      }}
+                    />
+                    <p className="mt-2 text-sm font-medium text-gray-700">{selectedProductData.name}</p>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="text-center text-sm text-gray-500 py-4">Aucune image disponible pour ce produit</div>
+            )}
           </div>
         )}
 
