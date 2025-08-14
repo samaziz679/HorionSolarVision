@@ -1,6 +1,7 @@
 "use server"
 
 import { z } from "zod"
+import { put } from "@vercel/blob"
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
@@ -35,9 +36,22 @@ export type State = {
     type?: string[]
     unit?: string[]
     seuil_stock_bas?: string[]
+    image?: string[]
   }
   message?: string | null
   success?: boolean
+}
+
+async function uploadImage(imageFile: File): Promise<string | null> {
+  try {
+    const blob = await put(`products/${Date.now()}-${imageFile.name}`, imageFile, {
+      access: "public",
+    })
+    return blob.url
+  } catch (error) {
+    console.error("Image upload error:", error)
+    return null
+  }
 }
 
 export async function createProduct(prevState: State, formData: FormData) {
@@ -79,6 +93,20 @@ export async function createProduct(prevState: State, formData: FormData) {
     unit,
     seuil_stock_bas,
   } = validatedFields.data
+
+  let imageUrl: string | null = null
+  const imageFile = formData.get("image") as File
+  if (imageFile && imageFile.size > 0) {
+    imageUrl = await uploadImage(imageFile)
+    if (!imageUrl) {
+      return {
+        message: "Failed to upload image. Please try again.",
+        success: false,
+        errors: { image: ["Image upload failed"] },
+      }
+    }
+  }
+
   const supabase = createClient()
 
   const { error } = await supabase.from("products").insert({
@@ -92,6 +120,7 @@ export async function createProduct(prevState: State, formData: FormData) {
     type,
     unit,
     seuil_stock_bas,
+    image: imageUrl, // Added image URL to database
     created_by: user.id,
   })
 
@@ -144,23 +173,41 @@ export async function updateProduct(id: string, prevState: State, formData: Form
     unit,
     seuil_stock_bas,
   } = validatedFields.data
+
+  let imageUrl: string | undefined = undefined
+  const imageFile = formData.get("image") as File
+  if (imageFile && imageFile.size > 0) {
+    const uploadedUrl = await uploadImage(imageFile)
+    if (!uploadedUrl) {
+      return {
+        message: "Failed to upload image. Please try again.",
+        success: false,
+        errors: { image: ["Image upload failed"] },
+      }
+    }
+    imageUrl = uploadedUrl
+  }
+
   const supabase = createClient()
 
-  const { error } = await supabase
-    .from("products")
-    .update({
-      name,
-      description,
-      prix_achat,
-      prix_vente_detail_1,
-      prix_vente_detail_2,
-      prix_vente_gros,
-      quantity,
-      type,
-      unit,
-      seuil_stock_bas,
-    })
-    .eq("id", id)
+  const updateData: any = {
+    name,
+    description,
+    prix_achat,
+    prix_vente_detail_1,
+    prix_vente_detail_2,
+    prix_vente_gros,
+    quantity,
+    type,
+    unit,
+    seuil_stock_bas,
+  }
+
+  if (imageUrl) {
+    updateData.image = imageUrl
+  }
+
+  const { error } = await supabase.from("products").update(updateData).eq("id", id)
 
   if (error) {
     console.error("Database Error:", error)

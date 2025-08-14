@@ -79,7 +79,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
           <Label htmlFor="client_id">Client</Label>
           <Select name="client_id" value={sale?.client_id || ""} required>
             <SelectTrigger aria-describedby="client_id-error">
-              <SelectValue placeholder="Select a client" />
+              <SelectValue placeholder="Sélectionner un client" />
             </SelectTrigger>
             <SelectContent>
               {clients.map((client) => (
@@ -90,11 +90,11 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             </SelectContent>
           </Select>
           <div id="client_id-error" aria-live="polite" aria-atomic="true">
-            {renderErrors([])} {/* Placeholder for errors */}
+            {renderErrors([])}
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="sale_date">Sale Date</Label>
+          <Label htmlFor="sale_date">Date de Vente</Label>
           <Input
             id="sale_date"
             name="sale_date"
@@ -104,19 +104,20 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             aria-describedby="sale_date-error"
           />
           <div id="sale_date-error" aria-live="polite" aria-atomic="true">
-            {renderErrors([])} {/* Placeholder for errors */}
+            {renderErrors([])}
           </div>
         </div>
       </div>
 
       <div className="space-y-4">
-        <Label>Product Details</Label>
+        <Label>Détails du Produit</Label>
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="product_id">Product</Label>
+            <Label htmlFor="product_id">Produit</Label>
             <Select value={selectedProduct} onValueChange={setSelectedProduct} required>
               <SelectTrigger aria-describedby="product_id-error">
-                <SelectValue placeholder="Select a product" />
+                <SelectValue placeholder="Sélectionner un produit" />
               </SelectTrigger>
               <SelectContent>
                 {products.map((product) => (
@@ -127,11 +128,11 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               </SelectContent>
             </Select>
             <div id="product_id-error" aria-live="polite" aria-atomic="true">
-              {renderErrors([])} {/* Placeholder for errors */}
+              {renderErrors([])}
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="quantity">Quantity</Label>
+            <Label htmlFor="quantity">Quantité</Label>
             <Input
               id="quantity"
               type="number"
@@ -142,29 +143,30 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               aria-describedby="quantity-error"
             />
             <div id="quantity-error" aria-live="polite" aria-atomic="true">
-              {renderErrors([])} {/* Placeholder for errors */}
+              {renderErrors([])}
             </div>
           </div>
         </div>
+
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="price_plan">Price Plan</Label>
+            <Label htmlFor="price_plan">Plan de Prix</Label>
             <Select value={pricePlan} onValueChange={setPricePlan} required>
               <SelectTrigger aria-describedby="price_plan-error">
-                <SelectValue placeholder="Select price plan" />
+                <SelectValue placeholder="Sélectionner le plan de prix" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="detail_1">Retail Price 1</SelectItem>
-                <SelectItem value="detail_2">Retail Price 2</SelectItem>
-                <SelectItem value="gros">Wholesale Price</SelectItem>
+                <SelectItem value="detail_1">Prix Détail 1</SelectItem>
+                <SelectItem value="detail_2">Prix Détail 2</SelectItem>
+                <SelectItem value="gros">Prix de Gros</SelectItem>
               </SelectContent>
             </Select>
             <div id="price_plan-error" aria-live="polite" aria-atomic="true">
-              {renderErrors([])} {/* Placeholder for errors */}
+              {renderErrors([])}
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="unit_price">Unit Price</Label>
+            <Label htmlFor="unit_price">Prix Unitaire</Label>
             <Input
               id="unit_price"
               type="number"
@@ -175,23 +177,23 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               aria-describedby="unit_price-error"
             />
             <div id="unit_price-error" aria-live="polite" aria-atomic="true">
-              {renderErrors([])} {/* Placeholder for errors */}
+              {renderErrors([])}
             </div>
           </div>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Notes (Optional)</Label>
+        <Label htmlFor="notes">Notes (Optionnelles)</Label>
         <Input
           id="notes"
           name="notes"
           defaultValue={sale?.notes || ""}
-          placeholder="Additional notes about this sale"
+          placeholder="Notes supplémentaires sur cette vente"
           aria-describedby="notes-error"
         />
         <div id="notes-error" aria-live="polite" aria-atomic="true">
-          {renderErrors([])} {/* Placeholder for errors */}
+          {renderErrors([])}
         </div>
       </div>
 
@@ -204,7 +206,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
 
       <Button type="submit" disabled={isLoading} className="w-full">
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-        {isLoading ? (sale ? "Updating..." : "Creating...") : sale ? "Update Sale" : "Create Sale"}
+        {isLoading ? (sale ? "Mise à jour..." : "Création...") : sale ? "Mettre à jour la vente" : "Créer une vente"}
       </Button>
     </form>
   )
