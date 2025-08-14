@@ -5,7 +5,9 @@ import { formatMoney } from "@/lib/currency"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
-import { Pencil } from "lucide-react"
+import { Pencil, Trash2 } from "lucide-react"
+import { DeleteSaleDialog } from "./delete-sale-dialog"
+import { useState } from "react"
 
 type SaleForList = {
   id: string
@@ -16,9 +18,16 @@ type SaleForList = {
 
 export function SalesList({ sales }: { sales: SaleForList[] }) {
   const router = useRouter()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [saleToDelete, setSaleToDelete] = useState<string | null>(null)
 
   const handleEdit = (id: string) => {
     router.push(`/sales/${id}/edit`)
+  }
+
+  const handleDelete = (id: string) => {
+    setSaleToDelete(id)
+    setDeleteDialogOpen(true)
   }
 
   return (
@@ -50,16 +59,31 @@ export function SalesList({ sales }: { sales: SaleForList[] }) {
                 <TableCell>{sale.client_name}</TableCell>
                 <TableCell className="text-right">{formatMoney(sale.total_amount)}</TableCell>
                 <TableCell className="text-right">
-                  <Button variant="ghost" size="icon" onClick={() => handleEdit(sale.id)}>
-                    <Pencil className="h-4 w-4" />
-                    <span className="sr-only">Modifier la Vente</span>
-                  </Button>
+                  <div className="flex items-center justify-end gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => handleEdit(sale.id)}>
+                      <Pencil className="h-4 w-4" />
+                      <span className="sr-only">Modifier la Vente</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(sale.id)}
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="sr-only">Supprimer la Vente</span>
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))
           )}
         </TableBody>
       </Table>
+
+      {saleToDelete && (
+        <DeleteSaleDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} saleId={saleToDelete} />
+      )}
     </div>
   )
 }
