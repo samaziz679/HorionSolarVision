@@ -22,6 +22,7 @@ export default async function NewSalePage() {
     prix_vente_detail_2: product.prix_vente_detail_2,
     prix_vente_gros: product.prix_vente_gros,
     stock_quantity: product.quantity,
+    image: product.image,
   }))
 
   const clientOptions = clients.map((client) => ({
