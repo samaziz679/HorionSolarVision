@@ -18,7 +18,7 @@ import {
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
 import UserButton from "@/components/auth/user-button"
-import { getCurrentUserProfileClient, type UserRole, ROLE_PERMISSIONS } from "@/lib/auth/rbac"
+import { getCurrentUserProfileClient, type UserRole, ROLE_PERMISSIONS } from "@/lib/auth/rbac-client"
 
 interface NavigationItem {
   href: string

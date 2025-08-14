@@ -13,6 +13,39 @@ export interface UserProfile {
   updated_at: string
 }
 
+export const ROLE_PERMISSIONS = {
+  admin: {
+    modules: [
+      "dashboard",
+      "inventory",
+      "sales",
+      "purchases",
+      "clients",
+      "suppliers",
+      "expenses",
+      "reports",
+      "settings",
+      "admin",
+    ],
+  },
+  manager: {
+    modules: [
+      "dashboard",
+      "inventory",
+      "sales",
+      "purchases",
+      "clients",
+      "suppliers",
+      "expenses",
+      "reports",
+      "settings",
+    ],
+  },
+  vendeur: {
+    modules: ["dashboard", "sales", "clients"],
+  },
+} as const
+
 const createClient = () => {
   return createBrowserClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,6 +72,8 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
     return null
   }
 }
+
+export const getCurrentUserProfileClient = getCurrentUserProfile
 
 export async function getAllUsers(): Promise<UserProfile[]> {
   if (typeof window === "undefined") return []
