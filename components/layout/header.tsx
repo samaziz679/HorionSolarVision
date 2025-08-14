@@ -32,9 +32,26 @@ export function Header() {
       address: "Ouagadougou, Burkina Faso",
     },
   })
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    getCompanyConfigClient().then(setCompany)
+    const loadCompanyConfig = async () => {
+      try {
+        console.log("Loading company config...")
+        const config = await getCompanyConfigClient()
+        console.log("Company config loaded:", config)
+        setCompany(config)
+        setError(null)
+      } catch (err) {
+        console.error("Error loading company config:", err)
+        setError(err instanceof Error ? err.message : "Unknown error")
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadCompanyConfig()
   }, [])
 
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
@@ -53,6 +70,9 @@ export function Header() {
     return translations[title] || capitalize(title)
   }
 
+  const displayName = isLoading ? "Chargement..." : company.name
+  const displayLogo = isLoading ? null : company.logo
+
   return (
     <header className="flex h-14 items-center gap-4 border-b gradient-solar px-4 lg:h-[60px] lg:px-6 shadow-lg">
       <Sheet>
@@ -70,21 +90,23 @@ export function Header() {
           <nav className="grid gap-2 text-lg font-medium">
             <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold mb-4">
               <div className="flex items-center gap-2">
-                <Image
-                  src={company.logo || "/placeholder.svg"}
-                  alt={`${company.name} Logo`}
-                  width={32}
-                  height={32}
-                  className="h-8 w-8 object-contain"
-                  onError={(e) => {
-                    // Fallback to icon if logo fails to load
-                    e.currentTarget.style.display = "none"
-                    e.currentTarget.nextElementSibling?.classList.remove("hidden")
-                  }}
-                />
-                <Package2 className="h-6 w-6 text-solar-orange hidden" />
+                {displayLogo ? (
+                  <Image
+                    src={displayLogo || "/placeholder.svg"}
+                    alt={`${company.name} Logo`}
+                    width={32}
+                    height={32}
+                    className="h-8 w-8 object-contain"
+                    onError={(e) => {
+                      console.error("Logo failed to load:", displayLogo)
+                      e.currentTarget.style.display = "none"
+                      e.currentTarget.nextElementSibling?.classList.remove("hidden")
+                    }}
+                  />
+                ) : null}
+                <Package2 className={`h-6 w-6 text-solar-orange ${displayLogo ? "hidden" : ""}`} />
               </div>
-              <span className="text-solar-orange">{company.name}</span>
+              <span className="text-solar-orange">{displayName}</span>
             </Link>
             {/* ... existing navigation links ... */}
             <Link
@@ -181,23 +203,23 @@ export function Header() {
 
       <Link href="/dashboard" className="flex items-center gap-2 text-white hover:text-white/90 transition-colors">
         <div className="flex items-center gap-2">
-          {company.logo ? (
+          {displayLogo ? (
             <Image
-              src={company.logo || "/placeholder.svg"}
+              src={displayLogo || "/placeholder.svg"}
               alt={`${company.name} Logo`}
               width={32}
               height={32}
               className="h-8 w-8 object-contain bg-white/10 rounded p-1"
               onError={(e) => {
-                // Fallback to icon if logo fails to load
+                console.error("Logo failed to load:", displayLogo)
                 e.currentTarget.style.display = "none"
                 e.currentTarget.nextElementSibling?.classList.remove("hidden")
               }}
             />
           ) : null}
-          <Package2 className={`h-6 w-6 text-white ${company.logo ? "hidden" : ""}`} />
+          <Package2 className={`h-6 w-6 text-white ${displayLogo ? "hidden" : ""}`} />
         </div>
-        <span className="font-semibold text-lg hidden sm:block">{company.name}</span>
+        <span className="font-semibold text-lg hidden sm:block">{displayName}</span>
       </Link>
 
       <Breadcrumb className="hidden md:flex">
