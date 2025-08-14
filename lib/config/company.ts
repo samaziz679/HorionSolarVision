@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
+import { createClient as createBrowserClient } from "@/lib/supabase/client"
 
 // Default company configuration (fallback values)
 const defaultConfig = {
@@ -27,6 +28,38 @@ const defaultConfig = {
 export async function getCompanyConfig() {
   try {
     const supabase = createClient()
+    const { data: settings } = await supabase.from("company_settings").select("*").single()
+
+    if (settings) {
+      return {
+        ...defaultConfig,
+        name: settings.name,
+        tagline: settings.tagline,
+        logo: settings.logo,
+        currency: settings.currency,
+        contact: {
+          email: settings.email,
+          phone: settings.phone,
+          address: settings.address,
+        },
+        theme: {
+          ...defaultConfig.theme,
+          primary: settings.theme_primary || defaultConfig.theme.primary,
+          secondary: settings.theme_secondary || defaultConfig.theme.secondary,
+          accent: settings.theme_accent || defaultConfig.theme.accent,
+        },
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching company config:", error)
+  }
+
+  return defaultConfig
+}
+
+export async function getCompanyConfigClient() {
+  try {
+    const supabase = createBrowserClient()
     const { data: settings } = await supabase.from("company_settings").select("*").single()
 
     if (settings) {

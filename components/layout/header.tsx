@@ -4,7 +4,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { Home, LineChart, Package, Package2, PanelLeft, ShoppingCart, Users, DollarSign, Truck } from "lucide-react"
 import { usePathname } from "next/navigation"
-import { getCompanyConfig } from "@/lib/config/company"
+import { useEffect, useState } from "react"
+import { getCompanyConfigClient, companyConfig } from "@/lib/config/company"
 
 import {
   Breadcrumb,
@@ -21,7 +22,11 @@ import UserButton from "@/components/auth/user-button"
 export function Header() {
   const pathname = usePathname()
   const pageTitle = pathname.split("/").pop()?.replace("-", " ") || "tableau de bord"
-  const company = getCompanyConfig()
+  const [company, setCompany] = useState(companyConfig)
+
+  useEffect(() => {
+    getCompanyConfigClient().then(setCompany)
+  }, [])
 
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
