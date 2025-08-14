@@ -5,7 +5,6 @@ import Image from "next/image"
 import { Home, LineChart, Package, Package2, PanelLeft, ShoppingCart, Users, DollarSign, Truck } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { useEffect, useState } from "react"
-import { createBrowserClient } from "@supabase/ssr"
 
 import {
   Breadcrumb,
@@ -18,25 +17,14 @@ import {
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import UserButton from "@/components/auth/user-button"
-
-type CompanyConfig = {
-  name: string
-  tagline: string
-  currency: string
-  logo?: string
-  contact: {
-    email: string
-    phone: string
-    address: string
-  }
-}
+import { getCompanyConfigBrowser, type CompanyConfig } from "@/lib/config/company-browser"
 
 export function Header() {
   const pathname = usePathname()
   const pageTitle = pathname.split("/").pop()?.replace("-", " ") || "tableau de bord"
   const [company, setCompany] = useState<CompanyConfig>({
     name: "Solar Vision ERP",
-    tagline: "Bienvenue dans le système ERP Solar Vision",
+    slogan: "Bienvenue dans le système ERP Solar Vision",
     currency: "FCFA",
     contact: {
       email: "contact@solarvision.bf",
@@ -45,47 +33,14 @@ export function Header() {
     },
   })
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const loadCompanyConfig = async () => {
       try {
-        console.log("Loading company config...")
-
-        // Create browser-only Supabase client
-        const supabase = createBrowserClient(
-          process.env.NEXT_PUBLIC_SUPABASE_URL!,
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        )
-
-        const { data, error } = await supabase.from("company_settings").select("*").single()
-
-        if (error) {
-          console.log("No company settings found, using defaults:", error.message)
-          setIsLoading(false)
-          return
-        }
-
-        if (data) {
-          console.log("Company settings found:", data)
-          const config: CompanyConfig = {
-            name: data.company_name || "Solar Vision ERP",
-            tagline: data.tagline || "Bienvenue dans le système ERP Solar Vision",
-            currency: data.currency || "FCFA",
-            logo: data.logo_url || undefined,
-            contact: {
-              email: data.email || "contact@solarvision.bf",
-              phone: data.phone || "+226 70 12 34 56",
-              address: data.address || "Ouagadougou, Burkina Faso",
-            },
-          }
-          setCompany(config)
-        }
-
-        setError(null)
+        const config = await getCompanyConfigBrowser()
+        setCompany(config)
       } catch (err) {
         console.error("Error loading company config:", err)
-        setError(err instanceof Error ? err.message : "Unknown error")
       } finally {
         setIsLoading(false)
       }
