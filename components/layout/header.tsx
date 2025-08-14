@@ -1,8 +1,10 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import { Home, LineChart, Package, Package2, PanelLeft, ShoppingCart, Users, DollarSign, Truck } from "lucide-react"
 import { usePathname } from "next/navigation"
+import { getCompanyConfig } from "@/lib/config/company"
 
 import {
   Breadcrumb,
@@ -19,6 +21,7 @@ import UserButton from "@/components/auth/user-button"
 export function Header() {
   const pathname = usePathname()
   const pageTitle = pathname.split("/").pop()?.replace("-", " ") || "tableau de bord"
+  const company = getCompanyConfig()
 
   const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1)
 
@@ -52,9 +55,24 @@ export function Header() {
         <SheetContent side="left" className="flex flex-col">
           <nav className="grid gap-2 text-lg font-medium">
             <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold mb-4">
-              <Package2 className="h-6 w-6 text-solar-orange" />
-              <span className="text-solar-orange">Solar Vision ERP</span>
+              <div className="flex items-center gap-2">
+                <Image
+                  src={company.logo || "/placeholder.svg"}
+                  alt={`${company.name} Logo`}
+                  width={32}
+                  height={32}
+                  className="h-8 w-8 object-contain"
+                  onError={(e) => {
+                    // Fallback to icon if logo fails to load
+                    e.currentTarget.style.display = "none"
+                    e.currentTarget.nextElementSibling?.classList.remove("hidden")
+                  }}
+                />
+                <Package2 className="h-6 w-6 text-solar-orange hidden" />
+              </div>
+              <span className="text-solar-orange">{company.name}</span>
             </Link>
+            {/* ... existing navigation links ... */}
             <Link
               href="/dashboard"
               className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground transition-colors ${

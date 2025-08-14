@@ -2,9 +2,11 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getDashboardData } from "@/lib/data/dashboard"
+import { getCompanyConfig } from "@/lib/config/company"
 
 export default async function DashboardPage() {
   const cookieStore = cookies()
+  const company = getCompanyConfig()
 
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
     cookies: {
@@ -20,9 +22,10 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight text-solar-orange">Tableau de bord</h1>
-        <p className="text-muted-foreground">Bienvenue dans le système ERP Solar Vision</p>
+        <p className="text-muted-foreground">{company.tagline}</p>
       </div>
 
+      {/* ... existing dashboard cards ... */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-solar-orange">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -79,7 +82,7 @@ export default async function DashboardPage() {
                     <p className="text-sm text-muted-foreground">{sale.client_name}</p>
                   </div>
                   <div className="ml-auto font-medium text-solar-orange">
-                    {process.env.NEXT_PUBLIC_CURRENCY || "FCFA"} {sale.total_amount}
+                    {company.currency} {sale.total_amount}
                   </div>
                 </div>
               ))}
