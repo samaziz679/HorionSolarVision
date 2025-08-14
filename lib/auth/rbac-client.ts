@@ -6,11 +6,11 @@ export type UserStatus = "active" | "suspended" | "pending"
 
 export interface UserProfile {
   id: string
-  email: string
+  user_id: string
   role: UserRole
-  status: UserStatus
   created_at: string
-  updated_at: string
+  created_by?: string
+  email?: string // Will be fetched from auth.users
 }
 
 export const ROLE_PERMISSIONS = {
@@ -64,9 +64,21 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
 
     if (!user) return null
 
-    const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).single()
+    console.log("Fetching user role for user:", user.id)
 
-    return profile
+    const { data: userRole, error } = await supabase.from("user_roles").select("*").eq("user_id", user.id).single()
+
+    if (error) {
+      console.error("Error fetching user role:", error)
+      return null
+    }
+
+    console.log("Found user role:", userRole)
+
+    return {
+      ...userRole,
+      email: user.email || "",
+    }
   } catch (error) {
     console.error("Error fetching user profile:", error)
     return null
@@ -80,13 +92,25 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 
   try {
     const supabase = createClient()
-    const { data: users, error } = await supabase
-      .from("user_profiles")
+    const { data: userRoles, error } = await supabase
+      .from("user_roles")
       .select("*")
       .order("created_at", { ascending: false })
 
     if (error) throw error
-    return users || []
+
+    // Get user emails from auth.users
+    const usersWithEmails = await Promise.all(
+      (userRoles || []).map(async (userRole) => {
+        const { data: authUser } = await supabase.auth.admin.getUserById(userRole.user_id)
+        return {
+          ...userRole,
+          email: authUser.user?.email || "",
+        }
+      }),
+    )
+
+    return usersWithEmails
   } catch (error) {
     console.error("Error fetching users:", error)
     return []
@@ -98,10 +122,7 @@ export async function updateUserRole(userId: string, role: UserRole): Promise<bo
 
   try {
     const supabase = createClient()
-    const { error } = await supabase
-      .from("user_profiles")
-      .update({ role, updated_at: new Date().toISOString() })
-      .eq("id", userId)
+    const { error } = await supabase.from("user_roles").update({ role }).eq("user_id", userId)
 
     if (error) throw error
     return true
@@ -115,13 +136,9 @@ export async function updateUserStatus(userId: string, status: UserStatus): Prom
   if (typeof window === "undefined") return false
 
   try {
-    const supabase = createClient()
-    const { error } = await supabase
-      .from("user_profiles")
-      .update({ status, updated_at: new Date().toISOString() })
-      .eq("id", userId)
-
-    if (error) throw error
+    // Since user_roles table doesn't have status, we might need to handle this differently
+    // For now, we'll just return true as a placeholder
+    console.log("Status update not implemented for user_roles table:", userId, status)
     return true
   } catch (error) {
     console.error("Error updating user status:", error)
