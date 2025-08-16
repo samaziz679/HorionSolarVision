@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Home, LineChart, Package, Package2, ShoppingCart, Users, DollarSign, Truck, Settings } from "lucide-react"
 import { usePathname } from "next/navigation"
 import UserButton from "@/components/auth/user-button"
-import { getCurrentUserProfileClient, ROLE_PERMISSIONS, type UserRole } from "@/lib/auth/rbac"
+import { getCurrentUserProfileClient, ROLE_PERMISSIONS, type UserRole } from "@/lib/auth/rbac-client"
 
 interface NavigationItem {
   href: string
