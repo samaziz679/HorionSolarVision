@@ -1,32 +1,62 @@
 "use client"
 
 import type React from "react"
-
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Home, LineChart, Package, Package2, ShoppingCart, Users, DollarSign, Truck, Settings } from "lucide-react"
 import { usePathname } from "next/navigation"
 import UserButton from "@/components/auth/user-button"
+import { getCurrentUserProfileClient, ROLE_PERMISSIONS, type UserRole } from "@/lib/auth/rbac"
 
 interface NavigationItem {
   href: string
   label: string
   icon: React.ComponentType<{ className?: string }>
+  module: string
 }
 
-const NAVIGATION_ITEMS: NavigationItem[] = [
-  { href: "/dashboard", label: "Tableau de bord", icon: Home },
-  { href: "/inventory", label: "Inventaire", icon: Package },
-  { href: "/sales", label: "Ventes", icon: ShoppingCart },
-  { href: "/purchases", label: "Achats", icon: Truck },
-  { href: "/clients", label: "Clients", icon: Users },
-  { href: "/suppliers", label: "Fournisseurs", icon: Users },
-  { href: "/expenses", label: "Dépenses", icon: DollarSign },
-  { href: "/reports", label: "Rapports", icon: LineChart },
-  { href: "/settings", label: "Paramètres", icon: Settings },
+const ALL_NAVIGATION_ITEMS: NavigationItem[] = [
+  { href: "/dashboard", label: "Tableau de bord", icon: Home, module: "dashboard" },
+  { href: "/inventory", label: "Inventaire", icon: Package, module: "inventory" },
+  { href: "/sales", label: "Ventes", icon: ShoppingCart, module: "sales" },
+  { href: "/purchases", label: "Achats", icon: Truck, module: "purchases" },
+  { href: "/clients", label: "Clients", icon: Users, module: "clients" },
+  { href: "/suppliers", label: "Fournisseurs", icon: Users, module: "suppliers" },
+  { href: "/expenses", label: "Dépenses", icon: DollarSign, module: "expenses" },
+  { href: "/reports", label: "Rapports", icon: LineChart, module: "reports" },
+  { href: "/settings", label: "Paramètres", icon: Settings, module: "settings" },
 ]
 
 export function Sidebar() {
   const pathname = usePathname()
+  const [navigationItems, setNavigationItems] = useState<NavigationItem[]>(ALL_NAVIGATION_ITEMS)
+  const [userRole, setUserRole] = useState<UserRole | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadUserRole() {
+      try {
+        const profile = await getCurrentUserProfileClient()
+        if (profile && profile.status === "active") {
+          setUserRole(profile.role)
+          const permissions = ROLE_PERMISSIONS[profile.role]
+          const filteredItems = ALL_NAVIGATION_ITEMS.filter((item) => permissions.modules.includes(item.module as any))
+          setNavigationItems(filteredItems)
+        }
+      } catch (error) {
+        console.error("Error loading user role:", error)
+        // Fallback to basic navigation for vendeur
+        const basicItems = ALL_NAVIGATION_ITEMS.filter((item) =>
+          ["dashboard", "sales", "clients"].includes(item.module),
+        )
+        setNavigationItems(basicItems)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadUserRole()
+  }, [])
 
   return (
     <div className="hidden border-r bg-muted/40 md:block">
@@ -40,7 +70,12 @@ export function Sidebar() {
         </div>
         <div className="flex-1">
           <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
-            {NAVIGATION_ITEMS.map((item) => {
+            {userRole && !loading && (
+              <div className="px-3 py-2 text-xs text-muted-foreground border-b mb-2">
+                Rôle: <span className="font-medium capitalize">{userRole}</span>
+              </div>
+            )}
+            {navigationItems.map((item) => {
               const Icon = item.icon
               return (
                 <Link

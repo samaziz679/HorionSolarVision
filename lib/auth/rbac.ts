@@ -6,6 +6,7 @@ export type UserStatus = "active" | "suspended" | "pending"
 
 export interface UserProfile {
   id: string
+  user_id: string
   email: string
   full_name: string | null
   role: UserRole
@@ -61,7 +62,7 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).single()
+  const { data: profile } = await supabase.from("user_roles").select("*").eq("user_id", user.id).single()
 
   return profile
 }
@@ -103,7 +104,7 @@ export async function getCurrentUserProfileClient(): Promise<UserProfile | null>
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase.from("user_profiles").select("*").eq("id", user.id).single()
+  const { data: profile } = await supabase.from("user_roles").select("*").eq("user_id", user.id).single()
 
   return profile
 }
