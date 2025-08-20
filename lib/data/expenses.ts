@@ -5,7 +5,17 @@ import type { Expense } from "@/lib/supabase/types"
 export async function fetchExpenses() {
   noStore()
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.from("expenses").select("*").order("expense_date", { ascending: false })
+  const { data, error } = await supabase
+    .from("expenses")
+    .select(`
+      *,
+      expense_categories!category_id (
+        id,
+        name_fr,
+        name_en
+      )
+    `)
+    .order("expense_date", { ascending: false })
 
   if (error) {
     console.error("Database Error:", error)
@@ -20,7 +30,18 @@ export async function fetchExpenseById(id: string) {
   if (!id) return null
 
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.from("expenses").select("*").eq("id", id).single()
+  const { data, error } = await supabase
+    .from("expenses")
+    .select(`
+      *,
+      expense_categories!category_id (
+        id,
+        name_fr,
+        name_en
+      )
+    `)
+    .eq("id", id)
+    .single()
 
   if (error) {
     console.error("Database Error:", error)
