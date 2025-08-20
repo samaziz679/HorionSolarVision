@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation"
 import { fetchExpenseById } from "@/lib/data/expenses"
+import { fetchExpenseCategories } from "@/lib/data/categories"
 import ExpenseForm from "@/components/expenses/expense-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -19,7 +20,7 @@ type PageProps = {
 
 export default async function EditExpensePage({ params }: PageProps) {
   const { id } = params
-  const expense = await fetchExpenseById(id)
+  const [expense, categories] = await Promise.all([fetchExpenseById(id), fetchExpenseCategories()])
 
   if (!expense) {
     notFound()
@@ -31,27 +32,27 @@ export default async function EditExpensePage({ params }: PageProps) {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/dashboard">Dashboard</Link>
+              <Link href="/dashboard">Tableau de bord</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link href="/expenses">Expenses</Link>
+              <Link href="/expenses">Dépenses</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
           <BreadcrumbItem>
-            <BreadcrumbLink>Edit Expense</BreadcrumbLink>
+            <BreadcrumbLink>Modifier Dépense</BreadcrumbLink>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
       <Card>
         <CardHeader>
-          <CardTitle>Edit Expense</CardTitle>
+          <CardTitle>Modifier Dépense</CardTitle>
         </CardHeader>
         <CardContent>
-          <ExpenseForm expense={expense} />
+          <ExpenseForm expense={expense} categories={categories || []} />
         </CardContent>
       </Card>
     </main>
