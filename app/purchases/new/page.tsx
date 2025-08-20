@@ -12,8 +12,11 @@ import {
 import Link from "next/link"
 
 export default async function NewPurchasePage() {
-  const products = await fetchProducts()
-  const suppliers = await fetchSuppliers()
+  const productsResult = await fetchProducts()
+  const suppliersResult = await fetchSuppliers()
+
+  const products = productsResult.products || []
+  const suppliers = suppliersResult.suppliers || []
 
   const productOptions = products.map((product) => ({
     id: product.id,
