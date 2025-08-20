@@ -26,7 +26,7 @@ export default async function EditSalePage({ params }: PageProps) {
   try {
     const sale = await fetchSaleById(id)
     const productsResult = await fetchProducts(1, 1000) // Get all products for editing
-    const products = productsResult.data || [] // Added fallback to empty array
+    const products = productsResult.products || [] // Fixed: use .products instead of .data
     const clients = (await fetchClients()) || [] // Added fallback to empty array
 
     if (!sale) {
