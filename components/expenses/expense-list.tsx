@@ -25,7 +25,7 @@ export default function ExpenseList({ expenses }: { expenses: Expense[] }) {
             <TableRow key={expense.id}>
               <TableCell>{formatDate(expense.expense_date)}</TableCell>
               <TableCell>{expense.description}</TableCell>
-              <TableCell>{expense.category}</TableCell>
+              <TableCell>{expense.expense_categories?.name_fr || expense.category}</TableCell>
               <TableCell className="text-right">{formatCurrency(expense.amount)}</TableCell>
               <TableCell className="flex gap-2">
                 <Button asChild variant="outline" size="sm">
