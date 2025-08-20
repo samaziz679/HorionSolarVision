@@ -50,9 +50,41 @@ export async function createExpense(prevState: State, formData: FormData) {
   }
 
   const supabase = createClient()
+
+  // Get the category name from the ID
+  const { data: categoryData } = await supabase
+    .from("expense_categories")
+    .select("name_fr")
+    .eq("id", validatedFields.data.category)
+    .single()
+
+  if (!categoryData) {
+    return { message: "Invalid category selected.", success: false }
+  }
+
+  const categoryEnumMap: Record<string, string> = {
+    Assurance: "INSURANCE",
+    Autre: "OTHER",
+    Carburant: "FUEL",
+    Équipement: "EQUIPMENT",
+    "Fournitures de Bureau": "OFFICE_SUPPLIES",
+    "Frais de livraison": "DELIVERY_FEES",
+    "Frais internet": "INTERNET_FEES",
+    "Loyer boutique": "SHOP_RENT",
+    Maintenance: "MAINTENANCE",
+    Marketing: "MARKETING",
+    "Produits en vente": "PRODUCTS_FOR_SALE",
+    "Salaire vendeur": "SALESPERSON_SALARY",
+    "Services Professionnels": "PROFESSIONAL_SERVICES",
+    "Services Publics": "UTILITIES",
+    Transport: "TRANSPORT",
+  }
+
+  const enumValue = categoryEnumMap[categoryData.name_fr] || categoryData.name_fr.toUpperCase().replace(/\s+/g, "_")
+
   const { error } = await supabase.from("expenses").insert({
     description: validatedFields.data.description,
-    category: validatedFields.data.category,
+    category: enumValue,
     amount: validatedFields.data.amount,
     expense_date: validatedFields.data.expense_date,
     created_by: user.id,
@@ -89,15 +121,45 @@ export async function updateExpense(id: string, prevState: State, formData: Form
     }
   }
 
-  const { description, amount, category, expense_date } = validatedFields.data
+  const { description, amount, expense_date } = validatedFields.data
   const supabase = createClient()
+
+  const { data: categoryData } = await supabase
+    .from("expense_categories")
+    .select("name_fr")
+    .eq("id", validatedFields.data.category)
+    .single()
+
+  if (!categoryData) {
+    return { message: "Invalid category selected.", success: false }
+  }
+
+  const categoryEnumMap: Record<string, string> = {
+    Assurance: "INSURANCE",
+    Autre: "OTHER",
+    Carburant: "FUEL",
+    Équipement: "EQUIPMENT",
+    "Fournitures de Bureau": "OFFICE_SUPPLIES",
+    "Frais de livraison": "DELIVERY_FEES",
+    "Frais internet": "INTERNET_FEES",
+    "Loyer boutique": "SHOP_RENT",
+    Maintenance: "MAINTENANCE",
+    Marketing: "MARKETING",
+    "Produits en vente": "PRODUCTS_FOR_SALE",
+    "Salaire vendeur": "SALESPERSON_SALARY",
+    "Services Professionnels": "PROFESSIONAL_SERVICES",
+    "Services Publics": "UTILITIES",
+    Transport: "TRANSPORT",
+  }
+
+  const enumValue = categoryEnumMap[categoryData.name_fr] || categoryData.name_fr.toUpperCase().replace(/\s+/g, "_")
 
   const { error } = await supabase
     .from("expenses")
     .update({
       description,
       amount,
-      category,
+      category: enumValue,
       expense_date,
     })
     .eq("id", id)

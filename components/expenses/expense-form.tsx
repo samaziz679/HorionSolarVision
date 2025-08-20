@@ -90,7 +90,7 @@ export default function ExpenseForm({ expense, categories: initialCategories }: 
             </SelectTrigger>
             <SelectContent>
               {categories.map((category) => (
-                <SelectItem key={category.id} value={category.name_fr}>
+                <SelectItem key={category.id} value={category.id}>
                   {category.name_fr}
                 </SelectItem>
               ))}
