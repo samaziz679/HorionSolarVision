@@ -84,13 +84,13 @@ export default function ExpenseForm({ expense, categories: initialCategories }: 
       <div>
         <Label htmlFor="category">Catégorie</Label>
         <div className="flex gap-2">
-          <Select name="category" defaultValue={expense?.category || ""} required>
+          <Select name="category" defaultValue={expense?.category_id || ""} required>
             <SelectTrigger className="flex-1">
               <SelectValue placeholder="Sélectionner une catégorie" />
             </SelectTrigger>
             <SelectContent>
               {categories.map((category) => (
-                <SelectItem key={category.id} value={category.name_fr}>
+                <SelectItem key={category.id} value={category.id}>
                   {category.name_fr}
                 </SelectItem>
               ))}
