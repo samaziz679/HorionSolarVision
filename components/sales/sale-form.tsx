@@ -21,13 +21,7 @@ type SaleFormProps = {
 
 export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedProduct, setSelectedProduct] = useState(() => {
-    if (sale?.product_id) {
-      const productExists = products.find((p) => p.id === sale.product_id)
-      return productExists ? sale.product_id : ""
-    }
-    return ""
-  })
+  const [selectedProduct, setSelectedProduct] = useState(sale?.product_id || "")
   const [quantity, setQuantity] = useState(sale?.quantity || 1)
   const [pricePlan, setPricePlan] = useState(sale?.price_plan || "detail_1")
   const [unitPrice, setUnitPrice] = useState(sale?.unit_price || 0)
@@ -41,28 +35,12 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   const selectedProductData = products.find((p) => p.id === selectedProduct)
 
   useEffect(() => {
-    console.log("[v0] All products:", products)
-    console.log("[v0] Selected product ID:", selectedProduct)
-    console.log("[v0] Selected product data:", selectedProductData)
-    if (selectedProductData) {
-      console.log("[v0] Selected product image:", selectedProductData.image)
-    }
     const product = products.find((p) => p.id === selectedProduct)
     if (product) {
       const priceProperty = pricePlanMapping[pricePlan as keyof typeof pricePlanMapping]
       setUnitPrice(Number(product[priceProperty]))
     }
-  }, [selectedProduct, pricePlan, products, selectedProductData])
-
-  useEffect(() => {
-    if (sale && products.length > 0) {
-      const productExists = products.find((p) => p.id === sale.product_id)
-      if (productExists && selectedProduct !== sale.product_id) {
-        console.log("[v0] Setting selected product from sale data:", sale.product_id)
-        setSelectedProduct(sale.product_id)
-      }
-    }
-  }, [sale, products, selectedProduct])
+  }, [selectedProduct, pricePlan, products])
 
   const totalAmount = quantity * unitPrice
 
@@ -181,7 +159,6 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
                       alt={selectedProductData.name}
                       className="mx-auto h-24 w-24 rounded-lg object-cover shadow-sm"
                       onError={(e) => {
-                        console.log("[v0] Image failed to load:", selectedProductData.image)
                         e.currentTarget.style.display = "none"
                       }}
                     />
