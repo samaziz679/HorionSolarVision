@@ -23,7 +23,8 @@ type PageProps = {
 export default async function EditSalePage({ params }: PageProps) {
   const { id } = params
   const sale = await fetchSaleById(id)
-  const products = await fetchProducts()
+  const productsResult = await fetchProducts(1, 1000) // Get all products for editing
+  const products = productsResult.data
   const clients = await fetchClients()
 
   if (!sale) {
@@ -36,6 +37,7 @@ export default async function EditSalePage({ params }: PageProps) {
     prix_vente_detail_1: product.prix_vente_detail_1,
     prix_vente_detail_2: product.prix_vente_detail_2,
     prix_vente_gros: product.prix_vente_gros,
+    image: product.image,
   }))
 
   const clientOptions = clients.map((client: Client) => ({
