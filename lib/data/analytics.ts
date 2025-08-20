@@ -108,9 +108,9 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     // Fetch basic sales data
     const { data: currentSales, error: salesError } = await supabase
       .from("sales")
-      .select("total_amount, created_at, client_id")
-      .gte("created_at", startOfMonth.toISOString())
-      .lte("created_at", endOfMonth.toISOString())
+      .select("total, sale_date, client_id")
+      .gte("sale_date", startOfMonth.toISOString().split("T")[0])
+      .lte("sale_date", endOfMonth.toISOString().split("T")[0])
 
     if (salesError) {
       console.error("Sales query error:", salesError)
@@ -118,16 +118,16 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
 
     const { data: prevSales } = await supabase
       .from("sales")
-      .select("total_amount")
-      .gte("created_at", startOfPrevMonth.toISOString())
-      .lte("created_at", endOfPrevMonth.toISOString())
+      .select("total")
+      .gte("sale_date", startOfPrevMonth.toISOString().split("T")[0])
+      .lte("sale_date", endOfPrevMonth.toISOString().split("T")[0])
 
     // Fetch expenses data
     const { data: currentExpenses, error: expensesError } = await supabase
       .from("expenses")
-      .select("amount, category, created_at")
-      .gte("created_at", startOfMonth.toISOString())
-      .lte("created_at", endOfMonth.toISOString())
+      .select("amount, category, expense_date")
+      .gte("expense_date", startOfMonth.toISOString().split("T")[0])
+      .lte("expense_date", endOfMonth.toISOString().split("T")[0])
 
     if (expensesError) {
       console.error("Expenses query error:", expensesError)
@@ -136,14 +136,14 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     // Fetch purchases data (cost of goods sold)
     const { data: currentPurchases } = await supabase
       .from("purchases")
-      .select("total_cost, created_at")
-      .gte("created_at", startOfMonth.toISOString())
-      .lte("created_at", endOfMonth.toISOString())
+      .select("total, purchase_date")
+      .gte("purchase_date", startOfMonth.toISOString().split("T")[0])
+      .lte("purchase_date", endOfMonth.toISOString().split("T")[0])
 
     // Fetch inventory data
     const { data: inventory, error: inventoryError } = await supabase
       .from("products")
-      .select("name, quantity, price, low_stock_threshold")
+      .select("name, quantity, prix_achat, seuil_stock_bas")
 
     if (inventoryError) {
       console.error("Inventory query error:", inventoryError)
@@ -153,24 +153,24 @@ export async function getAnalyticsData(): Promise<AnalyticsData> {
     const { data: clients } = await supabase.from("clients").select("id, name, created_at")
 
     // Calculate financial metrics
-    const totalRevenue = currentSales?.reduce((sum, sale) => sum + (sale.total_amount || 0), 0) || 0
-    const prevRevenue = prevSales?.reduce((sum, sale) => sum + (sale.total_amount || 0), 0) || 0
+    const totalRevenue = currentSales?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
+    const prevRevenue = prevSales?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
     const totalExpenses = currentExpenses?.reduce((sum, expense) => sum + (expense.amount || 0), 0) || 0
-    const totalCOGS = currentPurchases?.reduce((sum, purchase) => sum + (purchase.total_cost || 0), 0) || 0
+    const totalCOGS = currentPurchases?.reduce((sum, purchase) => sum + (purchase.total || 0), 0) || 0
     const netProfit = totalRevenue - totalExpenses - totalCOGS
 
     const revenueGrowth = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0
 
     // Calculate inventory metrics
     const inventoryValue =
-      inventory?.reduce((sum, product) => sum + (product.quantity || 0) * (product.price || 0), 0) || 0
+      inventory?.reduce((sum, product) => sum + (product.quantity || 0) * (product.prix_achat || 0), 0) || 0
     const lowStockItems =
       inventory
-        ?.filter((product) => (product.quantity || 0) <= (product.low_stock_threshold || 10))
+        ?.filter((product) => (product.quantity || 0) <= (product.seuil_stock_bas || 10))
         .map((product) => ({
           name: product.name || "Produit Inconnu",
           currentStock: product.quantity || 0,
-          threshold: product.low_stock_threshold || 10,
+          threshold: product.seuil_stock_bas || 10,
         }))
         .slice(0, 5) || []
 
