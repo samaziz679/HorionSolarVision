@@ -78,24 +78,24 @@ export async function createExpense(prevState: State, formData: FormData) {
   }
 
   const categoryEnumMap: Record<string, string> = {
-    Assurance: "INSURANCE",
-    Autre: "OTHER",
-    Carburant: "FUEL",
-    Équipement: "EQUIPMENT",
-    "Fournitures de Bureau": "OFFICE_SUPPLIES",
-    "Frais de livraison": "DELIVERY_FEES",
-    "Frais internet": "INTERNET_FEES",
-    "Loyer boutique": "SHOP_RENT",
-    Maintenance: "MAINTENANCE",
-    Marketing: "MARKETING",
-    "Produits en vente": "PRODUCTS_FOR_SALE",
-    "Salaire vendeur": "SALESPERSON_SALARY",
-    "Services Professionnels": "PROFESSIONAL_SERVICES",
-    "Services Publics": "UTILITIES",
-    Transport: "TRANSPORT",
+    Assurance: "autre",
+    Autre: "autre",
+    Carburant: "carburant",
+    Équipement: "autre",
+    "Fournitures de Bureau": "autre",
+    "Frais de livraison": "autre",
+    "Frais internet": "internet",
+    "Loyer boutique": "loyer",
+    Maintenance: "maintenance",
+    Marketing: "autre",
+    "Produits en vente": "autre",
+    "Salaire vendeur": "salaire",
+    "Services Professionnels": "autre",
+    "Services Publics": "electricite",
+    Transport: "autre",
   }
 
-  const enumValue = categoryEnumMap[categoryData.name_fr] || categoryData.name_fr.toUpperCase().replace(/\s+/g, "_")
+  const enumValue = categoryEnumMap[categoryData.name_fr] || categoryData.name_fr.toLowerCase().replace(/\s+/g, "_")
   console.log("[v0] Enum value:", enumValue)
 
   const insertData = {
@@ -155,24 +155,24 @@ export async function updateExpense(id: string, prevState: State, formData: Form
   }
 
   const categoryEnumMap: Record<string, string> = {
-    Assurance: "INSURANCE",
-    Autre: "OTHER",
-    Carburant: "FUEL",
-    Équipement: "EQUIPMENT",
-    "Fournitures de Bureau": "OFFICE_SUPPLIES",
-    "Frais de livraison": "DELIVERY_FEES",
-    "Frais internet": "INTERNET_FEES",
-    "Loyer boutique": "SHOP_RENT",
-    Maintenance: "MAINTENANCE",
-    Marketing: "MARKETING",
-    "Produits en vente": "PRODUCTS_FOR_SALE",
-    "Salaire vendeur": "SALESPERSON_SALARY",
-    "Services Professionnels": "PROFESSIONAL_SERVICES",
-    "Services Publics": "UTILITIES",
-    Transport: "TRANSPORT",
+    Assurance: "autre",
+    Autre: "autre",
+    Carburant: "carburant",
+    Équipement: "autre",
+    "Fournitures de Bureau": "autre",
+    "Frais de livraison": "autre",
+    "Frais internet": "internet",
+    "Loyer boutique": "loyer",
+    Maintenance: "maintenance",
+    Marketing: "autre",
+    "Produits en vente": "autre",
+    "Salaire vendeur": "salaire",
+    "Services Professionnels": "autre",
+    "Services Publics": "electricite",
+    Transport: "autre",
   }
 
-  const enumValue = categoryEnumMap[categoryData.name_fr] || categoryData.name_fr.toUpperCase().replace(/\s+/g, "_")
+  const enumValue = categoryEnumMap[categoryData.name_fr] || categoryData.name_fr.toLowerCase().replace(/\s+/g, "_")
 
   const { error } = await supabase
     .from("expenses")
