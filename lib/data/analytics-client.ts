@@ -32,6 +32,16 @@ export interface AnalyticsData {
     amount: number
     percentage: number
   }>
+  totalStockValue: number
+  stockRotation: number
+  outOfStockCount: number
+  stockMovements: Array<{
+    product: string
+    type: "sale" | "purchase"
+    quantity: number
+    date: string
+    value: number
+  }>
 }
 
 export async function getAnalyticsData(startDate?: string, endDate?: string): Promise<AnalyticsData> {
@@ -59,8 +69,15 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     // Get clients data
     const { data: clientsData } = await supabase.from("clients").select("id, name")
 
-    // Get products data
-    const { data: productsData } = await supabase.from("products").select("id, name, quantity, seuil_stock_bas")
+    const { data: productsData } = await supabase
+      .from("products")
+      .select("id, name, quantity, seuil_stock_bas, prix_achat, prix_detail_1")
+
+    const { data: purchasesData } = await supabase
+      .from("purchases")
+      .select("product_id, quantity, unit_price, purchase_date")
+      .gte("purchase_date", start)
+      .lte("purchase_date", end)
 
     // Calculate totals
     const totalRevenue = salesData?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
@@ -68,7 +85,61 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     const netProfit = totalRevenue - totalExpenses
     const totalClients = clientsData?.length || 0
 
-    // Calculate top products
+    const totalStockValue =
+      productsData?.reduce((sum, product) => {
+        const quantity = product.quantity || 0
+        const purchasePrice = product.prix_achat || 0
+        return sum + quantity * purchasePrice
+      }, 0) || 0
+
+    const outOfStockCount = productsData?.filter((product) => (product.quantity || 0) === 0).length || 0
+
+    // Calculate stock rotation (simplified: total sales value / average stock value)
+    const totalSalesQuantity = salesData?.reduce((sum, sale) => sum + (sale.quantity || 0), 0) || 0
+    const averageStockQuantity = productsData?.reduce((sum, product) => sum + (product.quantity || 0), 0) || 0
+    const stockRotation =
+      averageStockQuantity > 0 ? Math.round((totalSalesQuantity / averageStockQuantity) * 10) / 10 : 0
+
+    const stockMovements: Array<{
+      product: string
+      type: "sale" | "purchase"
+      quantity: number
+      date: string
+      value: number
+    }> = []
+
+    // Add sales movements
+    salesData?.forEach((sale) => {
+      const product = productsData?.find((p) => p.id === sale.product_id)
+      if (product) {
+        stockMovements.push({
+          product: product.name,
+          type: "sale",
+          quantity: -(sale.quantity || 0), // Negative for sales (stock reduction)
+          date: sale.sale_date,
+          value: sale.total || 0,
+        })
+      }
+    })
+
+    // Add purchase movements
+    purchasesData?.forEach((purchase) => {
+      const product = productsData?.find((p) => p.id === purchase.product_id)
+      if (product) {
+        stockMovements.push({
+          product: product.name,
+          type: "purchase",
+          quantity: purchase.quantity || 0, // Positive for purchases (stock increase)
+          date: purchase.purchase_date,
+          value: (purchase.quantity || 0) * (purchase.unit_price || 0),
+        })
+      }
+    })
+
+    // Sort stock movements by date (most recent first)
+    stockMovements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    // Get top products
     const productSales = new Map()
     salesData?.forEach((sale) => {
       const productId = sale.product_id
@@ -92,7 +163,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5)
 
-    // Calculate top clients
+    // Get top clients
     const clientSales = new Map()
     salesData?.forEach((sale) => {
       const clientId = sale.client_id
@@ -184,6 +255,10 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       monthlyData,
       stockAlerts,
       revenueBySource,
+      totalStockValue,
+      stockRotation,
+      outOfStockCount,
+      stockMovements: stockMovements.slice(0, 10), // Limit to 10 most recent movements
     }
   } catch (error) {
     console.error("Error fetching analytics data:", error)
@@ -197,6 +272,10 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       monthlyData: [],
       stockAlerts: [],
       revenueBySource: [],
+      totalStockValue: 0,
+      stockRotation: 0,
+      outOfStockCount: 0,
+      stockMovements: [],
     }
   }
 }
