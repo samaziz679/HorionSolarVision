@@ -22,9 +22,17 @@ type SaleFormProps = {
 export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState(sale?.product_id || "")
+  const [selectedClient, setSelectedClient] = useState(sale?.client_id || "")
   const [quantity, setQuantity] = useState(sale?.quantity || 1)
   const [pricePlan, setPricePlan] = useState(sale?.price_plan || "detail_1")
   const [unitPrice, setUnitPrice] = useState(sale?.unit_price || 0)
+
+  useEffect(() => {
+    if (sale) {
+      setSelectedProduct(sale.product_id || "")
+      setSelectedClient(sale.client_id || "")
+    }
+  }, [sale])
 
   const pricePlanMapping = {
     detail_1: "prix_vente_detail_1" as const,
@@ -35,12 +43,6 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   const selectedProductData = products.find((p) => p.id === selectedProduct)
 
   useEffect(() => {
-    console.log("All products:", products)
-    console.log("Selected product ID:", selectedProduct)
-    console.log("Selected product data:", selectedProductData)
-    if (selectedProductData) {
-      console.log("Selected product image:", selectedProductData.image)
-    }
     const product = products.find((p) => p.id === selectedProduct)
     if (product) {
       const priceProperty = pricePlanMapping[pricePlan as keyof typeof pricePlanMapping]
@@ -65,8 +67,8 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
 
     const formData = new FormData(event.currentTarget)
 
-    // Add computed values to form data
     formData.set("product_id", selectedProduct)
+    formData.set("client_id", selectedClient)
     formData.set("quantity", quantity.toString())
     formData.set("price_plan", pricePlan)
     formData.set("unit_price", unitPrice.toString())
@@ -76,7 +78,6 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
     } else {
       await createSale({ success: false }, formData)
     }
-    // Note: redirect() in server actions will handle navigation
     setIsLoading(false)
   }
 
@@ -85,7 +86,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="client_id">Client</Label>
-          <Select name="client_id" value={sale?.client_id || ""} required>
+          <Select value={selectedClient} onValueChange={setSelectedClient} required>
             <SelectTrigger aria-describedby="client_id-error">
               <SelectValue placeholder="Sélectionner un client" />
             </SelectTrigger>
@@ -175,7 +176,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
                 </div>
               </div>
             ) : (
-              <div className="text-center text-xs text-gray-400 py-2">Aucune image disponible</div>
+              <div className="text-center text-xs text-gray-400 py-2">Aucune image disponible pour ce produit</div>
             )}
           </div>
         )}

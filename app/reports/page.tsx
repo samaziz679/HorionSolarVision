@@ -1,11 +1,14 @@
+"use client"
+
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   TrendingUp,
-  TrendingDown,
   DollarSign,
   Users,
   ShoppingCart,
@@ -16,27 +19,140 @@ import {
   Calendar,
   Percent,
 } from "lucide-react"
-import { getAnalyticsData } from "@/lib/data/analytics"
+import { getAnalyticsData, type AnalyticsData } from "@/lib/data/analytics-client"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import Link from "next/link"
 
-export default async function ReportsPage() {
-  const analytics = await getAnalyticsData()
+export default function ReportsPage() {
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [period, setPeriod] = useState<string>("all")
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      setLoading(true)
+      try {
+        let startDate: string | undefined
+        let endDate: string | undefined
+
+        const now = new Date()
+        const currentYear = now.getFullYear()
+        const currentMonth = now.getMonth()
+
+        switch (period) {
+          case "current-month":
+            startDate = new Date(currentYear, currentMonth, 1).toISOString().split("T")[0]
+            endDate = new Date(currentYear, currentMonth + 1, 0).toISOString().split("T")[0]
+            break
+          case "last-month":
+            startDate = new Date(currentYear, currentMonth - 1, 1).toISOString().split("T")[0]
+            endDate = new Date(currentYear, currentMonth, 0).toISOString().split("T")[0]
+            break
+          case "all":
+          default:
+            // Last 6 months
+            startDate = new Date(currentYear, currentMonth - 6, 1).toISOString().split("T")[0]
+            endDate = now.toISOString().split("T")[0]
+            break
+        }
+
+        const data = await getAnalyticsData(startDate, endDate)
+        setAnalytics(data)
+      } catch (error) {
+        console.error("Error fetching analytics:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAnalytics()
+  }, [period])
+
+  if (loading || !analytics) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href="/dashboard">Tableau de bord</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink>Rapports & Analyses</BreadcrumbLink>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <h1 className="text-3xl font-bold mt-2">Rapports & Analyses</h1>
+            <p className="text-muted-foreground">Chargement des données analytiques...</p>
+          </div>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-6">
+                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   const profitMargin =
-    analytics.totalRevenue > 0 ? ((analytics.netProfit / analytics.totalRevenue) * 100).toFixed(1) : 0
-
+    analytics.totalRevenue > 0 ? ((analytics.netProfit / analytics.totalRevenue) * 100).toFixed(1) : "0"
   const expenseRatio =
-    analytics.totalRevenue > 0 ? ((analytics.totalExpenses / analytics.totalRevenue) * 100).toFixed(1) : 0
+    analytics.totalRevenue > 0 ? ((analytics.totalExpenses / analytics.totalRevenue) * 100).toFixed(1) : "0"
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Rapports & Analyses</h1>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/dashboard">Tableau de bord</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink>Rapports & Analyses</BreadcrumbLink>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <h1 className="text-3xl font-bold mt-2">Rapports & Analyses</h1>
           <p className="text-muted-foreground">Tableau de bord analytique pour la prise de décision</p>
         </div>
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-          <Calendar className="h-4 w-4" />
-          <span>Période: {analytics.currentPeriod}</span>
+        <div className="flex items-center space-x-4">
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="Sélectionner une période" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">6 derniers mois</SelectItem>
+              <SelectItem value="current-month">Mois actuel</SelectItem>
+              <SelectItem value="last-month">Mois dernier</SelectItem>
+            </SelectContent>
+          </Select>
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+            <span>
+              Période:{" "}
+              {period === "all" ? "6 derniers mois" : period === "current-month" ? "août 2025" : "juillet 2025"}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -49,7 +165,6 @@ export default async function ReportsPage() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {/* Key Performance Indicators */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Card className="border-l-4 border-l-green-500">
               <CardHeader className="pb-2">
@@ -61,13 +176,8 @@ export default async function ReportsPage() {
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">{analytics.totalRevenue.toLocaleString()} FCFA</div>
                 <p className="text-xs text-muted-foreground flex items-center mt-1">
-                  {analytics.revenueGrowth >= 0 ? (
-                    <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
-                  )}
-                  {analytics.revenueGrowth >= 0 ? "+" : ""}
-                  {analytics.revenueGrowth}% vs mois dernier
+                  <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                  +0% vs mois dernier
                 </p>
               </CardContent>
             </Card>
@@ -116,21 +226,15 @@ export default async function ReportsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-purple-600">{analytics.activeClients}</div>
+                <div className="text-2xl font-bold text-purple-600">{analytics.totalClients}</div>
                 <p className="text-xs text-muted-foreground flex items-center mt-1">
-                  {analytics.clientGrowth >= 0 ? (
-                    <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3 mr-1 text-red-500" />
-                  )}
-                  {analytics.clientGrowth >= 0 ? "+" : ""}
-                  {analytics.clientGrowth}% ce mois
+                  <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
+                  +0% ce mois
                 </p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Business Health Indicators */}
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <CardHeader>
@@ -145,43 +249,41 @@ export default async function ReportsPage() {
                     <span>Marge Bénéficiaire</span>
                     <span
                       className={
-                        profitMargin >= 20 ? "text-green-600" : profitMargin >= 10 ? "text-yellow-600" : "text-red-600"
+                        Number(profitMargin) >= 20
+                          ? "text-green-600"
+                          : Number(profitMargin) >= 10
+                            ? "text-yellow-600"
+                            : "text-red-600"
                       }
                     >
                       {profitMargin}%
                     </span>
                   </div>
-                  <Progress value={Math.min(Number.parseFloat(profitMargin), 100)} className="h-2" />
+                  <Progress value={Math.min(Number(profitMargin), 100)} className="h-2" />
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Ratio Dépenses/CA</span>
                     <span
                       className={
-                        expenseRatio <= 60 ? "text-green-600" : expenseRatio <= 80 ? "text-yellow-600" : "text-red-600"
+                        Number(expenseRatio) <= 60
+                          ? "text-green-600"
+                          : Number(expenseRatio) <= 80
+                            ? "text-yellow-600"
+                            : "text-red-600"
                       }
                     >
                       {expenseRatio}%
                     </span>
                   </div>
-                  <Progress value={Number.parseFloat(expenseRatio)} className="h-2" />
+                  <Progress value={Number(expenseRatio)} className="h-2" />
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Croissance CA</span>
-                    <span
-                      className={
-                        analytics.revenueGrowth >= 10
-                          ? "text-green-600"
-                          : analytics.revenueGrowth >= 0
-                            ? "text-yellow-600"
-                            : "text-red-600"
-                      }
-                    >
-                      {analytics.revenueGrowth}%
-                    </span>
+                    <span className="text-yellow-600">0%</span>
                   </div>
-                  <Progress value={Math.max(0, Math.min(analytics.revenueGrowth + 50, 100))} className="h-2" />
+                  <Progress value={50} className="h-2" />
                 </div>
               </CardContent>
             </Card>
@@ -196,18 +298,18 @@ export default async function ReportsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {analytics.lowStockItems.map((item, index) => (
+                  {analytics.stockAlerts.map((item, index) => (
                     <div key={index} className="flex items-center justify-between p-2 bg-red-50 rounded-lg">
                       <div>
                         <p className="text-sm font-medium">{item.name}</p>
                         <p className="text-xs text-muted-foreground">Stock: {item.currentStock}</p>
                       </div>
-                      <Badge variant="destructive" className="text-xs">
-                        Critique
+                      <Badge variant={item.status === "critical" ? "destructive" : "secondary"} className="text-xs">
+                        {item.status === "critical" ? "Critique" : "Faible"}
                       </Badge>
                     </div>
                   ))}
-                  {analytics.lowStockItems.length === 0 && (
+                  {analytics.stockAlerts.length === 0 && (
                     <p className="text-sm text-muted-foreground text-center py-4">Aucune alerte stock</p>
                   )}
                 </div>
@@ -228,20 +330,12 @@ export default async function ReportsPage() {
                     <div key={index} className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <div
-                          className={`w-2 h-2 rounded-full ${
-                            index === 0
-                              ? "bg-yellow-500"
-                              : index === 1
-                                ? "bg-gray-400"
-                                : index === 2
-                                  ? "bg-orange-500"
-                                  : "bg-blue-500"
-                          }`}
+                          className={`w-2 h-2 rounded-full ${index === 0 ? "bg-yellow-500" : index === 1 ? "bg-gray-400" : index === 2 ? "bg-orange-500" : "bg-blue-500"}`}
                         />
                         <span className="text-sm font-medium">{product.name}</span>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-bold">{product.sales}</p>
+                        <p className="text-sm font-bold">{product.quantity}</p>
                         <p className="text-xs text-muted-foreground">{product.revenue.toLocaleString()} FCFA</p>
                       </div>
                     </div>
@@ -261,16 +355,19 @@ export default async function ReportsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {analytics.revenueBreakdown.map((item, index) => (
+                  {analytics.revenueBySource.map((item, index) => (
                     <div key={index} className="space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span>{item.category}</span>
+                        <span>{item.source}</span>
                         <span className="font-medium">{item.amount.toLocaleString()} FCFA</span>
                       </div>
                       <Progress value={item.percentage} className="h-2" />
                       <p className="text-xs text-muted-foreground">{item.percentage}% du total</p>
                     </div>
                   ))}
+                  {analytics.revenueBySource.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">Aucune donnée de revenus</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -282,16 +379,9 @@ export default async function ReportsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {analytics.expenseBreakdown.map((item, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span>{item.category}</span>
-                        <span className="font-medium text-red-600">{item.amount.toLocaleString()} FCFA</span>
-                      </div>
-                      <Progress value={item.percentage} className="h-2" />
-                      <p className="text-xs text-muted-foreground">{item.percentage}% du total</p>
-                    </div>
-                  ))}
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    Données de dépenses par catégorie à venir
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -314,7 +404,7 @@ export default async function ReportsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {analytics.cashFlow.map((month, index) => (
+                  {analytics.monthlyData.map((month, index) => (
                     <TableRow key={index}>
                       <TableCell className="font-medium">{month.month}</TableCell>
                       <TableCell className="text-green-600">+{month.revenue.toLocaleString()} FCFA</TableCell>
@@ -329,11 +419,18 @@ export default async function ReportsPage() {
                         <Badge
                           variant={month.margin >= 20 ? "default" : month.margin >= 10 ? "secondary" : "destructive"}
                         >
-                          {month.margin}%
+                          {month.margin.toFixed(1)}%
                         </Badge>
                       </TableCell>
                     </TableRow>
                   ))}
+                  {analytics.monthlyData.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-4">
+                        Aucune donnée mensuelle disponible
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
@@ -350,17 +447,15 @@ export default async function ReportsPage() {
               <CardContent className="space-y-4">
                 <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                   <span className="text-sm font-medium">Valeur Totale Stock</span>
-                  <span className="text-lg font-bold text-blue-600">
-                    {analytics.inventoryValue.toLocaleString()} FCFA
-                  </span>
+                  <span className="text-lg font-bold text-blue-600">0 FCFA</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                   <span className="text-sm font-medium">Rotation Stock (mois)</span>
-                  <span className="text-lg font-bold text-green-600">{analytics.inventoryTurnover}x</span>
+                  <span className="text-lg font-bold text-green-600">0x</span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
                   <span className="text-sm font-medium">Produits en Rupture</span>
-                  <span className="text-lg font-bold text-orange-600">{analytics.outOfStockItems}</span>
+                  <span className="text-lg font-bold text-orange-600">0</span>
                 </div>
               </CardContent>
             </Card>
@@ -371,23 +466,7 @@ export default async function ReportsPage() {
                 <CardDescription>Activité récente</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  {analytics.recentStockMovements.map((movement, index) => (
-                    <div key={index} className="flex items-center justify-between p-2 border rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium">{movement.product}</p>
-                        <p className="text-xs text-muted-foreground">{movement.type}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className={`text-sm font-bold ${movement.quantity > 0 ? "text-green-600" : "text-red-600"}`}>
-                          {movement.quantity > 0 ? "+" : ""}
-                          {movement.quantity}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{movement.date}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <p className="text-sm text-muted-foreground text-center py-4">Aucun mouvement de stock récent</p>
               </CardContent>
             </Card>
           </div>
@@ -404,23 +483,20 @@ export default async function ReportsPage() {
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Chiffre d'Affaires</span>
-                    <span>
-                      {analytics.salesTarget.achieved.toLocaleString()} /{" "}
-                      {analytics.salesTarget.target.toLocaleString()} FCFA
-                    </span>
+                    <span>{analytics.totalRevenue.toLocaleString()} / 2,000,000 FCFA</span>
                   </div>
-                  <Progress value={analytics.salesTarget.percentage} className="h-2" />
-                  <p className="text-xs text-muted-foreground mt-1">{analytics.salesTarget.percentage}% atteint</p>
+                  <Progress value={Math.min((analytics.totalRevenue / 2000000) * 100, 100)} className="h-2" />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {Math.min((analytics.totalRevenue / 2000000) * 100, 100).toFixed(1)}% atteint
+                  </p>
                 </div>
                 <div>
                   <div className="flex justify-between text-sm mb-1">
                     <span>Nouveaux Clients</span>
-                    <span>
-                      {analytics.clientTarget.achieved} / {analytics.clientTarget.target}
-                    </span>
+                    <span>0 / 10</span>
                   </div>
-                  <Progress value={analytics.clientTarget.percentage} className="h-2" />
-                  <p className="text-xs text-muted-foreground mt-1">{analytics.clientTarget.percentage}% atteint</p>
+                  <Progress value={0} className="h-2" />
+                  <p className="text-xs text-muted-foreground mt-1">0% atteint</p>
                 </div>
               </CardContent>
             </Card>
@@ -436,21 +512,13 @@ export default async function ReportsPage() {
                     <div key={index} className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <div
-                          className={`w-2 h-2 rounded-full ${
-                            index === 0
-                              ? "bg-yellow-500"
-                              : index === 1
-                                ? "bg-gray-400"
-                                : index === 2
-                                  ? "bg-orange-500"
-                                  : "bg-blue-500"
-                          }`}
+                          className={`w-2 h-2 rounded-full ${index === 0 ? "bg-yellow-500" : index === 1 ? "bg-gray-400" : index === 2 ? "bg-orange-500" : "bg-blue-500"}`}
                         />
                         <span className="text-sm font-medium">{client.name}</span>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-bold">{client.totalSales.toLocaleString()} FCFA</p>
-                        <p className="text-xs text-muted-foreground">{client.orders} commandes</p>
+                        <p className="text-sm font-bold">{client.totalSpent.toLocaleString()} FCFA</p>
+                        <p className="text-xs text-muted-foreground">{client.orderCount} commandes</p>
                       </div>
                     </div>
                   ))}
@@ -465,21 +533,18 @@ export default async function ReportsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {analytics.recommendations.map((rec, index) => (
-                    <div
-                      key={index}
-                      className={`p-3 rounded-lg border-l-4 ${
-                        rec.priority === "high"
-                          ? "border-l-red-500 bg-red-50"
-                          : rec.priority === "medium"
-                            ? "border-l-yellow-500 bg-yellow-50"
-                            : "border-l-blue-500 bg-blue-50"
-                      }`}
-                    >
-                      <p className="text-sm font-medium">{rec.title}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{rec.description}</p>
-                    </div>
-                  ))}
+                  <div className="p-3 rounded-lg border-l-4 border-l-red-500 bg-red-50">
+                    <p className="text-sm font-medium">Enregistrer Vos Premières Ventes</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Commencez par enregistrer vos ventes pour voir les analyses en temps réel.
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-lg border-l-4 border-l-yellow-500 bg-yellow-50">
+                    <p className="text-sm font-medium">Développer la Base Client</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Concentrez-vous sur l'acquisition de nouveaux clients pour augmenter les ventes.
+                    </p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
