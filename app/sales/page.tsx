@@ -4,6 +4,13 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PlusCircle, ChevronLeft, ChevronRight } from "lucide-react"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 
 export default async function SalesPage({
   searchParams,
@@ -16,7 +23,19 @@ export default async function SalesPage({
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
       <div className="flex items-center">
-        <h1 className="font-semibold text-lg md:text-2xl">Ventes</h1>
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem>
+              <BreadcrumbLink asChild>
+                <Link href="/dashboard">Tableau de bord</Link>
+              </BreadcrumbLink>
+            </BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem>
+              <BreadcrumbLink>Ventes</BreadcrumbLink>
+            </BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
         <Button asChild size="sm" className="ml-auto gap-1">
           <Link href="/sales/new">
             Nouvelle Vente
@@ -24,6 +43,7 @@ export default async function SalesPage({
           </Link>
         </Button>
       </div>
+
       <Card>
         <CardHeader>
           <CardTitle>Ventes récentes</CardTitle>

@@ -20,6 +20,14 @@ import {
   Percent,
 } from "lucide-react"
 import { getAnalyticsData, type AnalyticsData } from "@/lib/data/analytics-client"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import Link from "next/link"
 
 export default function ReportsPage() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
@@ -71,7 +79,20 @@ export default function ReportsPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Rapports & Analyses</h1>
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Link href="/dashboard">Tableau de bord</Link>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbLink>Rapports & Analyses</BreadcrumbLink>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+            <h1 className="text-3xl font-bold mt-2">Rapports & Analyses</h1>
             <p className="text-muted-foreground">Chargement des données analytiques...</p>
           </div>
         </div>
@@ -98,7 +119,20 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Rapports & Analyses</h1>
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href="/dashboard">Tableau de bord</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink>Rapports & Analyses</BreadcrumbLink>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <h1 className="text-3xl font-bold mt-2">Rapports & Analyses</h1>
           <p className="text-muted-foreground">Tableau de bord analytique pour la prise de décision</p>
         </div>
         <div className="flex items-center space-x-4">
