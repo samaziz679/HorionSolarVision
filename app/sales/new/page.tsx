@@ -12,8 +12,7 @@ import {
 import Link from "next/link"
 
 export default async function NewSalePage() {
-  const productsResult = await fetchProducts()
-  const products = productsResult.data || []
+  const products = await fetchProducts()
   const clients = await fetchClients()
 
   const productOptions = products.map((product) => ({

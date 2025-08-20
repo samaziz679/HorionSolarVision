@@ -88,112 +88,89 @@ export interface AnalyticsData {
   }>
 }
 
-export async function getAnalyticsData(period?: string): Promise<AnalyticsData> {
+export async function getAnalyticsData(): Promise<AnalyticsData> {
   const supabase = createClient()
 
   try {
+    // Get current month data
     const currentDate = new Date()
-    let startDate: Date
-    let endDate: Date
-    let periodLabel: string
+    const currentMonth = currentDate.getMonth() + 1
+    const currentYear = currentDate.getFullYear()
+    const startOfMonth = new Date(currentYear, currentMonth - 1, 1)
+    const endOfMonth = new Date(currentYear, currentMonth, 0)
 
-    if (period === "current-month") {
-      const currentMonth = currentDate.getMonth() + 1
-      const currentYear = currentDate.getFullYear()
-      startDate = new Date(currentYear, currentMonth - 1, 1)
-      endDate = new Date(currentYear, currentMonth, 0)
-      periodLabel = currentDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-    } else if (period === "last-month") {
-      const lastMonth = currentDate.getMonth() === 0 ? 12 : currentDate.getMonth()
-      const lastYear = currentDate.getMonth() === 0 ? currentDate.getFullYear() - 1 : currentDate.getFullYear()
-      startDate = new Date(lastYear, lastMonth - 1, 1)
-      endDate = new Date(lastYear, lastMonth, 0)
-      periodLabel = new Date(lastYear, lastMonth - 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-    } else {
-      // Default: show all data (last 6 months)
-      startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 5, 1)
-      endDate = currentDate
-      periodLabel = "6 derniers mois"
-    }
+    // Get previous month for comparison
+    const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1
+    const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear
+    const startOfPrevMonth = new Date(prevYear, prevMonth - 1, 1)
+    const endOfPrevMonth = new Date(prevYear, prevMonth, 0)
 
+    // Fetch basic sales data
     const { data: currentSales, error: salesError } = await supabase
       .from("sales")
-      .select(`
-        total, 
-        sale_date, 
-        client_id, 
-        quantity,
-        product_id,
-        products!inner(name)
-      `)
-      .gte("sale_date", startDate.toISOString().split("T")[0])
-      .lte("sale_date", endDate.toISOString().split("T")[0])
+      .select("total_amount, created_at, client_id")
+      .gte("created_at", startOfMonth.toISOString())
+      .lte("created_at", endOfMonth.toISOString())
 
     if (salesError) {
       console.error("Sales query error:", salesError)
     }
 
-    // Get previous period for comparison
-    const prevStartDate = new Date(startDate.getTime() - (endDate.getTime() - startDate.getTime()))
-    const prevEndDate = startDate
-
     const { data: prevSales } = await supabase
       .from("sales")
-      .select("total")
-      .gte("sale_date", prevStartDate.toISOString().split("T")[0])
-      .lte("sale_date", prevEndDate.toISOString().split("T")[0])
+      .select("total_amount")
+      .gte("created_at", startOfPrevMonth.toISOString())
+      .lte("created_at", endOfPrevMonth.toISOString())
 
+    // Fetch expenses data
     const { data: currentExpenses, error: expensesError } = await supabase
       .from("expenses")
-      .select("amount, category, expense_date")
-      .gte("expense_date", startDate.toISOString().split("T")[0])
-      .lte("expense_date", endDate.toISOString().split("T")[0])
+      .select("amount, category, created_at")
+      .gte("created_at", startOfMonth.toISOString())
+      .lte("created_at", endOfMonth.toISOString())
 
     if (expensesError) {
       console.error("Expenses query error:", expensesError)
     }
 
+    // Fetch purchases data (cost of goods sold)
     const { data: currentPurchases } = await supabase
       .from("purchases")
-      .select("total, purchase_date")
-      .gte("purchase_date", startDate.toISOString().split("T")[0])
-      .lte("purchase_date", endDate.toISOString().split("T")[0])
-
-    const { data: clients } = await supabase.from("clients").select(`
-        id, 
-        name, 
-        created_at,
-        sales!inner(total, sale_date)
-      `)
+      .select("total_cost, created_at")
+      .gte("created_at", startOfMonth.toISOString())
+      .lte("created_at", endOfMonth.toISOString())
 
     // Fetch inventory data
     const { data: inventory, error: inventoryError } = await supabase
       .from("products")
-      .select("name, quantity, prix_achat, seuil_stock_bas")
+      .select("name, quantity, price, low_stock_threshold")
 
     if (inventoryError) {
       console.error("Inventory query error:", inventoryError)
     }
 
+    // Fetch clients data
+    const { data: clients } = await supabase.from("clients").select("id, name, created_at")
+
     // Calculate financial metrics
-    const totalRevenue = currentSales?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
-    const prevRevenue = prevSales?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
+    const totalRevenue = currentSales?.reduce((sum, sale) => sum + (sale.total_amount || 0), 0) || 0
+    const prevRevenue = prevSales?.reduce((sum, sale) => sum + (sale.total_amount || 0), 0) || 0
     const totalExpenses = currentExpenses?.reduce((sum, expense) => sum + (expense.amount || 0), 0) || 0
-    const totalCOGS = currentPurchases?.reduce((sum, purchase) => sum + (purchase.total || 0), 0) || 0
+    const totalCOGS = currentPurchases?.reduce((sum, purchase) => sum + (purchase.total_cost || 0), 0) || 0
     const netProfit = totalRevenue - totalExpenses - totalCOGS
 
     const revenueGrowth = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0
 
     // Calculate inventory metrics
     const inventoryValue =
-      inventory?.reduce((sum, product) => sum + (product.quantity || 0) * (product.prix_achat || 0), 0) || 0
+      inventory?.reduce((sum, product) => sum + (product.quantity || 0) * (product.price || 0), 0) || 0
     const lowStockItems =
       inventory
-        ?.filter((product) => (product.quantity || 0) <= (product.seuil_stock_bas || 10))
+        ?.filter((product) => (product.quantity || 0) <= (product.low_stock_threshold || 10))
         .map((product) => ({
           name: product.name || "Produit Inconnu",
           currentStock: product.quantity || 0,
-          threshold: product.seuil_stock_bas || 10,
+          threshold: product.low_stock_threshold || 10,
         }))
         .slice(0, 5) || []
 
@@ -204,7 +181,7 @@ export async function getAnalyticsData(period?: string): Promise<AnalyticsData> 
     const newClientsThisMonth =
       clients?.filter((client) => {
         const createdDate = new Date(client.created_at)
-        return createdDate >= startDate && createdDate <= endDate
+        return createdDate >= startOfMonth && createdDate <= endOfMonth
       }).length || 0
 
     const expenseCategories: Record<string, number> = {}
@@ -221,7 +198,7 @@ export async function getAnalyticsData(period?: string): Promise<AnalyticsData> 
 
     const cashFlow = []
     for (let i = 5; i >= 0; i--) {
-      const monthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1 - i, 1)
+      const monthDate = new Date(currentYear, currentMonth - 1 - i, 1)
       const monthName = monthDate.toLocaleDateString("fr-FR", { month: "short", year: "numeric" })
 
       // For now, use current month data for all months to avoid complex queries
@@ -239,41 +216,29 @@ export async function getAnalyticsData(period?: string): Promise<AnalyticsData> 
       })
     }
 
-    const productSales: Record<string, { sales: number; revenue: number; name: string }> = {}
-    currentSales?.forEach((sale: any) => {
-      const productName = sale.products?.name || "Produit Inconnu"
-      if (!productSales[productName]) {
-        productSales[productName] = { sales: 0, revenue: 0, name: productName }
-      }
-      productSales[productName].sales += sale.quantity || 1
-      productSales[productName].revenue += sale.total || 0
-    })
+    const topProducts = [
+      { name: "Panneau Solaire 300W", sales: 15, revenue: 450000 },
+      { name: "Batterie 12V", sales: 25, revenue: 350000 },
+      { name: "Onduleur 2000W", sales: 8, revenue: 240000 },
+      { name: "Régulateur MPPT", sales: 12, revenue: 180000 },
+      { name: "Kit Solaire Complet", sales: 5, revenue: 500000 },
+    ]
 
-    const topProducts = Object.values(productSales)
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5)
+    const topClients = [
+      { name: "Ouagadougou Solar SARL", totalSales: 850000, orders: 12 },
+      { name: "Bobo Energy", totalSales: 650000, orders: 8 },
+      { name: "Koudougou Electric", totalSales: 420000, orders: 6 },
+      { name: "Fada Solar", totalSales: 380000, orders: 5 },
+      { name: "Banfora Energy", totalSales: 290000, orders: 4 },
+    ]
 
-    const clientSales: Record<string, { totalSales: number; orders: number; name: string }> = {}
-    currentSales?.forEach((sale: any) => {
-      const clientId = sale.client_id
-      if (clientId && !clientSales[clientId]) {
-        // Find client name from clients data
-        const client = clients?.find((c) => c.id === clientId)
-        clientSales[clientId] = {
-          totalSales: 0,
-          orders: 0,
-          name: client?.name || "Client Inconnu",
-        }
-      }
-      if (clientId) {
-        clientSales[clientId].totalSales += sale.total || 0
-        clientSales[clientId].orders += 1
-      }
-    })
-
-    const topClients = Object.values(clientSales)
-      .sort((a, b) => b.totalSales - a.totalSales)
-      .slice(0, 5)
+    const recentStockMovements = [
+      { product: "Panneau Solaire 300W", type: "Vente", quantity: -5, date: "Aujourd'hui" },
+      { product: "Batterie 12V", type: "Achat", quantity: 20, date: "Hier" },
+      { product: "Onduleur 2000W", type: "Vente", quantity: -2, date: "Il y a 2 jours" },
+      { product: "Régulateur MPPT", type: "Vente", quantity: -3, date: "Il y a 3 jours" },
+      { product: "Kit Solaire Complet", type: "Achat", quantity: 10, date: "Il y a 4 jours" },
+    ]
 
     const inventoryTurnover = inventoryValue > 0 ? Math.round((totalCOGS / inventoryValue) * 12 * 10) / 10 : 0
 
@@ -321,20 +286,14 @@ export async function getAnalyticsData(period?: string): Promise<AnalyticsData> 
       inventoryValue,
       inventoryTurnover,
       outOfStockItems,
-      currentPeriod: periodLabel, // Use dynamic period label
+      currentPeriod: currentDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" }),
       revenueBreakdown: [{ category: "Ventes Directes", amount: totalRevenue, percentage: 100 }],
       expenseBreakdown,
       cashFlow,
       lowStockItems,
-      recentStockMovements: [
-        { product: "Panneau Solaire 300W", type: "Vente", quantity: -5, date: "Aujourd'hui" },
-        { product: "Batterie 12V", type: "Achat", quantity: 20, date: "Hier" },
-        { product: "Onduleur 2000W", type: "Vente", quantity: -2, date: "Il y a 2 jours" },
-        { product: "Régulateur MPPT", type: "Vente", quantity: -3, date: "Il y a 3 jours" },
-        { product: "Kit Solaire Complet", type: "Achat", quantity: 10, date: "Il y a 4 jours" },
-      ],
-      topProducts, // Use real data instead of hardcoded
-      topClients, // Use real data instead of hardcoded
+      recentStockMovements,
+      topProducts,
+      topClients,
       salesTarget: {
         target: 2000000,
         achieved: totalRevenue,
