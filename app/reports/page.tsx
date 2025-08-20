@@ -1,3 +1,5 @@
+"use client"
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -18,8 +20,12 @@ import {
 } from "lucide-react"
 import { getAnalyticsData } from "@/lib/data/analytics"
 
-export default async function ReportsPage() {
-  const analytics = await getAnalyticsData()
+export default async function ReportsPage({
+  searchParams,
+}: {
+  searchParams: { period?: string }
+}) {
+  const analytics = await getAnalyticsData(searchParams.period)
 
   const profitMargin =
     analytics.totalRevenue > 0 ? ((analytics.netProfit / analytics.totalRevenue) * 100).toFixed(1) : 0
@@ -34,9 +40,28 @@ export default async function ReportsPage() {
           <h1 className="text-3xl font-bold">Rapports & Analyses</h1>
           <p className="text-muted-foreground">Tableau de bord analytique pour la prise de décision</p>
         </div>
-        <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-          <Calendar className="h-4 w-4" />
-          <span>Période: {analytics.currentPeriod}</span>
+        <div className="flex items-center space-x-4">
+          <select
+            className="px-3 py-2 border rounded-md text-sm"
+            defaultValue={searchParams.period || "all"}
+            onChange={(e) => {
+              const url = new URL(window.location.href)
+              if (e.target.value === "all") {
+                url.searchParams.delete("period")
+              } else {
+                url.searchParams.set("period", e.target.value)
+              }
+              window.location.href = url.toString()
+            }}
+          >
+            <option value="all">6 derniers mois</option>
+            <option value="current-month">Mois actuel</option>
+            <option value="last-month">Mois dernier</option>
+          </select>
+          <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+            <span>Période: {analytics.currentPeriod}</span>
+          </div>
         </div>
       </div>
 
