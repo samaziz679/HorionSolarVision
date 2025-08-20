@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 import { fetchSaleById } from "@/lib/data/sales"
 import { fetchProducts } from "@/lib/data/products"
 import { fetchClients } from "@/lib/data/clients"
-import SaleForm from "@/components/sales/sale-form"
+import EditSaleForm from "@/components/sales/edit-sale-form"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Breadcrumb,
@@ -91,7 +91,7 @@ export default async function EditSalePage({ params }: PageProps) {
             <CardTitle>Edit Sale</CardTitle>
           </CardHeader>
           <CardContent>
-            <SaleForm sale={saleWithItems} products={productOptions} clients={clientOptions} />
+            <EditSaleForm sale={saleWithItems} products={productOptions} clients={clientOptions} />
           </CardContent>
         </Card>
       </main>
