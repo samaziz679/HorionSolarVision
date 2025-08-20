@@ -16,7 +16,7 @@ export default async function NewPurchasePage() {
   const suppliersResult = await fetchSuppliers()
 
   const products = productsResult.products || []
-  const suppliers = suppliersResult.suppliers || []
+  const suppliers = suppliersResult || []
 
   const productOptions = products.map((product) => ({
     id: product.id,
