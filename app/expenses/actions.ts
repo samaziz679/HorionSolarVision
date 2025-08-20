@@ -29,10 +29,13 @@ export type State = {
 }
 
 export async function createExpense(prevState: State, formData: FormData) {
+  console.log("[v0] createExpense called")
   const user = await getAuthUser()
   if (!user) {
+    console.log("[v0] No user found")
     return { message: "Authentication error. Please sign in.", success: false }
   }
+  console.log("[v0] User authenticated:", user.id)
 
   const validatedFields = CreateExpenseSchema.safeParse({
     description: formData.get("description"),
@@ -41,13 +44,22 @@ export async function createExpense(prevState: State, formData: FormData) {
     expense_date: formData.get("expense_date"),
   })
 
+  console.log("[v0] Form data:", {
+    description: formData.get("description"),
+    amount: formData.get("amount"),
+    category: formData.get("category"),
+    expense_date: formData.get("expense_date"),
+  })
+
   if (!validatedFields.success) {
+    console.log("[v0] Validation failed:", validatedFields.error)
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: "Missing or invalid fields. Failed to create expense.",
       success: false,
     }
   }
+  console.log("[v0] Validation successful:", validatedFields.data)
 
   const supabase = createClient()
 
@@ -58,7 +70,10 @@ export async function createExpense(prevState: State, formData: FormData) {
     .eq("id", validatedFields.data.category)
     .single()
 
+  console.log("[v0] Category data:", categoryData)
+
   if (!categoryData) {
+    console.log("[v0] No category found for ID:", validatedFields.data.category)
     return { message: "Invalid category selected.", success: false }
   }
 
@@ -81,20 +96,25 @@ export async function createExpense(prevState: State, formData: FormData) {
   }
 
   const enumValue = categoryEnumMap[categoryData.name_fr] || categoryData.name_fr.toUpperCase().replace(/\s+/g, "_")
+  console.log("[v0] Enum value:", enumValue)
 
-  const { error } = await supabase.from("expenses").insert({
+  const insertData = {
     description: validatedFields.data.description,
     category: enumValue,
     amount: validatedFields.data.amount,
     expense_date: validatedFields.data.expense_date,
     created_by: user.id,
-  })
+  }
+  console.log("[v0] Insert data:", insertData)
+
+  const { error } = await supabase.from("expenses").insert(insertData)
 
   if (error) {
-    console.error("Database Error:", error)
+    console.error("[v0] Database Error:", error)
     return { message: "Database Error: Failed to create expense.", success: false }
   }
 
+  console.log("[v0] Expense created successfully")
   revalidatePath("/expenses")
   redirect("/expenses")
 }
