@@ -81,21 +81,25 @@ export async function createExpense(prevState: State, formData: FormData) {
     Assurance: "autre",
     Autre: "autre",
     Carburant: "carburant",
+    Divers: "autre",
     Équipement: "autre",
     "Fournitures de Bureau": "autre",
     "Frais de livraison": "autre",
     "Frais internet": "internet",
+    "Frais d'impression": "autre",
     "Loyer boutique": "loyer",
     Maintenance: "maintenance",
     Marketing: "autre",
     "Produits en vente": "autre",
     "Salaire vendeur": "salaire",
+    "Salaire vendeuse": "salaire",
     "Services Professionnels": "autre",
     "Services Publics": "electricite",
+    Telephones: "autre",
     Transport: "autre",
   }
 
-  const enumValue = categoryEnumMap[categoryData.name_fr] || categoryData.name_fr.toLowerCase().replace(/\s+/g, "_")
+  const enumValue = categoryEnumMap[categoryData.name_fr] || "autre"
   console.log("[v0] Enum value:", enumValue)
 
   const insertData = {
@@ -158,21 +162,25 @@ export async function updateExpense(id: string, prevState: State, formData: Form
     Assurance: "autre",
     Autre: "autre",
     Carburant: "carburant",
+    Divers: "autre",
     Équipement: "autre",
     "Fournitures de Bureau": "autre",
     "Frais de livraison": "autre",
     "Frais internet": "internet",
+    "Frais d'impression": "autre",
     "Loyer boutique": "loyer",
     Maintenance: "maintenance",
     Marketing: "autre",
     "Produits en vente": "autre",
     "Salaire vendeur": "salaire",
+    "Salaire vendeuse": "salaire",
     "Services Professionnels": "autre",
     "Services Publics": "electricite",
+    Telephones: "autre",
     Transport: "autre",
   }
 
-  const enumValue = categoryEnumMap[categoryData.name_fr] || categoryData.name_fr.toLowerCase().replace(/\s+/g, "_")
+  const enumValue = categoryEnumMap[categoryData.name_fr] || "autre"
 
   const { error } = await supabase
     .from("expenses")
