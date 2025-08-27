@@ -12,7 +12,7 @@ import {
 import Link from "next/link"
 
 export default async function NewPurchasePage() {
-  const productsResult = await fetchProducts()
+  const productsResult = await fetchProducts(1, 1000)
   const suppliersResult = await fetchSuppliers()
 
   const products = productsResult.products || []
