@@ -24,6 +24,7 @@ const ALL_NAVIGATION_ITEMS: NavigationItem[] = [
   { href: "/suppliers", label: "Fournisseurs", icon: Users, module: "suppliers" },
   { href: "/expenses", label: "Dépenses", icon: DollarSign, module: "expenses" },
   { href: "/reports", label: "Rapports", icon: LineChart, module: "reports" },
+  { href: "/admin/users", label: "Gestion Utilisateurs", icon: Users, module: "admin" },
   { href: "/settings", label: "Paramètres", icon: Settings, module: "settings" },
 ]
 
