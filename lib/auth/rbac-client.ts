@@ -115,29 +115,79 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 
   try {
     const supabase = createClient()
-    const { data: userRoles, error } = await supabase
+
+    // Get all users from Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.admin.listUsers()
+    if (authError) throw authError
+
+    // Get all user roles
+    const { data: userRoles, error: rolesError } = await supabase
       .from("user_roles")
       .select("*")
       .order("created_at", { ascending: false })
+    if (rolesError) throw rolesError
 
-    if (error) throw error
+    // Get user profiles for additional data
+    const { data: userProfiles, error: profilesError } = await supabase.from("user_profiles").select("*")
+    if (profilesError) console.warn("Error fetching user profiles:", profilesError)
 
-    // Get user emails from auth.users
-    const usersWithEmails = await Promise.all(
-      (userRoles || []).map(async (userRole) => {
-        const { data: authUser } = await supabase.auth.admin.getUserById(userRole.user_id)
-        return {
-          ...userRole,
-          email: authUser.user?.email || "",
-          full_name: authUser.user?.full_name || "", // Added full_name field
-        }
-      }),
-    )
+    // Merge all data
+    const allUsers: UserProfile[] = (authData.users || []).map((authUser) => {
+      const userRole = userRoles?.find((role) => role.user_id === authUser.id)
+      const userProfile = userProfiles?.find((profile) => profile.user_id === authUser.id)
 
-    return usersWithEmails
+      return {
+        id: userRole?.id || `temp-${authUser.id}`,
+        user_id: authUser.id,
+        role: userRole?.role || "vendeur",
+        status: userRole?.status || "pending",
+        created_at: userRole?.created_at || authUser.created_at,
+        created_by: userRole?.created_by,
+        email: authUser.email || "",
+        full_name: userProfile?.full_name || authUser.user_metadata?.full_name || "",
+      }
+    })
+
+    return allUsers.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   } catch (error) {
     console.error("Error fetching users:", error)
     return []
+  }
+}
+
+export async function syncUserRole(
+  userId: string,
+  email: string,
+  role: UserRole = "vendeur",
+  status: UserStatus = "active",
+): Promise<boolean> {
+  if (typeof window === "undefined") return false
+
+  try {
+    const supabase = createClient()
+
+    // Check if user role already exists
+    const { data: existingRole } = await supabase.from("user_roles").select("id").eq("user_id", userId).single()
+
+    if (existingRole) {
+      // Update existing role
+      const { error } = await supabase.from("user_roles").update({ role, status }).eq("user_id", userId)
+      if (error) throw error
+    } else {
+      // Create new role entry
+      const { error } = await supabase.from("user_roles").insert({
+        user_id: userId,
+        role,
+        status,
+        email,
+      })
+      if (error) throw error
+    }
+
+    return true
+  } catch (error) {
+    console.error("Error syncing user role:", error)
+    return false
   }
 }
 
