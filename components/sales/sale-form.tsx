@@ -128,7 +128,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               <SelectTrigger aria-describedby="product_id-error">
                 <SelectValue placeholder="Sélectionner un produit" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[200px] overflow-y-auto">
                 {products.map((product) => (
                   <SelectItem key={product.id} value={product.id}>
                     {product.name}
