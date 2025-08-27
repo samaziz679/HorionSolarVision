@@ -33,6 +33,9 @@ export interface AnalyticsData {
     percentage: number
   }>
   totalStockValue: number
+  stockValueDetail1: number
+  stockValueDetail2: number
+  stockValueGros: number
   stockRotation: number
   outOfStockCount: number
   stockMovements: Array<{
@@ -71,7 +74,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
 
     const { data: productsData } = await supabase
       .from("products")
-      .select("id, name, quantity, seuil_stock_bas, prix_achat, prix_detail_1")
+      .select("id, name, quantity, seuil_stock_bas, prix_achat, prix_detail_1, prix_detail_2, prix_vente_gros")
 
     const { data: purchasesData } = await supabase
       .from("purchases")
@@ -90,6 +93,27 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         const quantity = product.quantity || 0
         const purchasePrice = product.prix_achat || 0
         return sum + quantity * purchasePrice
+      }, 0) || 0
+
+    const stockValueDetail1 =
+      productsData?.reduce((sum, product) => {
+        const quantity = product.quantity || 0
+        const price = product.prix_detail_1 || 0
+        return sum + quantity * price
+      }, 0) || 0
+
+    const stockValueDetail2 =
+      productsData?.reduce((sum, product) => {
+        const quantity = product.quantity || 0
+        const price = product.prix_detail_2 || 0
+        return sum + quantity * price
+      }, 0) || 0
+
+    const stockValueGros =
+      productsData?.reduce((sum, product) => {
+        const quantity = product.quantity || 0
+        const price = product.prix_vente_gros || 0
+        return sum + quantity * price
       }, 0) || 0
 
     const outOfStockCount = productsData?.filter((product) => (product.quantity || 0) === 0).length || 0
@@ -256,6 +280,9 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       stockAlerts,
       revenueBySource,
       totalStockValue,
+      stockValueDetail1,
+      stockValueDetail2,
+      stockValueGros,
       stockRotation,
       outOfStockCount,
       stockMovements: stockMovements.slice(0, 10), // Limit to 10 most recent movements
@@ -273,6 +300,9 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       stockAlerts: [],
       revenueBySource: [],
       totalStockValue: 0,
+      stockValueDetail1: 0,
+      stockValueDetail2: 0,
+      stockValueGros: 0,
       stockRotation: 0,
       outOfStockCount: 0,
       stockMovements: [],

@@ -479,17 +479,41 @@ export default function ReportsPage() {
                   <CardDescription>Valeur et rotation des stocks</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
-                    <span className="text-sm font-medium">Valeur Totale Stock</span>
-                    <span className="text-lg font-bold text-blue-600">0 FCFA</span>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                      <span className="text-sm font-medium">Valeur Stock (Prix Achat)</span>
+                      <span className="text-lg font-bold text-blue-600">
+                        {analytics.totalStockValue.toLocaleString()} FCFA
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                      <span className="text-sm font-medium">Valeur Stock (Prix Détail 1)</span>
+                      <span className="text-lg font-bold text-green-600">
+                        {analytics.stockValueDetail1.toLocaleString()} FCFA
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                      <span className="text-sm font-medium">Valeur Stock (Prix Détail 2)</span>
+                      <span className="text-lg font-bold text-purple-600">
+                        {analytics.stockValueDetail2.toLocaleString()} FCFA
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                      <span className="text-sm font-medium">Valeur Stock (Prix Gros)</span>
+                      <span className="text-lg font-bold text-orange-600">
+                        {analytics.stockValueGros.toLocaleString()} FCFA
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                    <span className="text-sm font-medium">Rotation Stock (mois)</span>
-                    <span className="text-lg font-bold text-green-600">0x</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
-                    <span className="text-sm font-medium">Produits en Rupture</span>
-                    <span className="text-lg font-bold text-orange-600">0</span>
+                  <div className="border-t pt-4 space-y-3">
+                    <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                      <span className="text-sm font-medium">Rotation Stock (mois)</span>
+                      <span className="text-lg font-bold text-gray-600">{analytics.stockRotation}x</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-red-50 rounded-lg">
+                      <span className="text-sm font-medium">Produits en Rupture</span>
+                      <span className="text-lg font-bold text-red-600">{analytics.outOfStockCount}</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -500,7 +524,35 @@ export default function ReportsPage() {
                   <CardDescription>Activité récente</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground text-center py-4">Aucun mouvement de stock récent</p>
+                  <div className="space-y-3">
+                    {analytics.stockMovements.map((movement, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 rounded-lg border">
+                        <div className="flex items-center space-x-3">
+                          <div
+                            className={`w-2 h-2 rounded-full ${movement.type === "sale" ? "bg-red-500" : "bg-green-500"}`}
+                          />
+                          <div>
+                            <p className="text-sm font-medium">{movement.product}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(movement.date).toLocaleDateString("fr-FR")}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p
+                            className={`text-sm font-bold ${movement.quantity < 0 ? "text-red-600" : "text-green-600"}`}
+                          >
+                            {movement.quantity > 0 ? "+" : ""}
+                            {movement.quantity}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{movement.value.toLocaleString()} FCFA</p>
+                        </div>
+                      </div>
+                    ))}
+                    {analytics.stockMovements.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">Aucun mouvement de stock récent</p>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </div>
