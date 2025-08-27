@@ -75,8 +75,10 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     const { data: clientsData } = await supabase.from("clients").select("id, name")
 
     const { data: productsData } = await supabase
-      .from("products")
-      .select("id, name, quantity, seuil_stock_bas, prix_achat, prix_detail_1, prix_detail_2, prix_vente_gros")
+      .from("current_stock")
+      .select(
+        "id, name, quantity, prix_achat, prix_vente_detail_1, prix_vente_detail_2, prix_vente_gros, type, stock_status",
+      )
 
     console.log("[v0] Products data:", productsData?.length, "products found")
     console.log("[v0] Sample product:", productsData?.[0])
@@ -103,14 +105,14 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     const stockValueDetail1 =
       productsData?.reduce((sum, product) => {
         const quantity = product.quantity || 0
-        const price = product.prix_detail_1 || 0
+        const price = product.prix_vente_detail_1 || 0
         return sum + quantity * price
       }, 0) || 0
 
     const stockValueDetail2 =
       productsData?.reduce((sum, product) => {
         const quantity = product.quantity || 0
-        const price = product.prix_detail_2 || 0
+        const price = product.prix_vente_detail_2 || 0
         return sum + quantity * price
       }, 0) || 0
 
@@ -261,7 +263,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
           name: product.name,
           currentStock: product.quantity || 0,
           status:
-            (product.quantity || 0) <= (product.seuil_stock_bas || 5)
+            (product.quantity || 0) <= 5
               ? (product.quantity || 0) === 0
                 ? ("critical" as const)
                 : ("low" as const)
