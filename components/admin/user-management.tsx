@@ -133,21 +133,20 @@ export function UserManagement() {
     try {
       const supabase = createClient()
 
-      // Create user profile (the user will need to sign up separately)
       const { data, error } = await supabase
-        .from("user_profiles")
+        .from("user_roles")
         .insert({
           email: newUserEmail,
           full_name: newUserFullName,
           role: newUserRole,
-          status: "pending",
+          status: "pending", // Admin-created users start as pending
         })
         .select()
         .single()
 
       if (error) throw error
 
-      await logAudit("CREATE_USER", "user_profiles", data.id, null, {
+      await logAudit("CREATE_USER", "user_roles", data.id, null, {
         email: newUserEmail,
         role: newUserRole,
       })
@@ -179,19 +178,17 @@ export function UserManagement() {
     try {
       const oldValues = { role: selectedUser.role, status: selectedUser.status }
 
-      // Update role if changed
       if (editUserRole !== selectedUser.role) {
-        const success = await updateUserRole(selectedUser.id, editUserRole)
+        const success = await updateUserRole(selectedUser.user_id, editUserRole)
         if (!success) throw new Error("Failed to update role")
       }
 
-      // Update status if changed
       if (editUserStatus !== selectedUser.status) {
-        const success = await updateUserStatus(selectedUser.id, editUserStatus)
+        const success = await updateUserStatus(selectedUser.user_id, editUserStatus)
         if (!success) throw new Error("Failed to update status")
       }
 
-      await logAudit("UPDATE_USER", "user_profiles", selectedUser.id, oldValues, {
+      await logAudit("UPDATE_USER", "user_roles", selectedUser.id, oldValues, {
         role: editUserRole,
         status: editUserStatus,
       })

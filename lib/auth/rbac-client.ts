@@ -160,9 +160,10 @@ export async function updateUserStatus(userId: string, status: UserStatus): Prom
   if (typeof window === "undefined") return false
 
   try {
-    // Since user_roles table doesn't have status, we might need to handle this differently
-    // For now, we'll just return true as a placeholder
-    console.log("Status update not implemented for user_roles table:", userId, status)
+    const supabase = createClient()
+    const { error } = await supabase.from("user_roles").update({ status }).eq("user_id", userId)
+
+    if (error) throw error
     return true
   } catch (error) {
     console.error("Error updating user status:", error)
