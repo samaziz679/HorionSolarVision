@@ -115,42 +115,54 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 
   try {
     const supabase = createClient()
+    console.log("[v0] getAllUsers: Starting user fetch")
 
-    // Get all users from Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.listUsers()
-    if (authError) throw authError
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser()
+    console.log("[v0] getAllUsers: Current user:", currentUser?.email)
 
-    // Get all user roles
+    // and get additional user info from the current session and user_profiles
     const { data: userRoles, error: rolesError } = await supabase
       .from("user_roles")
       .select("*")
       .order("created_at", { ascending: false })
-    if (rolesError) throw rolesError
+
+    console.log("[v0] getAllUsers: User roles query result:", { data: userRoles, error: rolesError })
+
+    if (rolesError) {
+      console.error("[v0] getAllUsers: Error fetching user roles:", rolesError)
+      return []
+    }
 
     // Get user profiles for additional data
     const { data: userProfiles, error: profilesError } = await supabase.from("user_profiles").select("*")
-    if (profilesError) console.warn("Error fetching user profiles:", profilesError)
 
-    // Merge all data
-    const allUsers: UserProfile[] = (authData.users || []).map((authUser) => {
-      const userRole = userRoles?.find((role) => role.user_id === authUser.id)
-      const userProfile = userProfiles?.find((profile) => profile.user_id === authUser.id)
+    console.log("[v0] getAllUsers: User profiles query result:", { data: userProfiles, error: profilesError })
+
+    if (profilesError) {
+      console.warn("[v0] getAllUsers: Error fetching user profiles:", profilesError)
+    }
+
+    const allUsers: UserProfile[] = (userRoles || []).map((userRole) => {
+      const userProfile = userProfiles?.find((profile) => profile.user_id === userRole.user_id)
 
       return {
-        id: userRole?.id || `temp-${authUser.id}`,
-        user_id: authUser.id,
-        role: userRole?.role || "vendeur",
-        status: userRole?.status || "pending",
-        created_at: userRole?.created_at || authUser.created_at,
-        created_by: userRole?.created_by,
-        email: authUser.email || "",
-        full_name: userProfile?.full_name || authUser.user_metadata?.full_name || "",
+        id: userRole.id,
+        user_id: userRole.user_id,
+        role: userRole.role,
+        status: userRole.status,
+        created_at: userRole.created_at,
+        created_by: userRole.created_by,
+        email: userRole.email || userProfile?.email || "",
+        full_name: userProfile?.full_name || "",
       }
     })
 
+    console.log("[v0] getAllUsers: Final users list:", allUsers)
     return allUsers.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   } catch (error) {
-    console.error("Error fetching users:", error)
+    console.error("[v0] getAllUsers: Exception:", error)
     return []
   }
 }
