@@ -12,7 +12,7 @@ import {
 import Link from "next/link"
 
 export default async function NewSalePage() {
-  const productsResult = await fetchProducts()
+  const productsResult = await fetchProducts(1, 1000) // Get up to 1000 products
   const products = productsResult.products || []
   const clients = await fetchClients()
 
