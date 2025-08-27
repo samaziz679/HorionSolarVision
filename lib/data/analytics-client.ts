@@ -55,6 +55,8 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     const start = startDate || new Date(new Date().getFullYear(), 0, 1).toISOString().split("T")[0]
     const end = endDate || new Date().toISOString().split("T")[0]
 
+    console.log("[v0] Analytics date range:", { start, end })
+
     // Get total revenue from sales
     const { data: salesData } = await supabase
       .from("sales")
@@ -75,6 +77,9 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     const { data: productsData } = await supabase
       .from("products")
       .select("id, name, quantity, seuil_stock_bas, prix_achat, prix_detail_1, prix_detail_2, prix_vente_gros")
+
+    console.log("[v0] Products data:", productsData?.length, "products found")
+    console.log("[v0] Sample product:", productsData?.[0])
 
     const { data: purchasesData } = await supabase
       .from("purchases")
@@ -115,6 +120,13 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         const price = product.prix_vente_gros || 0
         return sum + quantity * price
       }, 0) || 0
+
+    console.log("[v0] Stock values calculated:", {
+      totalStockValue,
+      stockValueDetail1,
+      stockValueDetail2,
+      stockValueGros,
+    })
 
     const outOfStockCount = productsData?.filter((product) => (product.quantity || 0) === 0).length || 0
 
