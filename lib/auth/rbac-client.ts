@@ -57,53 +57,37 @@ const createClient = () => {
 
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {
   if (typeof window === "undefined") {
-    console.log("RBAC Debug: Running on server side, returning null")
     return null
   }
 
   try {
     const supabase = createClient()
-    console.log("RBAC Debug: Created Supabase client")
 
     const {
       data: { user },
     } = await supabase.auth.getUser()
 
-    console.log("RBAC Debug: Auth user:", user ? { id: user.id, email: user.email } : "No user")
-
     if (!user) {
-      console.log("RBAC Debug: No authenticated user found")
       return null
     }
-
-    console.log("RBAC Debug: Fetching user role for user:", user.id)
 
     const { data: userRole, error } = await supabase.from("user_roles").select("*").eq("user_id", user.id).single()
 
-    console.log("RBAC Debug: Database query result:", { data: userRole, error })
-
-    if (error) {
-      console.error("RBAC Debug: Error fetching user role:", error)
+    if (error || !userRole) {
       return null
     }
 
-    if (!userRole) {
-      console.log("RBAC Debug: No user role found in database")
-      return null
-    }
+    const { data: userProfile } = await supabase.from("user_profiles").select("*").eq("user_id", user.id).single()
 
     const profile = {
       ...userRole,
-      email: userRole.email || user.email || "",
-      full_name: userRole.full_name || "",
+      email: userProfile?.email || user.email || "",
+      full_name: userProfile?.full_name || "",
     }
-
-    console.log("RBAC Debug: Final user profile:", profile)
-    console.log("RBAC Debug: Profile status check:", profile.status, "=== 'active':", profile.status === "active")
 
     return profile
   } catch (error) {
-    console.error("RBAC Debug: Exception in getCurrentUserProfile:", error)
+    console.error("Error in getCurrentUserProfile:", error)
     return null
   }
 }
@@ -115,33 +99,21 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 
   try {
     const supabase = createClient()
-    console.log("[v0] getAllUsers: Starting user fetch")
 
-    const {
-      data: { user: currentUser },
-    } = await supabase.auth.getUser()
-    console.log("[v0] getAllUsers: Current user:", currentUser?.email)
-
-    // and get additional user info from the current session and user_profiles
     const { data: userRoles, error: rolesError } = await supabase
       .from("user_roles")
       .select("*")
       .order("created_at", { ascending: false })
 
-    console.log("[v0] getAllUsers: User roles query result:", { data: userRoles, error: rolesError })
-
     if (rolesError) {
-      console.error("[v0] getAllUsers: Error fetching user roles:", rolesError)
+      console.error("Error fetching user roles:", rolesError)
       return []
     }
 
-    // Get user profiles for additional data
     const { data: userProfiles, error: profilesError } = await supabase.from("user_profiles").select("*")
 
-    console.log("[v0] getAllUsers: User profiles query result:", { data: userProfiles, error: profilesError })
-
     if (profilesError) {
-      console.warn("[v0] getAllUsers: Error fetching user profiles:", profilesError)
+      console.warn("Error fetching user profiles:", profilesError)
     }
 
     const allUsers: UserProfile[] = (userRoles || []).map((userRole) => {
@@ -154,15 +126,14 @@ export async function getAllUsers(): Promise<UserProfile[]> {
         status: userRole.status,
         created_at: userRole.created_at,
         created_by: userRole.created_by,
-        email: userRole.email || userProfile?.email || "",
-        full_name: userProfile?.full_name || "",
+        email: userProfile?.email || userRole.email || "",
+        full_name: userProfile?.full_name || "Non défini",
       }
     })
 
-    console.log("[v0] getAllUsers: Final users list:", allUsers)
     return allUsers.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   } catch (error) {
-    console.error("[v0] getAllUsers: Exception:", error)
+    console.error("Error in getAllUsers:", error)
     return []
   }
 }
