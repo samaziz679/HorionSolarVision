@@ -37,10 +37,6 @@ export function Sidebar() {
   const [loading, setLoading] = useState(true)
   const company = useCompany()
 
-  console.log("[v0] Company config:", company)
-  console.log("[v0] Company logo:", company.logo)
-  console.log("[v0] Company name:", company.name)
-
   useEffect(() => {
     async function loadUserRole() {
       try {
@@ -79,7 +75,6 @@ export function Sidebar() {
                   height={24}
                   className="h-6 w-6 object-contain"
                   onError={(e) => {
-                    console.log("[v0] Logo failed to load:", company.logo)
                     e.currentTarget.style.display = "none"
                     e.currentTarget.nextElementSibling?.classList.remove("hidden")
                   }}
