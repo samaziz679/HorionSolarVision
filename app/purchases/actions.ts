@@ -59,22 +59,44 @@ export async function createPurchase(prevState: State, formData: FormData) {
 
   const supabase = createClient()
 
-  const { error } = await supabase.from("purchases").insert({
-    created_by: user.id,
-    product_id,
-    supplier_id,
-    quantity,
-    unit_price,
-    total,
-    purchase_date,
-  })
+  const { data: purchase, error: purchaseError } = await supabase
+    .from("purchases")
+    .insert({
+      created_by: user.id,
+      product_id,
+      supplier_id,
+      quantity,
+      unit_price,
+      total,
+      purchase_date,
+    })
+    .select()
+    .single()
 
-  if (error) {
-    console.error("Database Error:", error)
+  if (purchaseError) {
+    console.error("Database Error:", purchaseError)
     return { message: "Database Error: Failed to create purchase.", success: false }
   }
 
+  const { error: stockLotError } = await supabase.from("stock_lots").insert({
+    product_id,
+    purchase_id: purchase.id,
+    quantity_received: quantity,
+    quantity_available: quantity,
+    unit_cost: unit_price,
+    purchase_date,
+    created_by: user.id,
+  })
+
+  if (stockLotError) {
+    console.error("Stock Lot Error:", stockLotError)
+    // If stock lot creation fails, we should ideally rollback the purchase
+    // For now, we'll continue but log the error
+    console.error("Warning: Purchase created but stock lot creation failed")
+  }
+
   revalidatePath("/purchases")
+  revalidatePath("/inventory")
   redirect("/purchases")
 }
 
@@ -105,6 +127,17 @@ export async function updatePurchase(id: string, prevState: State, formData: For
   const { product_id, supplier_id, quantity, unit_price, total, purchase_date } = validatedFields.data
   const supabase = createClient()
 
+  const { data: originalPurchase, error: fetchError } = await supabase
+    .from("purchases")
+    .select("*")
+    .eq("id", id)
+    .single()
+
+  if (fetchError) {
+    console.error("Database Error:", fetchError)
+    return { message: "Database Error: Failed to fetch original purchase.", success: false }
+  }
+
   const { error } = await supabase
     .from("purchases")
     .update({
@@ -122,8 +155,28 @@ export async function updatePurchase(id: string, prevState: State, formData: For
     return { message: "Database Error: Failed to update purchase.", success: false }
   }
 
+  if (originalPurchase.quantity !== quantity || originalPurchase.unit_price !== unit_price) {
+    const quantityDifference = quantity - originalPurchase.quantity
+
+    const { error: stockLotError } = await supabase
+      .from("stock_lots")
+      .update({
+        quantity_received: quantity,
+        quantity_available: supabase.raw(`quantity_available + ${quantityDifference}`),
+        unit_cost: unit_price,
+        purchase_date,
+      })
+      .eq("purchase_id", id)
+
+    if (stockLotError) {
+      console.error("Stock Lot Update Error:", stockLotError)
+      console.error("Warning: Purchase updated but stock lot update failed")
+    }
+  }
+
   revalidatePath("/purchases")
   revalidatePath(`/purchases/${id}/edit`)
+  revalidatePath("/inventory")
   redirect("/purchases")
 }
 
@@ -135,6 +188,24 @@ export async function deletePurchase(id: string) {
 
   const supabase = createClient()
 
+  const { data: stockLot, error: stockLotFetchError } = await supabase
+    .from("stock_lots")
+    .select("quantity_received, quantity_available")
+    .eq("purchase_id", id)
+    .single()
+
+  if (stockLotFetchError && stockLotFetchError.code !== "PGRST116") {
+    console.error("Database Error:", stockLotFetchError)
+    return { message: "Database Error: Failed to check stock lot status.", success: false }
+  }
+
+  if (stockLot && stockLot.quantity_available < stockLot.quantity_received) {
+    return {
+      message: "Cannot delete purchase: Some items from this batch have already been sold.",
+      success: false,
+    }
+  }
+
   const { error } = await supabase.from("purchases").delete().eq("id", id)
 
   if (error) {
@@ -143,5 +214,6 @@ export async function deletePurchase(id: string) {
   }
 
   revalidatePath("/purchases")
+  revalidatePath("/inventory")
   return { message: "Purchase deleted successfully.", success: true }
 }

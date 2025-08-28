@@ -44,7 +44,21 @@ export interface AnalyticsData {
     quantity: number
     date: string
     value: number
+    lotNumber?: string
   }>
+  batchAnalytics: {
+    totalBatches: number
+    averageBatchAge: number
+    oldestBatchDays: number
+    batchTurnover: number
+    agingInventory: Array<{
+      productName: string
+      lotNumber: string
+      daysOld: number
+      quantity: number
+      value: number
+    }>
+  }
 }
 
 export async function getAnalyticsData(startDate?: string, endDate?: string): Promise<AnalyticsData> {
@@ -74,14 +88,32 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     // Get clients data
     const { data: clientsData } = await supabase.from("clients").select("id, name")
 
-    const { data: productsData } = await supabase
-      .from("current_stock")
-      .select(
-        "id, name, quantity, prix_achat, prix_vente_detail_1, prix_vente_detail_2, prix_vente_gros, type, stock_status",
-      )
+    const { data: productsData } = await supabase.from("current_stock_with_batches").select("*")
 
     console.log("[v0] Products data:", productsData?.length, "products found")
     console.log("[v0] Sample product:", productsData?.[0])
+
+    const { data: stockLotsData } = await supabase
+      .from("stock_lots")
+      .select(`
+        *,
+        products (name)
+      `)
+      .gt("quantity_available", 0)
+
+    const { data: stockMovementsData } = await supabase
+      .from("stock_movements")
+      .select(`
+        *,
+        stock_lots (
+          lot_number,
+          products (name)
+        )
+      `)
+      .gte("created_at", start)
+      .lte("created_at", end)
+      .order("created_at", { ascending: false })
+      .limit(20)
 
     const { data: purchasesData } = await supabase
       .from("purchases")
@@ -97,28 +129,28 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
 
     const totalStockValue =
       productsData?.reduce((sum, product) => {
-        const quantity = product.quantity || 0
-        const purchasePrice = product.prix_achat || 0
-        return sum + quantity * purchasePrice
+        const quantity = product.total_quantity || 0
+        const avgCost = product.average_cost || 0
+        return sum + quantity * avgCost
       }, 0) || 0
 
     const stockValueDetail1 =
       productsData?.reduce((sum, product) => {
-        const quantity = product.quantity || 0
+        const quantity = product.total_quantity || 0
         const price = product.prix_vente_detail_1 || 0
         return sum + quantity * price
       }, 0) || 0
 
     const stockValueDetail2 =
       productsData?.reduce((sum, product) => {
-        const quantity = product.quantity || 0
+        const quantity = product.total_quantity || 0
         const price = product.prix_vente_detail_2 || 0
         return sum + quantity * price
       }, 0) || 0
 
     const stockValueGros =
       productsData?.reduce((sum, product) => {
-        const quantity = product.quantity || 0
+        const quantity = product.total_quantity || 0
         const price = product.prix_vente_gros || 0
         return sum + quantity * price
       }, 0) || 0
@@ -130,11 +162,11 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       stockValueGros,
     })
 
-    const outOfStockCount = productsData?.filter((product) => (product.quantity || 0) === 0).length || 0
+    const outOfStockCount = productsData?.filter((product) => (product.total_quantity || 0) === 0).length || 0
 
     // Calculate stock rotation (simplified: total sales value / average stock value)
     const totalSalesQuantity = salesData?.reduce((sum, sale) => sum + (sale.quantity || 0), 0) || 0
-    const averageStockQuantity = productsData?.reduce((sum, product) => sum + (product.quantity || 0), 0) || 0
+    const averageStockQuantity = productsData?.reduce((sum, product) => sum + (product.total_quantity || 0), 0) || 0
     const stockRotation =
       averageStockQuantity > 0 ? Math.round((totalSalesQuantity / averageStockQuantity) * 10) / 10 : 0
 
@@ -144,38 +176,65 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       quantity: number
       date: string
       value: number
+      lotNumber?: string
     }> = []
 
-    // Add sales movements
-    salesData?.forEach((sale) => {
-      const product = productsData?.find((p) => p.id === sale.product_id)
-      if (product) {
-        stockMovements.push({
-          product: product.name,
-          type: "sale",
-          quantity: -(sale.quantity || 0), // Negative for sales (stock reduction)
-          date: sale.sale_date,
-          value: sale.total || 0,
-        })
-      }
+    // Add stock movements from the new stock_movements table
+    stockMovementsData?.forEach((movement) => {
+      const productName = movement.stock_lots?.products?.name || "Unknown Product"
+      const lotNumber = movement.stock_lots?.lot_number
+
+      stockMovements.push({
+        product: productName,
+        type: movement.movement_type === "OUT" ? "sale" : "purchase",
+        quantity: movement.quantity,
+        date: movement.created_at,
+        value: Math.abs(movement.quantity) * 100, // Simplified value calculation
+        lotNumber: lotNumber,
+      })
     })
 
-    // Add purchase movements
-    purchasesData?.forEach((purchase) => {
-      const product = productsData?.find((p) => p.id === purchase.product_id)
-      if (product) {
-        stockMovements.push({
-          product: product.name,
-          type: "purchase",
-          quantity: purchase.quantity || 0, // Positive for purchases (stock increase)
-          date: purchase.purchase_date,
-          value: (purchase.quantity || 0) * (purchase.unit_price || 0),
-        })
-      }
-    })
+    const now = new Date()
+    const totalBatches = stockLotsData?.length || 0
 
-    // Sort stock movements by date (most recent first)
-    stockMovements.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    const batchAges =
+      stockLotsData?.map((lot) => {
+        const purchaseDate = new Date(lot.purchase_date)
+        return Math.floor((now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24))
+      }) || []
+
+    const averageBatchAge =
+      batchAges.length > 0 ? Math.round(batchAges.reduce((sum, age) => sum + age, 0) / batchAges.length) : 0
+
+    const oldestBatchDays = batchAges.length > 0 ? Math.max(...batchAges) : 0
+
+    // Calculate batch turnover (batches sold vs total batches)
+    const totalBatchesEverCreated = await supabase.from("stock_lots").select("id", { count: "exact", head: true })
+
+    const batchTurnover =
+      totalBatchesEverCreated.count && totalBatches > 0
+        ? Math.round(((totalBatchesEverCreated.count - totalBatches) / totalBatchesEverCreated.count) * 100)
+        : 0
+
+    // Create aging inventory analysis
+    const agingInventory =
+      stockLotsData
+        ?.map((lot) => {
+          const purchaseDate = new Date(lot.purchase_date)
+          const daysOld = Math.floor((now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24))
+          const value = (lot.quantity_available || 0) * (lot.unit_cost || 0)
+
+          return {
+            productName: lot.products?.name || "Unknown Product",
+            lotNumber: lot.lot_number,
+            daysOld,
+            quantity: lot.quantity_available || 0,
+            value,
+          }
+        })
+        .filter((item) => item.daysOld > 30) // Only show items older than 30 days
+        .sort((a, b) => b.daysOld - a.daysOld)
+        .slice(0, 10) || []
 
     // Get top products
     const productSales = new Map()
@@ -191,9 +250,9 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
 
     const topProducts = Array.from(productSales.entries())
       .map(([productId, data]) => {
-        const product = productsData?.find((p) => p.id === productId)
+        const product = productsData?.find((p) => p.product_id === productId)
         return {
-          name: product?.name || "Unknown Product",
+          name: product?.product_name || "Unknown Product",
           quantity: data.quantity,
           revenue: data.revenue,
         }
@@ -256,15 +315,14 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       }))
       .sort((a, b) => a.month.localeCompare(b.month))
 
-    // Calculate stock alerts
     const stockAlerts =
       productsData
         ?.map((product) => ({
-          name: product.name,
-          currentStock: product.quantity || 0,
+          name: product.product_name,
+          currentStock: product.total_quantity || 0,
           status:
-            (product.quantity || 0) <= 5
-              ? (product.quantity || 0) === 0
+            (product.total_quantity || 0) <= 5
+              ? (product.total_quantity || 0) === 0
                 ? ("critical" as const)
                 : ("low" as const)
               : ("ok" as const),
@@ -299,7 +357,14 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       stockValueGros,
       stockRotation,
       outOfStockCount,
-      stockMovements: stockMovements.slice(0, 10), // Limit to 10 most recent movements
+      stockMovements: stockMovements.slice(0, 10),
+      batchAnalytics: {
+        totalBatches,
+        averageBatchAge,
+        oldestBatchDays,
+        batchTurnover,
+        agingInventory,
+      },
     }
   } catch (error) {
     console.error("Error fetching analytics data:", error)
@@ -320,6 +385,13 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       stockRotation: 0,
       outOfStockCount: 0,
       stockMovements: [],
+      batchAnalytics: {
+        totalBatches: 0,
+        averageBatchAge: 0,
+        oldestBatchDays: 0,
+        batchTurnover: 0,
+        agingInventory: [],
+      },
     }
   }
 }
