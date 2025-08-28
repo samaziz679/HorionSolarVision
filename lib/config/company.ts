@@ -28,26 +28,13 @@ const defaultConfig = {
 export async function getCompanyConfig() {
   try {
     const supabase = createClient()
-    const { data: settings } = await supabase.from("company_settings").select("*").single()
+    const { data: settings } = await supabase.from("company_settings").select("tagline, logo").single()
 
     if (settings) {
       return {
         ...defaultConfig,
-        name: settings.name,
-        tagline: settings.tagline,
-        logo: settings.logo,
-        currency: settings.currency,
-        contact: {
-          email: settings.email,
-          phone: settings.phone,
-          address: settings.address,
-        },
-        theme: {
-          ...defaultConfig.theme,
-          primary: settings.theme_primary || defaultConfig.theme.primary,
-          secondary: settings.theme_secondary || defaultConfig.theme.secondary,
-          accent: settings.theme_accent || defaultConfig.theme.accent,
-        },
+        tagline: settings.tagline || defaultConfig.tagline,
+        logo: settings.logo || defaultConfig.logo,
       }
     }
   } catch (error) {
@@ -60,26 +47,13 @@ export async function getCompanyConfig() {
 export async function getCompanyConfigClient() {
   try {
     const supabase = createBrowserClient()
-    const { data: settings } = await supabase.from("company_settings").select("*").single()
+    const { data: settings } = await supabase.from("company_settings").select("tagline, logo").single()
 
     if (settings) {
       return {
         ...defaultConfig,
-        name: settings.name,
-        tagline: settings.tagline,
-        logo: settings.logo,
-        currency: settings.currency,
-        contact: {
-          email: settings.email,
-          phone: settings.phone,
-          address: settings.address,
-        },
-        theme: {
-          ...defaultConfig.theme,
-          primary: settings.theme_primary || defaultConfig.theme.primary,
-          secondary: settings.theme_secondary || defaultConfig.theme.secondary,
-          accent: settings.theme_accent || defaultConfig.theme.accent,
-        },
+        tagline: settings.tagline || defaultConfig.tagline,
+        logo: settings.logo || defaultConfig.logo,
       }
     }
   } catch (error) {
