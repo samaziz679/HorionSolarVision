@@ -3,10 +3,12 @@
 import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Home, LineChart, Package, Package2, ShoppingCart, Users, DollarSign, Truck, Settings } from "lucide-react"
 import { usePathname } from "next/navigation"
 import UserButton from "@/components/auth/user-button"
 import { getCurrentUserProfileClient, ROLE_PERMISSIONS, type UserRole } from "@/lib/auth/rbac-client"
+import { useCompany } from "@/components/providers/company-provider"
 
 interface NavigationItem {
   href: string
@@ -33,6 +35,7 @@ export function Sidebar() {
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>(ALL_NAVIGATION_ITEMS)
   const [userRole, setUserRole] = useState<UserRole | null>(null)
   const [loading, setLoading] = useState(true)
+  const company = useCompany()
 
   useEffect(() => {
     async function loadUserRole() {
@@ -46,7 +49,6 @@ export function Sidebar() {
         }
       } catch (error) {
         console.error("Error loading user role:", error)
-        // Fallback to basic navigation for vendeur
         const basicItems = ALL_NAVIGATION_ITEMS.filter((item) =>
           ["dashboard", "sales", "clients"].includes(item.module),
         )
@@ -64,8 +66,23 @@ export function Sidebar() {
       <div className="flex h-full max-h-screen flex-col gap-2">
         <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-            <Package2 className="h-6 w-6" />
-            <span className="">Solar Vision ERP</span>
+            <div className="flex items-center gap-2">
+              {company.logo ? (
+                <Image
+                  src={company.logo || "/placeholder.svg"}
+                  alt={`${company.name} Logo`}
+                  width={24}
+                  height={24}
+                  className="h-6 w-6 object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none"
+                    e.currentTarget.nextElementSibling?.classList.remove("hidden")
+                  }}
+                />
+              ) : null}
+              <Package2 className={`h-6 w-6 ${company.logo ? "hidden" : ""}`} />
+            </div>
+            <span className="">{company.name}</span>
           </Link>
           <UserButton />
         </div>
