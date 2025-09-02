@@ -217,3 +217,115 @@ export async function deletePurchase(id: string) {
   revalidatePath("/inventory")
   return { message: "Purchase deleted successfully.", success: true }
 }
+
+interface BulkPurchaseRow {
+  product_name: string
+  supplier_name: string
+  quantity: number
+  unit_price: number
+  purchase_date: string
+}
+
+export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
+  const user = await getAuthUser()
+  if (!user) {
+    return { success: 0, errors: ["Authentication error. Please sign in."] }
+  }
+
+  const supabase = createClient()
+  let successCount = 0
+  const errors: string[] = []
+
+  // Get all products and suppliers for name lookup
+  const { data: products } = await supabase.from("products").select("id, name")
+
+  const { data: suppliers } = await supabase.from("suppliers").select("id, name")
+
+  if (!products || !suppliers) {
+    return { success: 0, errors: ["Failed to load products or suppliers"] }
+  }
+
+  // Process each purchase
+  for (let i = 0; i < purchases.length; i++) {
+    const row = purchases[i]
+    const rowNum = i + 2 // +2 because CSV has header and arrays are 0-indexed
+
+    try {
+      // Find product by name
+      const product = products.find((p) => p.name.toLowerCase() === row.product_name.toLowerCase())
+      if (!product) {
+        errors.push(`Ligne ${rowNum}: Produit "${row.product_name}" non trouvé`)
+        continue
+      }
+
+      // Find supplier by name
+      const supplier = suppliers.find((s) => s.name.toLowerCase() === row.supplier_name.toLowerCase())
+      if (!supplier) {
+        errors.push(`Ligne ${rowNum}: Fournisseur "${row.supplier_name}" non trouvé`)
+        continue
+      }
+
+      // Validate data
+      if (row.quantity <= 0) {
+        errors.push(`Ligne ${rowNum}: Quantité doit être positive`)
+        continue
+      }
+
+      if (row.unit_price < 0) {
+        errors.push(`Ligne ${rowNum}: Prix unitaire ne peut pas être négatif`)
+        continue
+      }
+
+      const total = row.quantity * row.unit_price
+
+      // Create purchase
+      const { data: purchase, error: purchaseError } = await supabase
+        .from("purchases")
+        .insert({
+          created_by: user.id,
+          product_id: product.id,
+          supplier_id: supplier.id,
+          quantity: row.quantity,
+          unit_price: row.unit_price,
+          total: total,
+          purchase_date: row.purchase_date,
+        })
+        .select()
+        .single()
+
+      if (purchaseError) {
+        errors.push(`Ligne ${rowNum}: Erreur création achat - ${purchaseError.message}`)
+        continue
+      }
+
+      // Create stock lot
+      const { error: stockLotError } = await supabase.from("stock_lots").insert({
+        product_id: product.id,
+        purchase_id: purchase.id,
+        quantity_received: row.quantity,
+        quantity_available: row.quantity,
+        unit_cost: row.unit_price,
+        purchase_date: row.purchase_date,
+        created_by: user.id,
+      })
+
+      if (stockLotError) {
+        errors.push(`Ligne ${rowNum}: Erreur création lot - ${stockLotError.message}`)
+        // Note: Purchase was created but stock lot failed
+        continue
+      }
+
+      successCount++
+    } catch (error) {
+      errors.push(`Ligne ${rowNum}: Erreur inattendue - ${error}`)
+    }
+  }
+
+  // Revalidate paths if any purchases were successful
+  if (successCount > 0) {
+    revalidatePath("/purchases")
+    revalidatePath("/inventory")
+  }
+
+  return { success: successCount, errors }
+}

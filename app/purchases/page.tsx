@@ -2,7 +2,7 @@ import { fetchPurchases } from "@/lib/data/purchases"
 import PurchaseList from "@/components/purchases/purchase-list"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, Upload } from "lucide-react"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -30,12 +30,20 @@ export default async function PurchasesPage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <Button asChild className="ml-auto">
-          <Link href="/purchases/new">
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Nouvel Achat
-          </Link>
-        </Button>
+        <div className="ml-auto flex gap-2">
+          <Button asChild variant="outline">
+            <Link href="/purchases/bulk-import">
+              <Upload className="mr-2 h-4 w-4" />
+              Import CSV
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href="/purchases/new">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Nouvel Achat
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-6">
