@@ -12,10 +12,13 @@ import { Download, Upload, AlertCircle, CheckCircle } from "lucide-react"
 import { bulkCreatePurchases } from "@/app/purchases/actions"
 
 interface PurchaseRow {
-  product_name: string
+  name: string
   supplier_name: string
   quantity: number
-  unit_price: number
+  prix_achat: number
+  prix_vente_detail_1?: number
+  prix_vente_detail_2?: number
+  prix_vente_gros?: number
   purchase_date: string
 }
 
@@ -28,10 +31,10 @@ export function BulkPurchaseImport() {
   } | null>(null)
 
   const downloadTemplate = () => {
-    const csvContent = `product_name,supplier_name,quantity,unit_price,purchase_date
-15000AH BELTA,Fournisseur Solar,50,8092,2025-09-02
-2000W Inverter,Fournisseur Tech,25,3349,2025-09-02
-Panneau Solaire de 150W/200W,Fournisseur Solar,30,22438,2025-09-02`
+    const csvContent = `name,supplier_name,quantity,prix_achat,prix_vente_detail_1,prix_vente_detail_2,prix_vente_gros,purchase_date
+15000AH BELTA,Fournisseur Solar,50,8092,10000,10500,9000,2025-09-02
+2000W Inverter,Fournisseur Tech,25,3349,5024,,4522,2025-09-02
+Panneau Solaire 150W,Fournisseur Solar,30,22438,33656,,30291,2025-09-02`
 
     const blob = new Blob([csvContent], { type: "text/csv" })
     const url = window.URL.createObjectURL(blob)
@@ -57,11 +60,14 @@ Panneau Solaire de 150W/200W,Fournisseur Solar,30,22438,2025-09-02`
     return lines.slice(1).map((line) => {
       const values = line.split(",").map((v) => v.trim())
       return {
-        product_name: values[0],
+        name: values[0],
         supplier_name: values[1],
         quantity: Number.parseInt(values[2]),
-        unit_price: Number.parseFloat(values[3]),
-        purchase_date: values[4],
+        prix_achat: Number.parseFloat(values[3]),
+        prix_vente_detail_1: values[4] ? Number.parseFloat(values[4]) : undefined,
+        prix_vente_detail_2: values[5] ? Number.parseFloat(values[5]) : undefined,
+        prix_vente_gros: values[6] ? Number.parseFloat(values[6]) : undefined,
+        purchase_date: values[7],
       }
     })
   }
@@ -107,21 +113,33 @@ Panneau Solaire de 150W/200W,Fournisseur Solar,30,22438,2025-09-02`
             <h4 className="font-medium mb-2">Format requis:</h4>
             <ul className="text-sm text-gray-600 space-y-1">
               <li>
-                • <strong>product_name:</strong> Nom exact du produit (doit exister)
+                • <strong>name:</strong> Nom du produit (obligatoire)
               </li>
               <li>
-                • <strong>supplier_name:</strong> Nom exact du fournisseur (doit exister)
+                • <strong>supplier_name:</strong> Nom du fournisseur (doit exister)
               </li>
               <li>
                 • <strong>quantity:</strong> Quantité (nombre entier)
               </li>
               <li>
-                • <strong>unit_price:</strong> Prix unitaire (nombre décimal)
+                • <strong>prix_achat:</strong> Prix d'achat (obligatoire)
               </li>
               <li>
-                • <strong>purchase_date:</strong> Date (format: YYYY-MM-DD)
+                • <strong>prix_vente_detail_1:</strong> Prix de vente détail 1 (optionnel)
+              </li>
+              <li>
+                • <strong>prix_vente_detail_2:</strong> Prix de vente détail 2 (optionnel)
+              </li>
+              <li>
+                • <strong>prix_vente_gros:</strong> Prix de vente en gros (optionnel)
+              </li>
+              <li>
+                • <strong>purchase_date:</strong> Date d'achat (format: YYYY-MM-DD)
               </li>
             </ul>
+            <p className="text-xs text-gray-500 mt-2">
+              Note: Les champs de prix de vente sont optionnels. Laissez vide si non applicable.
+            </p>
           </div>
         </CardContent>
       </Card>
