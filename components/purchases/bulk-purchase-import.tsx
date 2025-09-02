@@ -17,6 +17,9 @@ interface PurchaseRow {
   quantity: number
   unit_price: number
   purchase_date?: string
+  prix_vente_detail_1?: number
+  prix_vente_detail_2?: number
+  prix_vente_gros?: number
 }
 
 export function BulkPurchaseImport() {
@@ -28,11 +31,11 @@ export function BulkPurchaseImport() {
   } | null>(null)
 
   const downloadTemplate = () => {
-    const csvContent = `product_name,supplier_name,quantity,unit_price,purchase_date
-15000AH BELTA,West Africa Solar,50,8092,2025-09-02
-2000W Inverter,Burkina Energy Supply,25,3349,2025-09-02
-Panneau Solaire 150W,Solar Tech Import,30,22438,2025-09-02
-2000AH USB,GUANGZHOU V V SUPO,40,93550,`
+    const csvContent = `product_name,supplier_name,quantity,unit_price,purchase_date,prix_vente_detail_1,prix_vente_detail_2,prix_vente_gros
+15000AH BELTA,West Africa Solar,50,8092,2025-09-02,10000,10500,9000
+2000W Inverter,Burkina Energy Supply,25,3349,2025-09-02,5300,5500,4500
+Panneau Solaire 150W,Solar Tech Import,30,22438,2025-09-02,33656,,30291
+2000AH USB,GUANGZHOU V V SUPO,40,93550,,125000,135000,120000`
 
     const blob = new Blob([csvContent], { type: "text/csv" })
     const url = window.URL.createObjectURL(blob)
@@ -63,6 +66,9 @@ Panneau Solaire 150W,Solar Tech Import,30,22438,2025-09-02
         quantity: Number.parseInt(values[2]),
         unit_price: Number.parseFloat(values[3]),
         purchase_date: values[4] || undefined,
+        prix_vente_detail_1: values[5] ? Number.parseFloat(values[5]) : undefined,
+        prix_vente_detail_2: values[6] ? Number.parseFloat(values[6]) : undefined,
+        prix_vente_gros: values[7] ? Number.parseFloat(values[7]) : undefined,
       }
     })
   }
@@ -122,10 +128,19 @@ Panneau Solaire 150W,Solar Tech Import,30,22438,2025-09-02
               <li>
                 • <strong>purchase_date:</strong> Date d'achat YYYY-MM-DD (optionnel, défaut: aujourd'hui)
               </li>
+              <li>
+                • <strong>prix_vente_detail_1:</strong> Prix de vente détail 1 (optionnel)
+              </li>
+              <li>
+                • <strong>prix_vente_detail_2:</strong> Prix de vente détail 2 (optionnel)
+              </li>
+              <li>
+                • <strong>prix_vente_gros:</strong> Prix de vente en gros (optionnel)
+              </li>
             </ul>
             <p className="text-xs text-gray-500 mt-2">
               Note: Les produits et fournisseurs doivent exister dans le système. Chaque achat créera un lot de stock
-              séparé.
+              séparé. Les prix de vente sont optionnels et mettront à jour les prix du produit si fournis.
             </p>
           </div>
         </CardContent>
