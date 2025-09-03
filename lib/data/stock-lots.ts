@@ -57,8 +57,18 @@ export async function fetchProductsWithBatches(
     throw new Error("Failed to fetch products with batches")
   }
 
-  // Get detailed stock lots for each product
-  const productIds = products?.map((p) => p.product_id) || []
+  const productIds = products?.map((p) => p.id) || []
+
+  // Only fetch stock lots if we have valid product IDs
+  if (productIds.length === 0) {
+    return {
+      products: [],
+      totalPages: 0,
+      hasNextPage: false,
+      hasPrevPage: false,
+    }
+  }
+
   const { data: stockLots, error: stockLotsError } = await supabase
     .from("stock_lots")
     .select("*")
@@ -83,23 +93,22 @@ export async function fetchProductsWithBatches(
     {} as Record<string, StockLot[]>,
   )
 
-  // Combine products with their stock lots
   const productsWithBatches: ProductWithBatches[] = (products || []).map((product) => ({
-    id: product.product_id,
-    name: product.product_name,
-    type: product.product_type,
-    unit: product.unit,
-    prix_vente_detail_1: product.prix_vente_detail_1,
-    prix_vente_detail_2: product.prix_vente_detail_2,
-    prix_vente_gros: product.prix_vente_gros,
-    image: null, // Not included in the view
+    id: product.id,
+    name: product.name,
+    type: product.type || "Product",
+    unit: product.unit || "pcs",
+    prix_vente_detail_1: product.prix_vente_detail_1 || 0,
+    prix_vente_detail_2: product.prix_vente_detail_2 || 0,
+    prix_vente_gros: product.prix_vente_gros || 0,
+    image: product.image || null,
     total_quantity: product.total_quantity || 0,
     batch_count: product.batch_count || 0,
     oldest_batch_date: product.oldest_batch_date,
     newest_batch_date: product.newest_batch_date,
     average_cost: product.average_cost || 0,
-    stock_status: product.stock_status,
-    stock_lots: stockLotsByProduct[product.product_id] || [],
+    stock_status: product.stock_status || "Normal",
+    stock_lots: stockLotsByProduct[product.id] || [],
   }))
 
   // Get total count for pagination
