@@ -250,9 +250,9 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
 
     const topProducts = Array.from(productSales.entries())
       .map(([productId, data]) => {
-        const product = productsData?.find((p) => p.product_id === productId)
+        const product = productsData?.find((p) => p.id === productId)
         return {
-          name: product?.product_name || "Unknown Product",
+          name: product?.name || "Unknown Product",
           quantity: data.quantity,
           revenue: data.revenue,
         }
@@ -318,7 +318,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     const stockAlerts =
       productsData
         ?.map((product) => ({
-          name: product.product_name,
+          name: product.name,
           currentStock: product.total_quantity || 0,
           status:
             (product.total_quantity || 0) <= 5
