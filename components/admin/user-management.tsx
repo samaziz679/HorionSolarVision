@@ -41,6 +41,7 @@ interface AuditLog {
   new_values: any
   created_at: string
   user_agent: string | null
+  ip_address: string | null
 }
 
 const createClient = () => {
@@ -120,14 +121,49 @@ export function UserManagement() {
       const { data, error } = await supabase
         .from("audit_logs")
         .select(`
-          *,
-          user_profiles(email, full_name)
+          id,
+          user_id,
+          action,
+          table_name,
+          record_id,
+          old_values,
+          new_values,
+          created_at,
+          user_agent,
+          ip_address
         `)
         .order("created_at", { ascending: false })
         .limit(100)
 
       if (error) throw error
-      setAuditLogs(data || [])
+
+      const auditLogsWithUsers = await Promise.all(
+        (data || []).map(async (log) => {
+          let userEmail = "Système"
+          if (log.user_id) {
+            try {
+              const { data: userData } = await supabase.auth.admin.getUserById(log.user_id)
+              userEmail = userData.user?.email || "Utilisateur inconnu"
+            } catch {
+              const { data: userRole } = await supabase
+                .from("user_roles")
+                .select("email, full_name")
+                .eq("user_id", log.user_id)
+                .single()
+
+              if (userRole) {
+                userEmail = userRole.full_name || userRole.email
+              }
+            }
+          }
+          return {
+            ...log,
+            user_email: userEmail,
+          }
+        }),
+      )
+
+      setAuditLogs(auditLogsWithUsers as any)
     } catch (error) {
       console.error("Error loading audit logs:", error)
     }
@@ -393,9 +429,7 @@ export function UserManagement() {
                         <Clock className="h-4 w-4 text-muted-foreground" />
                         {new Date(log.created_at).toLocaleString("fr-FR")}
                       </TableCell>
-                      <TableCell>
-                        {(log as any).user_profiles?.email || (log as any).user_profiles?.full_name || "Système"}
-                      </TableCell>
+                      <TableCell>{(log as any).user_email || "Système"}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{log.action}</Badge>
                       </TableCell>
