@@ -40,6 +40,7 @@ interface AuditLog {
   old_values: any
   new_values: any
   created_at: string
+  user_agent: string | null
 }
 
 const createClient = () => {
@@ -60,6 +61,8 @@ async function logAudit(action: string, tableName: string, recordId: string, old
 
     if (!user) return
 
+    const userAgent = navigator.userAgent
+
     await supabase.from("audit_logs").insert({
       user_id: user.id,
       action,
@@ -67,6 +70,7 @@ async function logAudit(action: string, tableName: string, recordId: string, old
       record_id: recordId,
       old_values: oldValues,
       new_values: newValues,
+      user_agent: userAgent,
     })
   } catch (error) {
     console.error("Error logging audit:", error)
@@ -117,10 +121,10 @@ export function UserManagement() {
         .from("audit_logs")
         .select(`
           *,
-          user_profiles!inner(email, full_name)
+          user_profiles(email, full_name)
         `)
         .order("created_at", { ascending: false })
-        .limit(50)
+        .limit(100)
 
       if (error) throw error
       setAuditLogs(data || [])
@@ -389,20 +393,42 @@ export function UserManagement() {
                         <Clock className="h-4 w-4 text-muted-foreground" />
                         {new Date(log.created_at).toLocaleString("fr-FR")}
                       </TableCell>
-                      <TableCell>{(log as any).user_profiles?.email || "Système"}</TableCell>
+                      <TableCell>
+                        {(log as any).user_profiles?.email || (log as any).user_profiles?.full_name || "Système"}
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline">{log.action}</Badge>
                       </TableCell>
                       <TableCell>{log.table_name || "N/A"}</TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {log.new_values && typeof log.new_values === "object"
-                          ? Object.entries(log.new_values)
-                              .map(([key, value]) => `${key}: ${value}`)
-                              .join(", ")
-                          : "N/A"}
+                      <TableCell className="max-w-xs">
+                        <div className="space-y-1">
+                          {log.new_values && typeof log.new_values === "object" && (
+                            <div className="text-sm">
+                              <span className="font-medium">Nouveau:</span>{" "}
+                              {Object.entries(log.new_values)
+                                .map(([key, value]) => `${key}: ${value}`)
+                                .join(", ")}
+                            </div>
+                          )}
+                          {log.old_values && typeof log.old_values === "object" && (
+                            <div className="text-sm text-muted-foreground">
+                              <span className="font-medium">Ancien:</span>{" "}
+                              {Object.entries(log.old_values)
+                                .map(([key, value]) => `${key}: ${value}`)
+                                .join(", ")}
+                            </div>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
+                  {auditLogs.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                        Aucune entrée d'audit trouvée
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </CardContent>
