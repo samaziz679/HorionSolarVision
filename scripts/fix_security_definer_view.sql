@@ -22,9 +22,9 @@ SELECT
     COALESCE(SUM(sl.quantity_available), 0) as total_quantity,
     COUNT(sl.id) as total_batches,
     CASE 
-        WHEN COALESCE(SUM(sl.quantity_available), 0) = 0 THEN 'out_of_stock'
-        WHEN COALESCE(SUM(sl.quantity_available), 0) <= p.seuil_stock_bas THEN 'low_stock'
-        ELSE 'in_stock'
+        WHEN COALESCE(SUM(sl.quantity_available), 0) = 0 THEN 'rupture_stock'
+        WHEN COALESCE(SUM(sl.quantity_available), 0) <= p.seuil_stock_bas THEN 'stock_faible'
+        ELSE 'en_stock'
     END as stock_status,
     -- Calculate weighted average cost based on available quantities
     CASE 

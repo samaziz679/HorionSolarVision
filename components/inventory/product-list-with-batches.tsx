@@ -45,9 +45,9 @@ export default function ProductListWithBatches({ products }: { products: Product
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "Critical":
+      case "Critique":
         return "destructive"
-      case "Low":
+      case "Faible":
         return "secondary"
       default:
         return "default"

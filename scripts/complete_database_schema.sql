@@ -230,10 +230,11 @@ SELECT
     COALESCE(AVG(sl.unit_cost), p.prix_achat) as avg_cost,
     MIN(sl.purchase_date) as oldest_batch_date,
     MAX(sl.purchase_date) as newest_batch_date,
+    -- Updated stock status values to French
     CASE 
-        WHEN COALESCE(SUM(sl.quantity_available), 0) = 0 THEN 'out_of_stock'
-        WHEN COALESCE(SUM(sl.quantity_available), 0) <= 10 THEN 'low_stock'
-        ELSE 'in_stock'
+        WHEN COALESCE(SUM(sl.quantity_available), 0) = 0 THEN 'rupture_stock'
+        WHEN COALESCE(SUM(sl.quantity_available), 0) <= 10 THEN 'stock_faible'
+        ELSE 'en_stock'
     END as stock_status
 FROM products p
 LEFT JOIN stock_lots sl ON p.id = sl.product_id AND sl.quantity_available > 0
