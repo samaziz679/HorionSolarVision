@@ -45,9 +45,9 @@ export default function ProductListWithBatches({ products }: { products: Product
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "Critique":
+      case "Critical":
         return "destructive"
-      case "Faible":
+      case "Low Stock":
         return "secondary"
       default:
         return "default"
@@ -85,11 +85,11 @@ export default function ProductListWithBatches({ products }: { products: Product
     },
     {
       accessorKey: "name",
-      header: "Nom du Produit",
+      header: "Product Name",
     },
     {
       accessorKey: "total_quantity",
-      header: "Quantité Totale",
+      header: "Total Quantity",
       cell: ({ row }) => {
         const product = row.original
         return (
@@ -102,25 +102,25 @@ export default function ProductListWithBatches({ products }: { products: Product
     },
     {
       accessorKey: "batch_count",
-      header: "Lots",
+      header: "Batches",
       cell: ({ row }) => {
         const product = row.original
         return (
           <div className="text-center">
             <span className="text-sm font-medium">{product.batch_count}</span>
-            <div className="text-xs text-muted-foreground">lots</div>
+            <div className="text-xs text-muted-foreground">batches</div>
           </div>
         )
       },
     },
     {
       accessorKey: "average_cost",
-      header: "Coût Moyen",
+      header: "Average Cost",
       cell: ({ row }) => formatMoney(row.original.average_cost),
     },
     {
       accessorKey: "prix_vente_detail_1",
-      header: "Prix Vente",
+      header: "Sale Price",
       cell: ({ row }) => formatMoney(row.original.prix_vente_detail_1),
     },
     {
@@ -132,7 +132,7 @@ export default function ProductListWithBatches({ products }: { products: Product
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Ouvrir menu</span>
+                  <span className="sr-only">Open menu</span>
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -140,12 +140,12 @@ export default function ProductListWithBatches({ products }: { products: Product
                 <DropdownMenuItem asChild>
                   <Link href={`/inventory/${product.id}/edit`}>
                     <Pencil className="mr-2 h-4 w-4" />
-                    Modifier
+                    Edit
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleDeleteClick(product.id)}>
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Supprimer
+                  Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -201,7 +201,7 @@ export default function ProductListWithBatches({ products }: { products: Product
                       <TableRow>
                         <TableCell colSpan={columns.length} className="p-0">
                           <div className="bg-muted/50 p-4">
-                            <h4 className="font-medium mb-3 text-sm">Détails des Lots</h4>
+                            <h4 className="font-medium mb-3 text-sm">Batch Details</h4>
                             <div className="grid gap-2">
                               {product.stock_lots.map((lot) => (
                                 <div
@@ -212,16 +212,17 @@ export default function ProductListWithBatches({ products }: { products: Product
                                     <div>
                                       <div className="font-medium">{lot.lot_number}</div>
                                       <div className="text-xs text-muted-foreground">
-                                        Acheté le {format(new Date(lot.purchase_date), "dd MMM yyyy", { locale: fr })}
+                                        Purchased on{" "}
+                                        {format(new Date(lot.purchase_date), "dd MMM yyyy", { locale: fr })}
                                       </div>
                                     </div>
                                     <div className="text-center">
                                       <div className="font-medium">{lot.quantity_available}</div>
-                                      <div className="text-xs text-muted-foreground">disponible</div>
+                                      <div className="text-xs text-muted-foreground">available</div>
                                     </div>
                                     <div className="text-center">
                                       <div className="font-medium">{formatMoney(lot.unit_cost)}</div>
-                                      <div className="text-xs text-muted-foreground">coût unitaire</div>
+                                      <div className="text-xs text-muted-foreground">unit cost</div>
                                     </div>
                                   </div>
                                   {lot.notes && (
@@ -240,7 +241,7 @@ export default function ProductListWithBatches({ products }: { products: Product
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  Aucun produit trouvé.
+                  No products found.
                 </TableCell>
               </TableRow>
             )}
@@ -249,10 +250,10 @@ export default function ProductListWithBatches({ products }: { products: Product
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          Précédent
+          Previous
         </Button>
         <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          Suivant
+          Next
         </Button>
       </div>
       {selectedProductId && (

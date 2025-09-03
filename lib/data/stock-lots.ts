@@ -30,7 +30,7 @@ export interface ProductWithBatches {
   oldest_batch_date: string | null
   newest_batch_date: string | null
   average_cost: number
-  stock_status: "Critique" | "Faible" | "Normal"
+  stock_status: "Critical" | "Low Stock" | "Normal"
   stock_lots: StockLot[]
 }
 
@@ -108,10 +108,10 @@ export async function fetchProductsWithBatches(
     newest_batch_date: product.newest_batch_date,
     average_cost: product.average_cost || 0,
     stock_status:
-      product.stock_status === "rupture_stock"
-        ? "Critique"
-        : product.stock_status === "stock_faible"
-          ? "Faible"
+      product.stock_status === "rupture_stock" || product.stock_status === "out_of_stock"
+        ? "Critical"
+        : product.stock_status === "stock_faible" || product.stock_status === "low_stock"
+          ? "Low Stock"
           : "Normal",
     stock_lots: stockLotsByProduct[product.id] || [],
   }))
