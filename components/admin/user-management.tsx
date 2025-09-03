@@ -42,6 +42,10 @@ interface AuditLog {
   created_at: string
   user_agent: string | null
   ip_address: string | null
+  user_profiles: {
+    email: string
+    full_name: string
+  }
 }
 
 const createClient = () => {
@@ -130,38 +134,21 @@ export function UserManagement() {
           new_values,
           created_at,
           user_agent,
-          ip_address
+          ip_address,
+          user_profiles!inner(
+            email,
+            full_name
+          )
         `)
         .order("created_at", { ascending: false })
         .limit(100)
 
       if (error) throw error
 
-      const auditLogsWithUsers = await Promise.all(
-        (data || []).map(async (log) => {
-          let userEmail = "Système"
-          if (log.user_id) {
-            try {
-              const { data: userData } = await supabase.auth.admin.getUserById(log.user_id)
-              userEmail = userData.user?.email || "Utilisateur inconnu"
-            } catch {
-              const { data: userRole } = await supabase
-                .from("user_roles")
-                .select("email, full_name")
-                .eq("user_id", log.user_id)
-                .single()
-
-              if (userRole) {
-                userEmail = userRole.full_name || userRole.email
-              }
-            }
-          }
-          return {
-            ...log,
-            user_email: userEmail,
-          }
-        }),
-      )
+      const auditLogsWithUsers = (data || []).map((log) => ({
+        ...log,
+        user_email: log.user_profiles?.full_name || log.user_profiles?.email || "Utilisateur inconnu",
+      }))
 
       setAuditLogs(auditLogsWithUsers as any)
     } catch (error) {
@@ -429,7 +416,7 @@ export function UserManagement() {
                         <Clock className="h-4 w-4 text-muted-foreground" />
                         {new Date(log.created_at).toLocaleString("fr-FR")}
                       </TableCell>
-                      <TableCell>{(log as any).user_email || "Système"}</TableCell>
+                      <TableCell>{log.user_profiles?.full_name || log.user_profiles?.email || "Système"}</TableCell>
                       <TableCell>
                         <Badge variant="outline">{log.action}</Badge>
                       </TableCell>
