@@ -46,20 +46,19 @@ export async function fetchProductsWithBatches(
   const supabase = createClient()
   const offset = (page - 1) * limit
 
-  // Get products with aggregated stock lot information
-  const { data: products, error: productsError } = await supabase
-    .from("current_stock_with_batches")
+  const { data: allProducts, error: productsError } = await supabase
+    .from("products")
     .select("*")
     .range(offset, offset + limit - 1)
+    .order("name", { ascending: true })
 
   if (productsError) {
-    console.error("Error fetching products with batches:", productsError)
-    throw new Error("Failed to fetch products with batches")
+    console.error("Error fetching products:", productsError)
+    throw new Error("Failed to fetch products")
   }
 
-  const productIds = products?.map((p) => p.id) || []
+  const productIds = allProducts?.map((p) => p.id) || []
 
-  // Only fetch stock lots if we have valid product IDs
   if (productIds.length === 0) {
     return {
       products: [],
@@ -68,6 +67,24 @@ export async function fetchProductsWithBatches(
       hasPrevPage: false,
     }
   }
+
+  const { data: stockSummary, error: stockError } = await supabase
+    .from("current_stock_with_batches")
+    .select("*")
+    .in("id", productIds)
+
+  if (stockError) {
+    console.error("Error fetching stock summary:", stockError)
+  }
+
+  // Create a map of stock summaries by product ID
+  const stockSummaryMap = (stockSummary || []).reduce(
+    (acc, summary) => {
+      acc[summary.id] = summary
+      return acc
+    },
+    {} as Record<string, any>,
+  )
 
   const { data: stockLots, error: stockLotsError } = await supabase
     .from("stock_lots")
@@ -93,33 +110,38 @@ export async function fetchProductsWithBatches(
     {} as Record<string, StockLot[]>,
   )
 
-  const productsWithBatches: ProductWithBatches[] = (products || []).map((product) => ({
-    id: product.id,
-    name: product.name,
-    type: product.type || "Product",
-    unit: product.unit || "pcs",
-    prix_vente_detail_1: product.prix_vente_detail_1 || 0,
-    prix_vente_detail_2: product.prix_vente_detail_2 || 0,
-    prix_vente_gros: product.prix_vente_gros || 0,
-    image: product.image || null,
-    total_quantity: product.total_quantity || 0,
-    batch_count: product.batch_count || 0,
-    oldest_batch_date: product.oldest_batch_date,
-    newest_batch_date: product.newest_batch_date,
-    average_cost: product.average_cost || 0,
-    stock_status:
-      product.stock_status === "rupture_stock" || product.stock_status === "out_of_stock"
-        ? "Critical"
-        : product.stock_status === "stock_faible" || product.stock_status === "low_stock"
-          ? "Low Stock"
-          : "Normal",
-    stock_lots: stockLotsByProduct[product.id] || [],
-  }))
+  const productsWithBatches: ProductWithBatches[] = (allProducts || []).map((product) => {
+    const stockInfo = stockSummaryMap[product.id]
+    const totalQuantity = stockInfo?.total_quantity || 0
 
-  // Get total count for pagination
-  const { count, error: countError } = await supabase
-    .from("current_stock_with_batches")
-    .select("*", { count: "exact", head: true })
+    // Determine stock status based on quantity and threshold
+    let stockStatus: "Critical" | "Low Stock" | "Normal" = "Normal"
+    if (totalQuantity === 0) {
+      stockStatus = "Critical"
+    } else if (totalQuantity <= (product.seuil_stock_bas || 5)) {
+      stockStatus = "Low Stock"
+    }
+
+    return {
+      id: product.id,
+      name: product.name,
+      type: product.type || "Product",
+      unit: product.unit || "pcs",
+      prix_vente_detail_1: product.prix_vente_detail_1 || 0,
+      prix_vente_detail_2: product.prix_vente_detail_2 || 0,
+      prix_vente_gros: product.prix_vente_gros || 0,
+      image: product.image || null,
+      total_quantity: totalQuantity,
+      batch_count: stockInfo?.batch_count || 0,
+      oldest_batch_date: stockInfo?.oldest_batch_date || null,
+      newest_batch_date: stockInfo?.newest_batch_date || null,
+      average_cost: stockInfo?.average_cost || 0,
+      stock_status: stockStatus,
+      stock_lots: stockLotsByProduct[product.id] || [],
+    }
+  })
+
+  const { count, error: countError } = await supabase.from("products").select("*", { count: "exact", head: true })
 
   if (countError) {
     console.error("Error counting products:", countError)
