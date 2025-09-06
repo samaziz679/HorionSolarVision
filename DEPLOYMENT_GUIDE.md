@@ -1,6 +1,11 @@
-# Deployment Guide for Solar Vision ERP
+# Solar Vision ERP - Deployment Guide
 
-This comprehensive guide provides step-by-step instructions for deploying the Solar Vision ERP system with complete batch tracking functionality.
+This guide provides step-by-step instructions for deploying the Solar Vision ERP system with complete batch tracking functionality.
+
+## Quick Start
+
+For a fresh installation, you only need to run **ONE** script:
+- `scripts/00_fresh_install_complete.sql` - Complete database setup
 
 ## Prerequisites
 
@@ -15,26 +20,27 @@ Before you begin, ensure you have:
 ### 1. Set Up Supabase Database
 
 1. **Create a new Supabase project** at [supabase.com](https://supabase.com/)
-2. **Run the complete database schema**:
+2. **Run the unified installation script**:
    - Go to your Supabase dashboard
    - Navigate to the SQL Editor
-   - Copy and paste the entire contents of `scripts/complete_database_schema.sql`
+   - Copy and paste the entire contents of `scripts/00_fresh_install_complete.sql`
    - Click "Run" to execute the script
 
-This will create:
-- All core tables (products, clients, suppliers, sales, purchases, expenses)
-- **Batch tracking system** (stock_lots, stock_movements)
-- User management and RBAC system
-- Analytics views and functions
-- Row Level Security policies
-- Performance indexes
+**That's it!** This single script creates:
+- ✅ All core tables (products, clients, suppliers, sales, purchases, expenses)
+- ✅ **Complete batch tracking system** (stock_lots, stock_movements)
+- ✅ User management and RBAC system
+- ✅ Analytics views and functions
+- ✅ Row Level Security policies
+- ✅ Performance indexes
+- ✅ Automated triggers for batch creation
+- ✅ FIFO inventory deduction system
 
 ### 2. Configure Authentication
 
 1. In your Supabase dashboard, go to **Authentication > Settings**
 2. **Enable Email authentication**
-3. **Configure email templates** (optional)
-4. **Set up your site URL** (will be your Vercel deployment URL)
+3. **Set up your site URL** (will be your Vercel deployment URL)
 
 ### 3. Get Your Supabase Credentials
 
@@ -71,16 +77,7 @@ VERCEL_FORCE_NO_BUILD_CACHE=1
 NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL=http://localhost:3000
 \`\`\`
 
-### 3. Configure Build Settings
-
-Ensure these settings in Vercel:
-- **Framework Preset**: Next.js
-- **Build Command**: `pnpm run build`
-- **Install Command**: `pnpm install`
-- **Output Directory**: `dist`
-- **Node.js Version**: 18.x or higher
-
-### 4. Deploy Your Project
+### 3. Deploy Your Project
 
 1. Click **"Deploy"** button
 2. Monitor the build process in the deployment logs
@@ -106,31 +103,24 @@ Since the first user won't have admin privileges automatically:
    - `role`: `admin`
    - `created_by`: Your user ID
 
-### 3. Configure Company Settings
-
-1. **Log in to your application**
-2. **Navigate to Settings** (Paramètres)
-3. **Upload your company logo**
-4. **Configure company information**
-
-### 4. Test Core Functionality
+### 3. Test Your Installation
 
 **Inventory Management:**
-- Add products with zero quantity
-- Use purchases to create stock lots
-- Verify batch tracking is working
+- ✅ Add products with zero quantity
+- ✅ Use purchases to create stock lots automatically
+- ✅ Verify batch tracking is working (LOT-2025-001, LOT-2025-002, etc.)
 
 **Sales Process:**
-- Create a sale
-- Verify FIFO deduction from stock lots
-- Check inventory updates
+- ✅ Create a sale
+- ✅ Verify FIFO deduction from oldest batches first
+- ✅ Check inventory updates automatically
 
 **Reporting:**
-- View analytics dashboard
-- Check batch-specific reports
-- Verify stock movement tracking
+- ✅ View analytics dashboard
+- ✅ Check batch-specific reports
+- ✅ Verify stock movement tracking
 
-## Batch Tracking System Features
+## What You Get
 
 Your deployment includes a comprehensive batch tracking system:
 
@@ -142,15 +132,29 @@ Your deployment includes a comprehensive batch tracking system:
 - Sales automatically deduct from oldest batches first
 - Maintains accurate cost tracking and inventory aging
 
-### **Detailed Tracking**
-- Complete audit trail of all stock movements
-- Batch-specific reporting and analytics
-- Aging inventory analysis
+### **Complete Audit Trail**
+- All stock movements tracked with lot numbers
+- User activity logging in audit_logs table
+- Detailed reporting and analytics
 
-### **Enhanced Inventory Display**
-- View total quantities and batch counts
-- Expandable rows showing individual lot details
-- Stock status indicators (Critical, Low, Normal)
+### **Enhanced Features**
+- Bulk CSV import for purchases
+- User role management (admin, manager, user)
+- Company settings and branding
+- Mobile-responsive interface
+
+## Scripts Reference
+
+### For Fresh Installation
+- `scripts/00_fresh_install_complete.sql` - **Use this for new deployments**
+
+### Development Scripts (Reference Only)
+The `scripts/` folder contains many development scripts that were used during the building process. These are for reference only and should NOT be run on a fresh installation:
+
+- `complete_database_schema.sql` - Older version, use `00_fresh_install_complete.sql` instead
+- `create_stock_lots_system.sql` - Included in main script
+- `migrate_direct_inventory_to_stock_lots.sql` - Migration script (not needed for fresh install)
+- Various fix and update scripts - Applied during development
 
 ## Troubleshooting
 
@@ -164,17 +168,12 @@ Your deployment includes a comprehensive batch tracking system:
 **Database Connection Issues:**
 - Verify Supabase URL and keys
 - Check RLS policies are properly configured
-- Ensure database schema was applied correctly
+- Ensure the installation script completed successfully
 
 **Authentication Problems:**
 - Confirm email authentication is enabled in Supabase
 - Check site URL configuration matches your deployment
 - Verify user roles are properly assigned
-
-**Batch Tracking Issues:**
-- Ensure all database triggers are created
-- Check stock_lots table has proper constraints
-- Verify purchase/sales actions are using batch functions
 
 ### Getting Help
 
@@ -186,23 +185,9 @@ Your deployment includes a comprehensive batch tracking system:
 ## Security Considerations
 
 1. **Never expose Service Role Key** on client-side
-2. **Configure proper RLS policies** for production use
+2. **Configure proper RLS policies** (included in installation script)
 3. **Set up proper user roles** and permissions
 4. **Regular database backups** through Supabase
 5. **Monitor application logs** for security issues
 
-## Maintenance
-
-### Regular Tasks
-- **Monitor stock levels** and set up low stock alerts
-- **Review batch aging** reports for slow-moving inventory
-- **Backup database** regularly through Supabase
-- **Update dependencies** and security patches
-
-### Scaling Considerations
-- **Database performance**: Add indexes for large datasets
-- **File storage**: Monitor Vercel Blob usage for images
-- **User management**: Implement more granular RLS policies
-- **Analytics**: Consider data archiving for historical reports
-
-Your Solar Vision ERP system is now fully deployed with comprehensive batch tracking, ready for production use!
+Your Solar Vision ERP system is now fully deployed with comprehensive batch tracking, ready for production use! 🚀
