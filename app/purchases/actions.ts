@@ -305,6 +305,8 @@ export async function previewBulkPurchases(purchases: BulkPurchaseRow[]) {
 }
 
 export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
+  console.log("[v0] Starting bulk import with", purchases.length, "rows")
+
   const user = await getAuthUser()
   if (!user) {
     return { success: 0, errors: ["Authentication error. Please sign in."] }
@@ -330,9 +332,18 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
     const row = purchases[i]
     const rowNum = i + 2 // +2 because CSV has header and arrays are 0-indexed
 
+    console.log(`[v0] Processing row ${rowNum}:`, {
+      product_name: row.product_name,
+      supplier_name: row.supplier_name,
+      quantity: row.quantity,
+      unit_price: row.unit_price,
+    })
+
     try {
       let supplier = supplierMap.get(row.supplier_name.toLowerCase())
       if (!supplier) {
+        console.log(`[v0] Creating new supplier: ${row.supplier_name}`)
+
         const { data: newSupplier, error: supplierError } = await supabase
           .from("suppliers")
           .insert({
@@ -343,6 +354,7 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
           .single()
 
         if (supplierError) {
+          console.log(`[v0] Supplier creation error:`, supplierError)
           errors.push(`Ligne ${rowNum}: Erreur création fournisseur "${row.supplier_name}" - ${supplierError.message}`)
           continue
         }
@@ -350,10 +362,13 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
         supplier = newSupplier
         supplierMap.set(row.supplier_name.toLowerCase(), supplier)
         createdItems.push(`Fournisseur créé: ${row.supplier_name}`)
+        console.log(`[v0] Supplier created successfully:`, supplier)
       }
 
       let product = productMap.get(row.product_name.toLowerCase())
       if (!product) {
+        console.log(`[v0] Creating new product: ${row.product_name}`)
+
         const { data: newProduct, error: productError } = await supabase
           .from("products")
           .insert({
@@ -369,6 +384,7 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
           .single()
 
         if (productError) {
+          console.log(`[v0] Product creation error:`, productError)
           errors.push(`Ligne ${rowNum}: Erreur création produit "${row.product_name}" - ${productError.message}`)
           continue
         }
@@ -376,6 +392,7 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
         product = newProduct
         productMap.set(row.product_name.toLowerCase(), product)
         createdItems.push(`Produit créé: ${row.product_name}`)
+        console.log(`[v0] Product created successfully:`, product)
       } else {
         const updateData: any = {}
         if (row.prix_vente_detail_1) updateData.prix_vente_detail_1 = row.prix_vente_detail_1
@@ -401,6 +418,15 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
       const total = row.quantity * row.unit_price
       const purchaseDate = row.purchase_date || new Date().toISOString().split("T")[0]
 
+      console.log(`[v0] Creating purchase for row ${rowNum}:`, {
+        product_id: product.id,
+        supplier_id: supplier.id,
+        quantity: row.quantity,
+        unit_price: row.unit_price,
+        total: total,
+        purchase_date: purchaseDate,
+      })
+
       // Create purchase
       const { data: purchase, error: purchaseError } = await supabase
         .from("purchases")
@@ -417,31 +443,45 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
         .single()
 
       if (purchaseError) {
+        console.log(`[v0] Purchase creation error for row ${rowNum}:`, purchaseError)
         errors.push(`Ligne ${rowNum}: Erreur création achat - ${purchaseError.message}`)
         continue
       }
 
-      // Create stock lot
-      const { error: stockLotError } = await supabase.from("stock_lots").insert({
+      console.log(`[v0] Purchase created successfully for row ${rowNum}:`, purchase)
+
+      const stockLotData = {
         product_id: product.id,
         purchase_id: purchase.id,
-        quantity_received: row.quantity, // Changed from quantity_purchased
+        quantity_received: row.quantity,
         quantity_available: row.quantity,
         unit_cost: row.unit_price,
         purchase_date: purchaseDate,
         created_by: user.id,
-      })
+      }
+
+      console.log(`[v0] Creating stock lot for row ${rowNum} with data:`, stockLotData)
+
+      // Create stock lot
+      const { error: stockLotError } = await supabase.from("stock_lots").insert(stockLotData)
 
       if (stockLotError) {
+        console.log(`[v0] Stock lot creation error for row ${rowNum}:`, stockLotError)
         errors.push(`Ligne ${rowNum}: Erreur création lot - ${stockLotError.message}`)
         continue
       }
 
+      console.log(`[v0] Stock lot created successfully for row ${rowNum}`)
       successCount++
     } catch (error) {
+      console.log(`[v0] Unexpected error for row ${rowNum}:`, error)
       errors.push(`Ligne ${i + 2}: Erreur inattendue - ${error}`)
     }
   }
+
+  console.log(`[v0] Bulk import completed. Success: ${successCount}, Errors: ${errors.length}`)
+  console.log(`[v0] Created items:`, createdItems)
+  console.log(`[v0] Errors:`, errors)
 
   // Revalidate paths if any purchases were successful
   if (successCount > 0) {
