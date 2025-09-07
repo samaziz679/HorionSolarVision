@@ -229,6 +229,80 @@ interface BulkPurchaseRow {
   prix_vente_gros?: number
 }
 
+interface PreviewRow extends BulkPurchaseRow {
+  rowNumber: number
+  productStatus: "exists" | "will_create"
+  supplierStatus: "exists" | "will_create"
+  errors: string[]
+  productId?: string
+  supplierId?: string
+}
+
+export async function previewBulkPurchases(purchases: BulkPurchaseRow[]) {
+  const user = await getAuthUser()
+  if (!user) {
+    return { success: false, errors: ["Authentication error. Please sign in."], preview: [] }
+  }
+
+  const supabase = createClient()
+
+  const { data: existingProducts } = await supabase.from("products").select("id, name")
+  const { data: existingSuppliers } = await supabase.from("suppliers").select("id, name")
+
+  if (!existingProducts || !existingSuppliers) {
+    return { success: false, errors: ["Failed to load existing products or suppliers"], preview: [] }
+  }
+
+  const productMap = new Map(existingProducts.map((p) => [p.name.toLowerCase(), p]))
+  const supplierMap = new Map(existingSuppliers.map((s) => [s.name.toLowerCase(), s]))
+
+  const preview: PreviewRow[] = purchases.map((row, index) => {
+    const rowNumber = index + 2 // +2 because CSV has header and arrays are 0-indexed
+    const errors: string[] = []
+
+    // Check product
+    const product = productMap.get(row.product_name.toLowerCase())
+    const productStatus = product ? "exists" : "will_create"
+
+    // Check supplier
+    const supplier = supplierMap.get(row.supplier_name.toLowerCase())
+    const supplierStatus = supplier ? "exists" : "will_create"
+
+    // Validate data
+    if (!row.product_name?.trim()) {
+      errors.push("Nom du produit requis")
+    }
+    if (!row.supplier_name?.trim()) {
+      errors.push("Nom du fournisseur requis")
+    }
+    if (row.quantity <= 0) {
+      errors.push("Quantité doit être positive")
+    }
+    if (row.unit_price < 0) {
+      errors.push("Prix unitaire ne peut pas être négatif")
+    }
+    if (row.purchase_date && !/^\d{4}-\d{2}-\d{2}$/.test(row.purchase_date)) {
+      errors.push("Format de date invalide (YYYY-MM-DD)")
+    }
+
+    return {
+      ...row,
+      rowNumber,
+      productStatus,
+      supplierStatus,
+      errors,
+      productId: product?.id,
+      supplierId: supplier?.id,
+    }
+  })
+
+  return {
+    success: true,
+    errors: [],
+    preview,
+  }
+}
+
 export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
   const user = await getAuthUser()
   if (!user) {
@@ -364,7 +438,7 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
 
       successCount++
     } catch (error) {
-      errors.push(`Ligne ${rowNum}: Erreur inattendue - ${error}`)
+      errors.push(`Ligne ${i + 2}: Erreur inattendue - ${error}`)
     }
   }
 

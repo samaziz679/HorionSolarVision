@@ -8,8 +8,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Download, Upload, AlertCircle, CheckCircle } from "lucide-react"
-import { bulkCreatePurchases } from "@/app/purchases/actions"
+import { Badge } from "@/components/ui/badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Download, Upload, AlertCircle, CheckCircle, Eye, Plus } from "lucide-react"
+import { bulkCreatePurchases, previewBulkPurchases, type PreviewRow } from "@/app/purchases/actions"
 
 interface PurchaseRow {
   product_name: string
@@ -25,6 +27,7 @@ interface PurchaseRow {
 export function BulkPurchaseImport() {
   const [file, setFile] = useState<File | null>(null)
   const [isProcessing, setIsProcessing] = useState(false)
+  const [preview, setPreview] = useState<PreviewRow[] | null>(null)
   const [results, setResults] = useState<{
     success: number
     errors: string[]
@@ -52,6 +55,7 @@ Onduleur 3000W,West Africa Solar,20,45000,2025-09-07,67500,,60000`
     if (selectedFile && selectedFile.type === "text/csv") {
       setFile(selectedFile)
       setResults(null)
+      setPreview(null)
     }
   }
 
@@ -74,7 +78,7 @@ Onduleur 3000W,West Africa Solar,20,45000,2025-09-07,67500,,60000`
     })
   }
 
-  const handleImport = async () => {
+  const handlePreview = async () => {
     if (!file) return
 
     setIsProcessing(true)
@@ -82,8 +86,16 @@ Onduleur 3000W,West Africa Solar,20,45000,2025-09-07,67500,,60000`
       const csvText = await file.text()
       const purchases = parseCSV(csvText)
 
-      const result = await bulkCreatePurchases(purchases)
-      setResults(result)
+      const result = await previewBulkPurchases(purchases)
+      if (result.success) {
+        setPreview(result.preview)
+        setResults(null)
+      } else {
+        setResults({
+          success: 0,
+          errors: result.errors,
+        })
+      }
     } catch (error) {
       setResults({
         success: 0,
@@ -92,6 +104,43 @@ Onduleur 3000W,West Africa Solar,20,45000,2025-09-07,67500,,60000`
     } finally {
       setIsProcessing(false)
     }
+  }
+
+  const handleImport = async () => {
+    if (!file || !preview) return
+
+    setIsProcessing(true)
+    try {
+      const csvText = await file.text()
+      const purchases = parseCSV(csvText)
+
+      const result = await bulkCreatePurchases(purchases)
+      setResults(result)
+      setPreview(null) // Clear preview after import
+    } catch (error) {
+      setResults({
+        success: 0,
+        errors: ["Erreur lors du traitement du fichier CSV"],
+      })
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const getStatusBadge = (status: "exists" | "will_create", type: "product" | "supplier") => {
+    if (status === "exists") {
+      return (
+        <Badge variant="secondary" className="text-green-700 bg-green-100">
+          Existe
+        </Badge>
+      )
+    }
+    return (
+      <Badge variant="outline" className="text-blue-700 bg-blue-50">
+        <Plus className="h-3 w-3 mr-1" />
+        Créer
+      </Badge>
+    )
   }
 
   return (
@@ -171,11 +220,105 @@ Onduleur 3000W,West Africa Solar,20,45000,2025-09-07,67500,,60000`
             </Alert>
           )}
 
-          <Button onClick={handleImport} disabled={!file || isProcessing} className="w-full">
-            {isProcessing ? "Traitement en cours..." : "Importer les Achats"}
-          </Button>
+          {!preview ? (
+            <Button onClick={handlePreview} disabled={!file || isProcessing} className="w-full">
+              <Eye className="h-4 w-4 mr-2" />
+              {isProcessing ? "Vérification en cours..." : "Prévisualiser l'Import"}
+            </Button>
+          ) : (
+            <div className="flex gap-2">
+              <Button onClick={handleImport} disabled={isProcessing} className="flex-1">
+                {isProcessing ? "Import en cours..." : "Confirmer l'Import"}
+              </Button>
+              <Button onClick={() => setPreview(null)} variant="outline">
+                Modifier
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
+
+      {/* Preview Table */}
+      {preview && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5" />
+              Prévisualisation de l'Import
+            </CardTitle>
+            <CardDescription>
+              Vérifiez les données avant de confirmer l'import. Les éléments marqués "Créer" seront ajoutés
+              automatiquement.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ligne</TableHead>
+                    <TableHead>Produit</TableHead>
+                    <TableHead>Fournisseur</TableHead>
+                    <TableHead>Quantité</TableHead>
+                    <TableHead>Prix Unit.</TableHead>
+                    <TableHead>Statut</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {preview.map((row) => (
+                    <TableRow key={row.rowNumber} className={row.errors.length > 0 ? "bg-red-50" : ""}>
+                      <TableCell>{row.rowNumber}</TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="font-medium">{row.product_name}</div>
+                          {getStatusBadge(row.productStatus, "product")}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="font-medium">{row.supplier_name}</div>
+                          {getStatusBadge(row.supplierStatus, "supplier")}
+                        </div>
+                      </TableCell>
+                      <TableCell>{row.quantity}</TableCell>
+                      <TableCell>{row.unit_price.toLocaleString()} FCFA</TableCell>
+                      <TableCell>
+                        {row.errors.length > 0 ? (
+                          <div className="space-y-1">
+                            <Badge variant="destructive">Erreur</Badge>
+                            <div className="text-xs text-red-600">
+                              {row.errors.map((error, i) => (
+                                <div key={i}>• {error}</div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <Badge variant="default" className="bg-green-100 text-green-800">
+                            Prêt
+                          </Badge>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2 text-blue-800">
+                <AlertCircle className="h-4 w-4" />
+                <span className="font-medium">Résumé:</span>
+              </div>
+              <div className="mt-2 text-sm text-blue-700">
+                • {preview.filter((r) => r.errors.length === 0).length} lignes prêtes à importer •{" "}
+                {preview.filter((r) => r.errors.length > 0).length} lignes avec erreurs •{" "}
+                {preview.filter((r) => r.productStatus === "will_create").length} nouveaux produits à créer •{" "}
+                {preview.filter((r) => r.supplierStatus === "will_create").length} nouveaux fournisseurs à créer
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Results */}
       {results && (
