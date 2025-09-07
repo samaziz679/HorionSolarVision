@@ -64,16 +64,46 @@ Onduleur 3000W,West Africa Solar,20,45000,2025-09-07,67500,,60000`
     const headers = lines[0].split(",").map((h) => h.trim())
 
     return lines.slice(1).map((line) => {
-      const values = line.split(",").map((v) => v.trim())
+      const values = []
+      let current = ""
+      let inQuotes = false
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i]
+        if (char === '"') {
+          inQuotes = !inQuotes
+        } else if (char === "," && !inQuotes) {
+          values.push(current.trim())
+          current = ""
+        } else {
+          current += char
+        }
+      }
+      values.push(current.trim()) // Add the last value
+
+      const parseNumber = (value: string): number => {
+        if (!value || value === "") return 0
+        const cleaned = value.replace(/[^\d.-]/g, "") // Remove non-numeric characters except . and -
+        const parsed = Number.parseFloat(cleaned)
+        return isNaN(parsed) ? 0 : parsed
+      }
+
+      const parseInteger = (value: string): number => {
+        if (!value || value === "") return 0
+        const cleaned = value.replace(/[^\d-]/g, "") // Remove non-numeric characters except -
+        const parsed = Number.parseInt(cleaned, 10)
+        return isNaN(parsed) ? 0 : parsed
+      }
+
       return {
-        product_name: values[0],
-        supplier_name: values[1],
-        quantity: Number.parseInt(values[2]),
-        unit_price: Number.parseFloat(values[3]),
-        purchase_date: values[4] || undefined,
-        prix_vente_detail_1: values[5] ? Number.parseFloat(values[5]) : undefined,
-        prix_vente_detail_2: values[6] ? Number.parseFloat(values[6]) : undefined,
-        prix_vente_gros: values[7] ? Number.parseFloat(values[7]) : undefined,
+        product_name: (values[0] || "").replace(/"/g, ""), // Remove quotes
+        supplier_name: (values[1] || "").replace(/"/g, ""), // Remove quotes
+        quantity: parseInteger(values[2]),
+        unit_price: parseNumber(values[3]),
+        purchase_date: values[4] && values[4] !== "" ? values[4].replace(/"/g, "") : undefined,
+        prix_vente_detail_1: values[5] ? parseNumber(values[5]) : undefined,
+        prix_vente_detail_2: values[6] ? parseNumber(values[6]) : undefined,
+        prix_vente_gros: values[7] ? parseNumber(values[7]) : undefined,
       }
     })
   }
@@ -276,12 +306,24 @@ Onduleur 3000W,West Africa Solar,20,45000,2025-09-07,67500,,60000`
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <div className="font-medium">{row.supplier_name}</div>
+                          <div className="font-medium max-w-[200px] break-words">{row.supplier_name}</div>
                           {getStatusBadge(row.supplierStatus, "supplier")}
                         </div>
                       </TableCell>
-                      <TableCell>{row.quantity}</TableCell>
-                      <TableCell>{row.unit_price.toLocaleString()} FCFA</TableCell>
+                      <TableCell>
+                        {isNaN(row.quantity) || row.quantity === 0 ? (
+                          <span className="text-red-600">Invalide</span>
+                        ) : (
+                          row.quantity
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {isNaN(row.unit_price) || row.unit_price === 0 ? (
+                          <span className="text-red-600">Invalide</span>
+                        ) : (
+                          `${row.unit_price.toLocaleString()} FCFA`
+                        )}
+                      </TableCell>
                       <TableCell>
                         {row.errors.length > 0 ? (
                           <div className="space-y-1">
