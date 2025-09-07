@@ -22,7 +22,7 @@ export default function PurchaseForm({
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [quantity, setQuantity] = useState(purchase?.quantity || 0)
-  const [unitPrice, setUnitPrice] = useState(0)
+  const [unitPrice, setUnitPrice] = useState(purchase?.unit_price || 0)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -104,7 +104,7 @@ export default function PurchaseForm({
           type="number"
           step="0.01"
           min="0"
-          defaultValue=""
+          defaultValue={purchase?.unit_price || ""}
           onChange={(e) => setUnitPrice(Number(e.target.value))}
           required
         />
@@ -121,7 +121,11 @@ export default function PurchaseForm({
           id="purchase_date"
           name="purchase_date"
           type="date"
-          defaultValue={purchase?.purchase_date || new Date().toISOString().split("T")[0]}
+          defaultValue={
+            purchase?.purchase_date
+              ? new Date(purchase.purchase_date).toISOString().split("T")[0]
+              : new Date().toISOString().split("T")[0]
+          }
           required
         />
       </div>
