@@ -81,7 +81,7 @@ export async function createPurchase(prevState: State, formData: FormData) {
   const { error: stockLotError } = await supabase.from("stock_lots").insert({
     product_id,
     purchase_id: purchase.id,
-    quantity_purchased: quantity, // Changed from quantity_received
+    quantity_received: quantity, // Changed from quantity_purchased
     quantity_available: quantity,
     unit_cost: unit_price,
     purchase_date,
@@ -161,7 +161,7 @@ export async function updatePurchase(id: string, prevState: State, formData: For
     const { error: stockLotError } = await supabase
       .from("stock_lots")
       .update({
-        quantity_purchased: quantity, // Changed from quantity_received
+        quantity_received: quantity, // Changed from quantity_purchased
         quantity_available: supabase.raw(`quantity_available + ${quantityDifference}`),
         unit_cost: unit_price,
         purchase_date,
@@ -190,7 +190,7 @@ export async function deletePurchase(id: string) {
 
   const { data: stockLot, error: stockLotFetchError } = await supabase
     .from("stock_lots")
-    .select("quantity_purchased, quantity_available") // Changed from quantity_received
+    .select("quantity_received, quantity_available") // Changed from quantity_purchased
     .eq("purchase_id", id)
     .single()
 
@@ -199,8 +199,8 @@ export async function deletePurchase(id: string) {
     return { message: "Database Error: Failed to check stock lot status.", success: false }
   }
 
-  if (stockLot && stockLot.quantity_available < stockLot.quantity_purchased) {
-    // Changed from quantity_received
+  if (stockLot && stockLot.quantity_available < stockLot.quantity_received) {
+    // Changed from quantity_purchased
     return {
       message: "Cannot delete purchase: Some items from this batch have already been sold.",
       success: false,
@@ -425,7 +425,7 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
       const { error: stockLotError } = await supabase.from("stock_lots").insert({
         product_id: product.id,
         purchase_id: purchase.id,
-        quantity_purchased: row.quantity, // Changed from quantity_received
+        quantity_received: row.quantity, // Changed from quantity_purchased
         quantity_available: row.quantity,
         unit_cost: row.unit_price,
         purchase_date: purchaseDate,
