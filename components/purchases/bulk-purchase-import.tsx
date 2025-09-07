@@ -28,14 +28,15 @@ export function BulkPurchaseImport() {
   const [results, setResults] = useState<{
     success: number
     errors: string[]
+    created?: string[]
   } | null>(null)
 
   const downloadTemplate = () => {
     const csvContent = `product_name,supplier_name,quantity,unit_price,purchase_date,prix_vente_detail_1,prix_vente_detail_2,prix_vente_gros
-15000AH BELTA,West Africa Solar,50,8092,2025-09-02,10000,10500,9000
-2000W Inverter,Burkina Energy Supply,25,3349,2025-09-02,5300,5500,4500
-Panneau Solaire 150W,Solar Tech Import,30,22438,2025-09-02,33656,,30291
-2000AH USB,GUANGZHOU V V SUPO,40,93550,,125000,135000,120000`
+Raggie 30AH Controller,GUANGZHOU V V SUPOWER CO,150,8364,2025-09-07,12547,11292,9500
+Tele 43 VV SMART,GUANGZHOU V V SUPOWER CO,75,15200,2025-09-07,22800,21000,18500
+Panneau Solaire 200W,Solar Tech Burkina,30,25000,,37500,35000,32000
+Onduleur 3000W,West Africa Solar,20,45000,2025-09-07,67500,,60000`
 
     const blob = new Blob([csvContent], { type: "text/csv" })
     const url = window.URL.createObjectURL(blob)
@@ -114,10 +115,10 @@ Panneau Solaire 150W,Solar Tech Import,30,22438,2025-09-02,33656,,30291
             <h4 className="font-medium mb-2">Format requis:</h4>
             <ul className="text-sm text-gray-600 space-y-1">
               <li>
-                • <strong>product_name:</strong> Nom exact du produit (doit exister dans l'inventaire)
+                • <strong>product_name:</strong> Nom du produit (sera créé s'il n'existe pas)
               </li>
               <li>
-                • <strong>supplier_name:</strong> Nom exact du fournisseur (doit exister)
+                • <strong>supplier_name:</strong> Nom du fournisseur (sera créé s'il n'existe pas)
               </li>
               <li>
                 • <strong>quantity:</strong> Quantité achetée (nombre entier)
@@ -139,8 +140,8 @@ Panneau Solaire 150W,Solar Tech Import,30,22438,2025-09-02,33656,,30291
               </li>
             </ul>
             <p className="text-xs text-gray-500 mt-2">
-              Note: Les produits et fournisseurs doivent exister dans le système. Chaque achat créera un lot de stock
-              séparé. Les prix de vente sont optionnels et mettront à jour les prix du produit si fournis.
+              Note: Les produits et fournisseurs manquants seront créés automatiquement. Chaque achat créera un lot de
+              stock séparé avec traçabilité complète. Les prix de vente mettront à jour les prix du produit.
             </p>
           </div>
         </CardContent>
@@ -192,6 +193,17 @@ Panneau Solaire 150W,Solar Tech Import,30,22438,2025-09-02,33656,,30291
           <CardContent>
             <div className="space-y-2">
               <p className="text-green-600">✅ {results.success} achats créés avec succès</p>
+
+              {results.created && results.created.length > 0 && (
+                <div>
+                  <p className="text-blue-600 font-medium">🆕 Éléments créés:</p>
+                  <ul className="text-sm text-blue-600 ml-4">
+                    {results.created.map((item, index) => (
+                      <li key={index}>• {item}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
               {results.errors.length > 0 && (
                 <div>

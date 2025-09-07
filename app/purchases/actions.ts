@@ -223,7 +223,10 @@ interface BulkPurchaseRow {
   supplier_name: string
   quantity: number
   unit_price: number
-  purchase_date: string
+  purchase_date?: string
+  prix_vente_detail_1?: number
+  prix_vente_detail_2?: number
+  prix_vente_gros?: number
 }
 
 export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
@@ -235,15 +238,17 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
   const supabase = createClient()
   let successCount = 0
   const errors: string[] = []
+  const createdItems: string[] = []
 
-  // Get all products and suppliers for name lookup
-  const { data: products } = await supabase.from("products").select("id, name")
+  const { data: existingProducts } = await supabase.from("products").select("id, name")
+  const { data: existingSuppliers } = await supabase.from("suppliers").select("id, name")
 
-  const { data: suppliers } = await supabase.from("suppliers").select("id, name")
-
-  if (!products || !suppliers) {
-    return { success: 0, errors: ["Failed to load products or suppliers"] }
+  if (!existingProducts || !existingSuppliers) {
+    return { success: 0, errors: ["Failed to load existing products or suppliers"] }
   }
+
+  const productMap = new Map(existingProducts.map((p) => [p.name.toLowerCase(), p]))
+  const supplierMap = new Map(existingSuppliers.map((s) => [s.name.toLowerCase(), s]))
 
   // Process each purchase
   for (let i = 0; i < purchases.length; i++) {
@@ -251,18 +256,60 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
     const rowNum = i + 2 // +2 because CSV has header and arrays are 0-indexed
 
     try {
-      // Find product by name
-      const product = products.find((p) => p.name.toLowerCase() === row.product_name.toLowerCase())
-      if (!product) {
-        errors.push(`Ligne ${rowNum}: Produit "${row.product_name}" non trouvé`)
-        continue
+      let supplier = supplierMap.get(row.supplier_name.toLowerCase())
+      if (!supplier) {
+        const { data: newSupplier, error: supplierError } = await supabase
+          .from("suppliers")
+          .insert({
+            name: row.supplier_name,
+            created_by: user.id,
+          })
+          .select("id, name")
+          .single()
+
+        if (supplierError) {
+          errors.push(`Ligne ${rowNum}: Erreur création fournisseur "${row.supplier_name}" - ${supplierError.message}`)
+          continue
+        }
+
+        supplier = newSupplier
+        supplierMap.set(row.supplier_name.toLowerCase(), supplier)
+        createdItems.push(`Fournisseur créé: ${row.supplier_name}`)
       }
 
-      // Find supplier by name
-      const supplier = suppliers.find((s) => s.name.toLowerCase() === row.supplier_name.toLowerCase())
-      if (!supplier) {
-        errors.push(`Ligne ${rowNum}: Fournisseur "${row.supplier_name}" non trouvé`)
-        continue
+      let product = productMap.get(row.product_name.toLowerCase())
+      if (!product) {
+        const { data: newProduct, error: productError } = await supabase
+          .from("products")
+          .insert({
+            name: row.product_name,
+            quantity: 0, // Will be updated by stock lot creation
+            prix_achat: row.unit_price,
+            prix_vente_detail_1: row.prix_vente_detail_1,
+            prix_vente_detail_2: row.prix_vente_detail_2,
+            prix_vente_gros: row.prix_vente_gros,
+            created_by: user.id,
+          })
+          .select("id, name")
+          .single()
+
+        if (productError) {
+          errors.push(`Ligne ${rowNum}: Erreur création produit "${row.product_name}" - ${productError.message}`)
+          continue
+        }
+
+        product = newProduct
+        productMap.set(row.product_name.toLowerCase(), product)
+        createdItems.push(`Produit créé: ${row.product_name}`)
+      } else {
+        const updateData: any = {}
+        if (row.prix_vente_detail_1) updateData.prix_vente_detail_1 = row.prix_vente_detail_1
+        if (row.prix_vente_detail_2) updateData.prix_vente_detail_2 = row.prix_vente_detail_2
+        if (row.prix_vente_gros) updateData.prix_vente_gros = row.prix_vente_gros
+
+        if (Object.keys(updateData).length > 0) {
+          await supabase.from("products").update(updateData).eq("id", product.id)
+        }
       }
 
       // Validate data
@@ -277,6 +324,7 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
       }
 
       const total = row.quantity * row.unit_price
+      const purchaseDate = row.purchase_date || new Date().toISOString().split("T")[0]
 
       // Create purchase
       const { data: purchase, error: purchaseError } = await supabase
@@ -288,7 +336,7 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
           quantity: row.quantity,
           unit_price: row.unit_price,
           total: total,
-          purchase_date: row.purchase_date,
+          purchase_date: purchaseDate,
         })
         .select()
         .single()
@@ -305,13 +353,12 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
         quantity_received: row.quantity,
         quantity_available: row.quantity,
         unit_cost: row.unit_price,
-        purchase_date: row.purchase_date,
+        purchase_date: purchaseDate,
         created_by: user.id,
       })
 
       if (stockLotError) {
         errors.push(`Ligne ${rowNum}: Erreur création lot - ${stockLotError.message}`)
-        // Note: Purchase was created but stock lot failed
         continue
       }
 
@@ -327,5 +374,9 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
     revalidatePath("/inventory")
   }
 
-  return { success: successCount, errors }
+  return {
+    success: successCount,
+    errors,
+    created: createdItems,
+  }
 }
