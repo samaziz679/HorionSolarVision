@@ -138,6 +138,33 @@ export async function updatePurchase(id: string, prevState: State, formData: For
     return { message: "Database Error: Failed to fetch original purchase.", success: false }
   }
 
+  const { data: stockLot, error: stockLotFetchError } = await supabase
+    .from("stock_lots")
+    .select("quantity_received, quantity_available")
+    .eq("purchase_id", id)
+    .single()
+
+  if (stockLotFetchError) {
+    console.error("Stock Lot Fetch Error:", stockLotFetchError)
+    return { message: "Database Error: Failed to check stock lot status.", success: false }
+  }
+
+  const consumedQuantity = stockLot.quantity_received - stockLot.quantity_available
+
+  if (quantity < consumedQuantity) {
+    return {
+      message: `Cannot reduce quantity to ${quantity}. ${consumedQuantity} items from this batch have already been sold. Minimum allowed quantity: ${consumedQuantity}`,
+      success: false,
+    }
+  }
+
+  if (originalPurchase.product_id !== product_id && consumedQuantity > 0) {
+    return {
+      message: `Cannot change product. ${consumedQuantity} items from this batch have already been sold.`,
+      success: false,
+    }
+  }
+
   const { error } = await supabase
     .from("purchases")
     .update({
@@ -156,13 +183,13 @@ export async function updatePurchase(id: string, prevState: State, formData: For
   }
 
   if (originalPurchase.quantity !== quantity || originalPurchase.unit_price !== unit_price) {
-    const quantityDifference = quantity - originalPurchase.quantity
+    const newAvailableQuantity = quantity - consumedQuantity
 
     const { error: stockLotError } = await supabase
       .from("stock_lots")
       .update({
-        quantity_received: quantity, // Changed from quantity_purchased
-        quantity_available: supabase.raw(`quantity_available + ${quantityDifference}`),
+        quantity_received: quantity,
+        quantity_available: newAvailableQuantity, // Set directly instead of adding difference
         unit_cost: unit_price,
         purchase_date,
       })
@@ -170,7 +197,7 @@ export async function updatePurchase(id: string, prevState: State, formData: For
 
     if (stockLotError) {
       console.error("Stock Lot Update Error:", stockLotError)
-      console.error("Warning: Purchase updated but stock lot update failed")
+      return { message: "Database Error: Failed to update stock lot.", success: false }
     }
   }
 

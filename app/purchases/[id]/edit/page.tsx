@@ -23,22 +23,26 @@ type PageProps = {
 export default async function EditPurchasePage({ params }: PageProps) {
   const { id } = params
   const purchase = await fetchPurchaseById(id)
-  const products = await fetchProducts()
-  const suppliers = await fetchSuppliers()
+  const products = (await fetchProducts()) || []
+  const suppliers = (await fetchSuppliers()) || []
 
   if (!purchase) {
     notFound()
   }
 
-  const productOptions = products.map((product: Product) => ({
-    id: product.id,
-    name: product.name,
-  }))
+  const productOptions = Array.isArray(products)
+    ? products.map((product: Product) => ({
+        id: product.id,
+        name: product.name,
+      }))
+    : []
 
-  const supplierOptions = suppliers.map((supplier: Supplier) => ({
-    id: supplier.id,
-    name: supplier.name,
-  }))
+  const supplierOptions = Array.isArray(suppliers)
+    ? suppliers.map((supplier: Supplier) => ({
+        id: supplier.id,
+        name: supplier.name,
+      }))
+    : []
 
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
