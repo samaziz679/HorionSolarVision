@@ -4,7 +4,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Home, LineChart, Package, Package2, ShoppingCart, Users, DollarSign, Truck, Settings } from "lucide-react"
+import { Home, LineChart, Package, Package2, ShoppingCart, Users, DollarSign, Truck, Settings, Sun } from "lucide-react"
 import { usePathname } from "next/navigation"
 import UserButton from "@/components/auth/user-button"
 import { getCurrentUserProfileClient, ROLE_PERMISSIONS, type UserRole } from "@/lib/auth/rbac-client"
@@ -26,6 +26,7 @@ const ALL_NAVIGATION_ITEMS: NavigationItem[] = [
   { href: "/suppliers", label: "Fournisseurs", icon: Users, module: "suppliers" },
   { href: "/expenses", label: "Dépenses", icon: DollarSign, module: "expenses" },
   { href: "/reports", label: "Rapports", icon: LineChart, module: "reports" },
+  { href: "/solar-sizer", label: "Dimensionnement Solaire", icon: Sun, module: "solar-sizer" },
   { href: "/admin/users", label: "Gestion Utilisateurs", icon: Users, module: "admin" },
   { href: "/settings", label: "Paramètres", icon: Settings, module: "settings" },
 ]

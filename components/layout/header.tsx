@@ -2,7 +2,18 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { Home, LineChart, Package, Package2, PanelLeft, ShoppingCart, Users, DollarSign, Truck } from "lucide-react"
+import {
+  Home,
+  LineChart,
+  Package,
+  Package2,
+  PanelLeft,
+  ShoppingCart,
+  Users,
+  DollarSign,
+  Truck,
+  Sun,
+} from "lucide-react"
 import { usePathname } from "next/navigation"
 
 import {
@@ -35,6 +46,7 @@ export function Header() {
       suppliers: "Fournisseurs",
       expenses: "Dépenses",
       reports: "Rapports",
+      "solar-sizer": "Dimensionnement Solaire",
     }
     return translations[title] || capitalize(title)
   }
@@ -161,6 +173,17 @@ export function Header() {
             >
               <LineChart className="h-5 w-5" />
               Rapports
+            </Link>
+            <Link
+              href="/solar-sizer"
+              className={`mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 hover:text-foreground transition-colors ${
+                pathname === "/solar-sizer"
+                  ? "bg-solar-orange/10 text-solar-orange border-l-4 border-solar-orange"
+                  : "text-muted-foreground hover:text-solar-orange"
+              }`}
+            >
+              <Sun className="h-5 w-5" />
+              Dimensionnement Solaire
             </Link>
           </nav>
         </SheetContent>

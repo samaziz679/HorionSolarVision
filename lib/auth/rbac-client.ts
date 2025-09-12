@@ -28,6 +28,7 @@ export const ROLE_PERMISSIONS = {
       "reports",
       "settings",
       "admin",
+      "solar-sizer", // Added solar-sizer module for admin role
     ],
   },
   manager: {
@@ -41,6 +42,7 @@ export const ROLE_PERMISSIONS = {
       "expenses",
       "reports",
       "settings",
+      "solar-sizer", // Added solar-sizer module for manager role
     ],
   },
   vendeur: {
