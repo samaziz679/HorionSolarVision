@@ -20,6 +20,29 @@ interface LoadItem {
   peakFactor: number
 }
 
+interface CustomBattery {
+  id: string
+  brand: string
+  model: string
+  voltage: number
+  capacity: number
+  chemistry: string
+  dod: number
+  efficiency: number
+}
+
+interface CustomPanel {
+  id: string
+  brand: string
+  model: string
+  power: number
+  vmp: number
+  voc: number
+  imp: number
+  isc: number
+  efficiency: number
+}
+
 export default function SolarSizerPage() {
   // Paramètres du site et système
   const [psh, setPsh] = useState(5.5)
@@ -29,9 +52,31 @@ export default function SolarSizerPage() {
   const [autonomyDays, setAutonomyDays] = useState(2)
   const [maxDoD, setMaxDoD] = useState(0.8)
 
-  // Sélections des équipements
   const [selectedBattery, setSelectedBattery] = useState<any>(BATTERIES[0])
   const [selectedPanel, setSelectedPanel] = useState<any>(SOLAR_PANELS[0])
+  const [isCustomBattery, setIsCustomBattery] = useState(false)
+  const [isCustomPanel, setIsCustomPanel] = useState(false)
+  const [customBattery, setCustomBattery] = useState<CustomBattery>({
+    id: "custom",
+    brand: "",
+    model: "",
+    voltage: 12,
+    capacity: 100,
+    chemistry: "LiFePO4",
+    dod: 0.8,
+    efficiency: 0.95,
+  })
+  const [customPanel, setCustomPanel] = useState<CustomPanel>({
+    id: "custom",
+    brand: "",
+    model: "",
+    power: 400,
+    vmp: 40,
+    voc: 48,
+    imp: 10,
+    isc: 11,
+    efficiency: 0.21,
+  })
 
   // Paramètres MPPT
   const [mpptMinV, setMpptMinV] = useState(120)
@@ -62,24 +107,27 @@ export default function SolarSizerPage() {
     return matchesSearch && matchesCategory
   })
 
+  const currentBattery = isCustomBattery ? customBattery : selectedBattery
+  const currentPanel = isCustomPanel ? customPanel : selectedPanel
+
   // Calculs énergétiques
   const dailyLoadKwh = loads.reduce((sum, load) => sum + (load.power * load.quantity * load.hours) / 1000, 0)
   const peakPowerW = loads.reduce((sum, load) => sum + load.power * load.quantity * load.peakFactor, 0)
 
   // Calculs PV
   const requiredPvKw = dailyLoadKwh / (psh * pvEfficiency)
-  const seriesPerString = Math.ceil(mpptMinV / selectedPanel.vmp)
-  const stringPowerW = seriesPerString * selectedPanel.power
+  const seriesPerString = Math.ceil(mpptMinV / currentPanel.vmp)
+  const stringPowerW = seriesPerString * currentPanel.power
   const parallelStrings = Math.ceil((requiredPvKw * 1000) / stringPowerW)
   const totalPanels = seriesPerString * parallelStrings
-  const totalPvKw = (totalPanels * selectedPanel.power) / 1000
+  const totalPvKw = (totalPanels * currentPanel.power) / 1000
   const dailyPvKwh = totalPvKw * psh * pvEfficiency
 
   // Calculs batteries
-  const requiredBatteryKwh = (dailyLoadKwh * autonomyDays) / (selectedBattery.dod * selectedBattery.efficiency)
-  const unitCapacityKwh = (selectedBattery.voltage * selectedBattery.capacity) / 1000
-  const batterySeries = Math.ceil(busVoltage / selectedBattery.voltage)
-  const perStringUsableKwh = batterySeries * unitCapacityKwh * selectedBattery.dod * selectedBattery.efficiency
+  const requiredBatteryKwh = (dailyLoadKwh * autonomyDays) / (currentBattery.dod * currentBattery.efficiency)
+  const unitCapacityKwh = (currentBattery.voltage * currentBattery.capacity) / 1000
+  const batterySeries = Math.ceil(busVoltage / currentBattery.voltage)
+  const perStringUsableKwh = batterySeries * unitCapacityKwh * currentBattery.dod * currentBattery.efficiency
   const batteryParallel = Math.ceil(requiredBatteryKwh / perStringUsableKwh)
   const totalBatteries = batterySeries * batteryParallel
   const usableBatteryKwh = batteryParallel * perStringUsableKwh
@@ -246,38 +294,144 @@ export default function SolarSizerPage() {
                 <CardTitle className="flex items-center gap-2 text-green-600">Modèle de Batterie</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Select
-                  value={selectedBattery.id}
-                  onValueChange={(id) => {
-                    const battery = BATTERIES.find((b) => b.id === id)
-                    if (battery) setSelectedBattery(battery)
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {BATTERIES.map((battery) => (
-                      <SelectItem key={battery.id} value={battery.id}>
-                        {battery.brand} {battery.model} - {battery.voltage}V {battery.capacity}Ah
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2 mb-4">
+                  <Button
+                    variant={!isCustomBattery ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setIsCustomBattery(false)}
+                  >
+                    Catalogue
+                  </Button>
+                  <Button
+                    variant={isCustomBattery ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setIsCustomBattery(true)}
+                  >
+                    Personnalisé
+                  </Button>
+                </div>
+
+                {!isCustomBattery ? (
+                  <Select
+                    value={selectedBattery.id}
+                    onValueChange={(id) => {
+                      const battery = BATTERIES.find((b) => b.id === id)
+                      if (battery) setSelectedBattery(battery)
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BATTERIES.map((battery) => (
+                        <SelectItem key={battery.id} value={battery.id}>
+                          {battery.brand} {battery.model} - {battery.voltage}V {battery.capacity}Ah
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Marque</Label>
+                        <Input
+                          placeholder="Ex: Rolls"
+                          value={customBattery.brand}
+                          onChange={(e) => setCustomBattery({ ...customBattery, brand: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Modèle</Label>
+                        <Input
+                          placeholder="Ex: S-550"
+                          value={customBattery.model}
+                          onChange={(e) => setCustomBattery({ ...customBattery, model: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Tension (V)</Label>
+                        <Input
+                          type="number"
+                          value={customBattery.voltage}
+                          onChange={(e) =>
+                            setCustomBattery({ ...customBattery, voltage: Number.parseFloat(e.target.value) || 12 })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Capacité (Ah)</Label>
+                        <Input
+                          type="number"
+                          value={customBattery.capacity}
+                          onChange={(e) =>
+                            setCustomBattery({ ...customBattery, capacity: Number.parseFloat(e.target.value) || 100 })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <Label className="text-xs">Technologie</Label>
+                        <Select
+                          value={customBattery.chemistry}
+                          onValueChange={(value) => setCustomBattery({ ...customBattery, chemistry: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="LiFePO4">LiFePO4</SelectItem>
+                            <SelectItem value="Gel">Gel</SelectItem>
+                            <SelectItem value="AGM">AGM</SelectItem>
+                            <SelectItem value="Plomb-acide">Plomb-acide</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-xs">DoD (%)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={customBattery.dod * 100}
+                          onChange={(e) =>
+                            setCustomBattery({ ...customBattery, dod: (Number.parseFloat(e.target.value) || 80) / 100 })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Rendement (%)</Label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={customBattery.efficiency * 100}
+                          onChange={(e) =>
+                            setCustomBattery({
+                              ...customBattery,
+                              efficiency: (Number.parseFloat(e.target.value) || 95) / 100,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Technologie:</span>
-                    <Badge variant="secondary">{selectedBattery.chemistry}</Badge>
+                    <Badge variant="secondary">{currentBattery.chemistry}</Badge>
                   </div>
                   <div className="flex justify-between">
                     <span>Capacité unitaire:</span>
-                    <span>{((selectedBattery.voltage * selectedBattery.capacity) / 1000).toFixed(2)} kWh</span>
+                    <span>{((currentBattery.voltage * currentBattery.capacity) / 1000).toFixed(2)} kWh</span>
                   </div>
                   <div className="flex justify-between">
                     <span>DoD / Rendement:</span>
                     <span>
-                      {(selectedBattery.dod * 100).toFixed(0)}% / {(selectedBattery.efficiency * 100).toFixed(0)}%
+                      {(currentBattery.dod * 100).toFixed(0)}% / {(currentBattery.efficiency * 100).toFixed(0)}%
                     </span>
                   </div>
                 </div>
@@ -303,41 +457,153 @@ export default function SolarSizerPage() {
                 <CardTitle className="flex items-center gap-2 text-sky-blue">Modèle de Panneau PV</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Select
-                  value={selectedPanel.id}
-                  onValueChange={(id) => {
-                    const panel = SOLAR_PANELS.find((p) => p.id === id)
-                    if (panel) setSelectedPanel(panel)
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SOLAR_PANELS.map((panel) => (
-                      <SelectItem key={panel.id} value={panel.id}>
-                        {panel.brand} {panel.model} - {panel.power}W
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex items-center gap-2 mb-4">
+                  <Button
+                    variant={!isCustomPanel ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setIsCustomPanel(false)}
+                  >
+                    Catalogue
+                  </Button>
+                  <Button
+                    variant={isCustomPanel ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setIsCustomPanel(true)}
+                  >
+                    Personnalisé
+                  </Button>
+                </div>
+
+                {!isCustomPanel ? (
+                  <Select
+                    value={selectedPanel.id}
+                    onValueChange={(id) => {
+                      const panel = SOLAR_PANELS.find((p) => p.id === id)
+                      if (panel) setSelectedPanel(panel)
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SOLAR_PANELS.map((panel) => (
+                        <SelectItem key={panel.id} value={panel.id}>
+                          {panel.brand} {panel.model} - {panel.power}W
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Marque</Label>
+                        <Input
+                          placeholder="Ex: LONGi"
+                          value={customPanel.brand}
+                          onChange={(e) => setCustomPanel({ ...customPanel, brand: e.target.value })}
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Modèle</Label>
+                        <Input
+                          placeholder="Ex: Hi-MO6"
+                          value={customPanel.model}
+                          onChange={(e) => setCustomPanel({ ...customPanel, model: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-xs">Puissance (W)</Label>
+                        <Input
+                          type="number"
+                          value={customPanel.power}
+                          onChange={(e) =>
+                            setCustomPanel({ ...customPanel, power: Number.parseFloat(e.target.value) || 400 })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Rendement (%)</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={customPanel.efficiency * 100}
+                          onChange={(e) =>
+                            setCustomPanel({
+                              ...customPanel,
+                              efficiency: (Number.parseFloat(e.target.value) || 21) / 100,
+                            })
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      <div>
+                        <Label className="text-xs">Vmp (V)</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={customPanel.vmp}
+                          onChange={(e) =>
+                            setCustomPanel({ ...customPanel, vmp: Number.parseFloat(e.target.value) || 40 })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Voc (V)</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={customPanel.voc}
+                          onChange={(e) =>
+                            setCustomPanel({ ...customPanel, voc: Number.parseFloat(e.target.value) || 48 })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Imp (A)</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={customPanel.imp}
+                          onChange={(e) =>
+                            setCustomPanel({ ...customPanel, imp: Number.parseFloat(e.target.value) || 10 })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-xs">Isc (A)</Label>
+                        <Input
+                          type="number"
+                          step="0.1"
+                          value={customPanel.isc}
+                          onChange={(e) =>
+                            setCustomPanel({ ...customPanel, isc: Number.parseFloat(e.target.value) || 11 })
+                          }
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Vmp / Voc:</span>
                     <span>
-                      {selectedPanel.vmp}V / {selectedPanel.voc}V
+                      {currentPanel.vmp}V / {currentPanel.voc}V
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Imp / Isc:</span>
                     <span>
-                      {selectedPanel.imp}A / {selectedPanel.isc}A
+                      {currentPanel.imp}A / {currentPanel.isc}A
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span>Rendement:</span>
-                    <span>{(selectedPanel.efficiency * 100).toFixed(1)}%</span>
+                    <span>{(currentPanel.efficiency * 100).toFixed(1)}%</span>
                   </div>
                 </div>
 
@@ -538,7 +804,7 @@ export default function SolarSizerPage() {
               <div className="flex justify-between">
                 <span className="text-sm">Nombre de panneaux:</span>
                 <span className="font-medium">
-                  {totalPanels} × {selectedPanel.power}W
+                  {totalPanels} × {currentPanel.power}W
                 </span>
               </div>
               <div className="flex justify-between">
@@ -567,7 +833,7 @@ export default function SolarSizerPage() {
               <div className="flex justify-between">
                 <span className="text-sm">Nombre de batteries:</span>
                 <span className="font-medium">
-                  {totalBatteries} × {selectedBattery.capacity}Ah
+                  {totalBatteries} × {currentBattery.capacity}Ah
                 </span>
               </div>
               <div className="flex justify-between">
@@ -608,8 +874,8 @@ export default function SolarSizerPage() {
             <CardContent className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-sm">Tension MPPT:</span>
-                <Badge variant={seriesPerString * selectedPanel.vmp >= mpptMinV ? "default" : "destructive"}>
-                  {(seriesPerString * selectedPanel.vmp).toFixed(0)}V
+                <Badge variant={seriesPerString * currentPanel.vmp >= mpptMinV ? "default" : "destructive"}>
+                  {(seriesPerString * currentPanel.vmp).toFixed(0)}V
                 </Badge>
               </div>
               <div className="flex items-center justify-between">
@@ -644,7 +910,7 @@ export default function SolarSizerPage() {
             <li>Dimensionnement PV basé sur PSH (Peak Sun Hours) et rendement global du système</li>
             <li>
               Capacité batterie calculée pour {autonomyDays} jour{autonomyDays > 1 ? "s" : ""} d'autonomie avec DoD de{" "}
-              {(selectedBattery.dod * 100).toFixed(0)}%
+              {(currentBattery.dod * 100).toFixed(0)}%
             </li>
             <li>Configuration MPPT validée selon les tensions Vmp des panneaux sélectionnés</li>
             <li>Onduleur dimensionné avec marge de sécurité de 25% sur la puissance continue</li>
