@@ -23,20 +23,20 @@ export default function LoginForm() {
     const email = formData.get("email") as string
     const supabase = createClient()
 
-    // Check if user exists in our system first
-    const { data: userExists, error: checkError } = await supabase
-      .from("user_roles")
-      .select("id, status")
+    const { data: userProfile, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("id, email, status")
       .eq("email", email)
       .single()
 
-    if (checkError || !userExists) {
+    if (profileError || !userProfile) {
+      console.log("[v0] User profile not found for email:", email)
       try {
         await supabase.from("unauthorized_attempts").insert({
           user_id: null,
           attempted_resource: "login",
           user_role: null,
-          ip_address: null, // Will be populated by database trigger if available
+          ip_address: null,
           user_agent: navigator.userAgent,
         })
       } catch (logError) {
@@ -48,12 +48,25 @@ export default function LoginForm() {
       return
     }
 
-    if (userExists.status !== "active") {
+    const { data: userRole, error: roleError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userProfile.id)
+      .single()
+
+    if (roleError || !userRole) {
+      console.log("[v0] No role found for user:", userProfile.id)
+      setError("Votre compte n'a pas de rôle assigné. Contactez votre administrateur.")
+      setIsSubmitting(false)
+      return
+    }
+
+    if (userProfile.status !== "active") {
       try {
         await supabase.from("unauthorized_attempts").insert({
-          user_id: null,
+          user_id: userProfile.id,
           attempted_resource: "login_inactive",
-          user_role: null,
+          user_role: userRole.role,
           ip_address: null,
           user_agent: navigator.userAgent,
         })
@@ -66,6 +79,7 @@ export default function LoginForm() {
       return
     }
 
+    console.log("[v0] User validation successful for:", email)
     const redirectTo = new URL("/auth/callback", window.location.origin)
 
     const { error: signInError } = await supabase.auth.signInWithOtp({
