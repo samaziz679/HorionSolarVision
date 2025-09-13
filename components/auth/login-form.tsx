@@ -23,9 +23,15 @@ export default function LoginForm() {
     const email = formData.get("email") as string
     const supabase = createClient()
 
-    const { count: profileCount } = await supabase.from("user_profiles").select("*", { count: "exact", head: true })
+    console.log("[v0] Checking if this is first use...")
 
-    const isFirstUse = profileCount === 0
+    const { count: profileCount, error: countError } = await supabase
+      .from("user_profiles")
+      .select("*", { count: "exact", head: true })
+
+    console.log("[v0] Profile count result:", { profileCount, countError })
+
+    const isFirstUse = profileCount === 0 || profileCount === null
 
     if (isFirstUse) {
       console.log("[v0] First use detected - allowing admin creation for:", email)
@@ -47,6 +53,8 @@ export default function LoginForm() {
       setIsSubmitting(false)
       return
     }
+
+    console.log("[v0] Not first use, checking user authorization...")
 
     const { data: userProfile, error: profileError } = await supabase
       .from("user_profiles")
