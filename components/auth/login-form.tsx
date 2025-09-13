@@ -23,17 +23,60 @@ export default function LoginForm() {
     const email = formData.get("email") as string
     const supabase = createClient()
 
+    // Check if user exists in our system first
+    const { data: userExists, error: checkError } = await supabase
+      .from("user_roles")
+      .select("id, status")
+      .eq("email", email)
+      .single()
+
+    if (checkError || !userExists) {
+      try {
+        await supabase.from("unauthorized_attempts").insert({
+          user_id: null,
+          attempted_resource: "login",
+          user_role: null,
+          ip_address: null, // Will be populated by database trigger if available
+          user_agent: navigator.userAgent,
+        })
+      } catch (logError) {
+        console.error("Failed to log unauthorized attempt:", logError)
+      }
+
+      setError("Cette adresse email n'est pas autorisée à accéder au système. Contactez votre administrateur.")
+      setIsSubmitting(false)
+      return
+    }
+
+    if (userExists.status !== "active") {
+      try {
+        await supabase.from("unauthorized_attempts").insert({
+          user_id: null,
+          attempted_resource: "login_inactive",
+          user_role: null,
+          ip_address: null,
+          user_agent: navigator.userAgent,
+        })
+      } catch (logError) {
+        console.error("Failed to log inactive account attempt:", logError)
+      }
+
+      setError("Votre compte n'est pas encore activé. Contactez votre administrateur.")
+      setIsSubmitting(false)
+      return
+    }
+
     const redirectTo = new URL("/auth/callback", window.location.origin)
 
-    const { error } = await supabase.auth.signInWithOtp({
+    const { error: signInError } = await supabase.auth.signInWithOtp({
       email,
       options: {
         emailRedirectTo: redirectTo.toString(),
       },
     })
 
-    if (error) {
-      setError(error.message)
+    if (signInError) {
+      setError(signInError.message)
     } else {
       setIsMagicLinkSent(true)
     }
