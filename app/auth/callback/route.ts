@@ -23,7 +23,6 @@ export async function GET(request: Request) {
         if (isFirstUse) {
           console.log("[v0] Creating first admin user profile for:", user.email)
 
-          // Create user profile
           const { data: newProfile, error: profileError } = await supabase
             .from("user_profiles")
             .insert({
@@ -31,6 +30,7 @@ export async function GET(request: Request) {
               email: user.email,
               full_name: user.email?.split("@")[0] || "Admin",
               status: "active",
+              created_by: user.id,
             })
             .select()
             .single()
@@ -40,11 +40,10 @@ export async function GET(request: Request) {
             return NextResponse.redirect(`${origin}/auth/auth-code-error?error=profile_creation_failed`)
           }
 
-          // Create admin role
           const { error: roleError } = await supabase.from("user_roles").insert({
             user_id: user.id,
             role: "admin",
-            status: "active",
+            created_by: user.id,
           })
 
           if (roleError) {
@@ -52,15 +51,7 @@ export async function GET(request: Request) {
             return NextResponse.redirect(`${origin}/auth/auth-code-error?error=role_creation_failed`)
           }
 
-          // Log successful first admin creation
-          await supabase.from("audit_logs").insert({
-            user_id: user.id,
-            action: "FIRST_ADMIN_CREATED",
-            table_name: "user_profiles",
-            record_id: newProfile.id,
-            new_values: { email: user.email, role: "admin" },
-            user_agent: request.headers.get("user-agent"),
-          })
+          console.log("[v0] First admin user created successfully:", user.email)
 
           return NextResponse.redirect(`${origin}${next}`)
         }
@@ -73,12 +64,7 @@ export async function GET(request: Request) {
 
         if (profileError || !userProfile) {
           // User authenticated with Supabase but has no profile in our system
-          await supabase.from("unauthorized_attempts").insert({
-            user_id: user.id,
-            attempted_resource: "callback_no_profile",
-            user_role: null,
-            user_agent: request.headers.get("user-agent"),
-          })
+          console.error("[v0] No user profile found for:", user.email)
 
           // Sign out the user and redirect to error
           await supabase.auth.signOut()
@@ -87,20 +73,14 @@ export async function GET(request: Request) {
           )
         }
 
-        // Check user role
         const { data: userRole, error: roleError } = await supabase
           .from("user_roles")
-          .select("role, status")
+          .select("role")
           .eq("user_id", user.id)
           .single()
 
         if (roleError || !userRole) {
-          await supabase.from("unauthorized_attempts").insert({
-            user_id: user.id,
-            attempted_resource: "callback_no_role",
-            user_role: null,
-            user_agent: request.headers.get("user-agent"),
-          })
+          console.error("[v0] No user role found for:", user.email)
 
           await supabase.auth.signOut()
           return NextResponse.redirect(
@@ -108,14 +88,8 @@ export async function GET(request: Request) {
           )
         }
 
-        if (userProfile.status !== "active" || userRole.status !== "active") {
-          // User has profile but is not active
-          await supabase.from("unauthorized_attempts").insert({
-            user_id: user.id,
-            attempted_resource: "callback_inactive",
-            user_role: userRole.role,
-            user_agent: request.headers.get("user-agent"),
-          })
+        if (userProfile.status !== "active") {
+          console.error("[v0] User profile not active:", user.email)
 
           await supabase.auth.signOut()
           return NextResponse.redirect(
@@ -123,15 +97,7 @@ export async function GET(request: Request) {
           )
         }
 
-        // Log successful login
-        await supabase.from("audit_logs").insert({
-          user_id: user.id,
-          action: "LOGIN_SUCCESS",
-          table_name: "auth",
-          record_id: user.id,
-          new_values: { email: user.email, role: userRole.role },
-          user_agent: request.headers.get("user-agent"),
-        })
+        console.log("[v0] User login successful:", user.email, "Role:", userRole.role)
       }
 
       return NextResponse.redirect(`${origin}${next}`)
