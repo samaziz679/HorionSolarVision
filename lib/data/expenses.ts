@@ -15,12 +15,7 @@ export async function fetchExpenses(page = 1, limit = 10) {
   const { data, error } = await supabase
     .from("expenses")
     .select(`
-      *,
-      expense_categories!category_id (
-        id,
-        name_fr,
-        name_en
-      )
+      *
     `)
     .order("expense_date", { ascending: false })
     .range(offset, offset + limit - 1)
@@ -47,18 +42,7 @@ export async function fetchExpenseById(id: string) {
   if (!id) return null
 
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase
-    .from("expenses")
-    .select(`
-      *,
-      expense_categories!category_id (
-        id,
-        name_fr,
-        name_en
-      )
-    `)
-    .eq("id", id)
-    .single()
+  const { data, error } = await supabase.from("expenses").select(`*`).eq("id", id).single()
 
   if (error) {
     console.error("Database Error:", error)

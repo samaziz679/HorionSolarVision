@@ -18,7 +18,7 @@ export async function fetchSales(page = 1, limit = 10) {
       `
       id,
       sale_date,
-      total_price,
+      total,
       clients (id, name)
     `,
     )
@@ -35,7 +35,7 @@ export async function fetchSales(page = 1, limit = 10) {
   const salesData = data.map((sale) => ({
     id: sale.id,
     date: sale.sale_date,
-    total_amount: sale.total_price,
+    total_amount: sale.total,
     client_name: sale.clients?.name || "N/A",
   }))
 
