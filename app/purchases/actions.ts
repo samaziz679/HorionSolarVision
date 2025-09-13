@@ -82,7 +82,7 @@ export async function createPurchase(prevState: State, formData: FormData) {
     product_id,
     purchase_id: purchase.id,
     quantity_received: quantity, // Changed from quantity_purchased
-    quantity_available: quantity,
+    quantity_remaining: quantity, // Fixed column name from quantity_available to quantity_remaining
     unit_cost: unit_price,
     purchase_date,
     created_by: user.id,
@@ -140,7 +140,7 @@ export async function updatePurchase(id: string, prevState: State, formData: For
 
   const { data: stockLot, error: stockLotFetchError } = await supabase
     .from("stock_lots")
-    .select("quantity_received, quantity_available")
+    .select("quantity_received, quantity_remaining") // Fixed column name from quantity_available to quantity_remaining
     .eq("purchase_id", id)
     .single()
 
@@ -149,7 +149,7 @@ export async function updatePurchase(id: string, prevState: State, formData: For
     return { message: "Database Error: Failed to check stock lot status.", success: false }
   }
 
-  const consumedQuantity = stockLot.quantity_received - stockLot.quantity_available
+  const consumedQuantity = stockLot.quantity_received - stockLot.quantity_remaining // Fixed column name
 
   if (quantity < consumedQuantity) {
     return {
@@ -189,7 +189,7 @@ export async function updatePurchase(id: string, prevState: State, formData: For
       .from("stock_lots")
       .update({
         quantity_received: quantity,
-        quantity_available: newAvailableQuantity, // Set directly instead of adding difference
+        quantity_remaining: newAvailableQuantity, // Fixed column name from quantity_available to quantity_remaining
         unit_cost: unit_price,
         purchase_date,
       })
@@ -217,7 +217,7 @@ export async function deletePurchase(id: string) {
 
   const { data: stockLot, error: stockLotFetchError } = await supabase
     .from("stock_lots")
-    .select("quantity_received, quantity_available") // Changed from quantity_purchased
+    .select("quantity_received, quantity_remaining") // Fixed column name from quantity_available to quantity_remaining
     .eq("purchase_id", id)
     .single()
 
@@ -226,7 +226,8 @@ export async function deletePurchase(id: string) {
     return { message: "Database Error: Failed to check stock lot status.", success: false }
   }
 
-  if (stockLot && stockLot.quantity_available < stockLot.quantity_received) {
+  if (stockLot && stockLot.quantity_remaining < stockLot.quantity_received) {
+    // Fixed column name
     // Changed from quantity_purchased
     return {
       message: "Cannot delete purchase: Some items from this batch have already been sold.",
@@ -481,7 +482,7 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
         product_id: product.id,
         purchase_id: purchase.id,
         quantity_received: row.quantity,
-        quantity_available: row.quantity,
+        quantity_remaining: row.quantity, // Fixed column name from quantity_available to quantity_remaining
         unit_cost: row.unit_price,
         purchase_date: purchaseDate,
         created_by: user.id,
