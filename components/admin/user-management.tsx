@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
-import { Plus, Edit, Shield, Clock } from "lucide-react"
+import { Plus, Edit, Shield, Clock, UserPlus } from "lucide-react"
 import { createBrowserClient } from "@supabase/ssr"
 import {
   getAllUsers,
@@ -82,7 +82,7 @@ async function logAudit(action: string, tableName: string, recordId: string, old
   }
 }
 
-export function UserManagement() {
+export function UserManagement({ initialSetup = false }: { initialSetup?: boolean }) {
   const [users, setUsers] = useState<UserProfile[]>([])
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -160,42 +160,48 @@ export function UserManagement() {
     try {
       const supabase = createClient()
 
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser()
+
       const { data, error } = await supabase
         .from("user_roles")
         .insert({
+          user_id: initialSetup && currentUser ? currentUser.id : undefined,
           email: newUserEmail,
           full_name: newUserFullName,
-          role: newUserRole,
-          status: "pending", // Admin-created users start as pending
+          role: initialSetup ? "admin" : newUserRole, // Force admin role for initial setup
+          status: initialSetup ? "active" : "pending", // Activate immediately for initial setup
         })
         .select()
         .single()
 
       if (error) throw error
 
-      const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(newUserEmail, {
-        redirectTo: `${window.location.origin}/dashboard`,
-        data: {
-          full_name: newUserFullName,
-          role: newUserRole,
-        },
-      })
+      if (!initialSetup) {
+        const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(newUserEmail, {
+          redirectTo: `${window.location.origin}/dashboard`,
+          data: {
+            full_name: newUserFullName,
+            role: newUserRole,
+          },
+        })
 
-      if (inviteError) {
-        console.warn("Could not send invitation email:", inviteError)
-        // Don't throw error - user was created successfully, just email failed
+        if (inviteError) {
+          console.warn("Could not send invitation email:", inviteError)
+        }
       }
 
       await logAudit("CREATE_USER", "user_roles", data.id, null, {
         email: newUserEmail,
-        role: newUserRole,
+        role: initialSetup ? "admin" : newUserRole,
       })
 
       toast({
-        title: "Utilisateur créé",
-        description: inviteError
-          ? `L'utilisateur ${newUserEmail} a été créé. Lien d'invitation non envoyé - demandez à l'utilisateur de s'inscrire manuellement.`
-          : `L'utilisateur ${newUserEmail} a été créé et un lien d'invitation a été envoyé.`,
+        title: initialSetup ? "Compte administrateur créé" : "Utilisateur créé",
+        description: initialSetup
+          ? `Votre compte administrateur a été configuré avec succès.`
+          : `L'utilisateur ${newUserEmail} a été créé.`,
       })
 
       setNewUserEmail("")
@@ -204,6 +210,10 @@ export function UserManagement() {
       setIsCreateDialogOpen(false)
       loadUsers()
       loadAuditLogs()
+
+      if (initialSetup) {
+        window.location.reload()
+      }
     } catch (error) {
       console.error("Error creating user:", error)
       toast({
@@ -289,6 +299,51 @@ export function UserManagement() {
 
   if (loading) {
     return <div className="flex items-center justify-center p-8">Chargement...</div>
+  }
+
+  if (initialSetup) {
+    return (
+      <div className="space-y-6">
+        <Card className="border-orange-200 bg-orange-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-800">
+              <UserPlus className="h-5 w-5" />
+              Configuration Initiale Requise
+            </CardTitle>
+            <CardDescription className="text-orange-700">
+              Aucun administrateur n'existe dans le système. Créez votre compte administrateur pour commencer.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="adminEmail">Votre Email</Label>
+                <Input
+                  id="adminEmail"
+                  type="email"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  placeholder="admin@votre-entreprise.com"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="adminName">Votre Nom Complet</Label>
+                <Input
+                  id="adminName"
+                  value={newUserFullName}
+                  onChange={(e) => setNewUserFullName(e.target.value)}
+                  placeholder="Votre Nom Complet"
+                />
+              </div>
+            </div>
+            <Button onClick={createUser} disabled={!newUserEmail || !newUserFullName} className="w-full">
+              <Shield className="h-4 w-4 mr-2" />
+              Créer Mon Compte Administrateur
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
