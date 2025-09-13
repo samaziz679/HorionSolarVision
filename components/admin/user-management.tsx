@@ -173,6 +173,19 @@ export function UserManagement() {
 
       if (error) throw error
 
+      const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(newUserEmail, {
+        redirectTo: `${window.location.origin}/dashboard`,
+        data: {
+          full_name: newUserFullName,
+          role: newUserRole,
+        },
+      })
+
+      if (inviteError) {
+        console.warn("Could not send invitation email:", inviteError)
+        // Don't throw error - user was created successfully, just email failed
+      }
+
       await logAudit("CREATE_USER", "user_roles", data.id, null, {
         email: newUserEmail,
         role: newUserRole,
@@ -180,7 +193,9 @@ export function UserManagement() {
 
       toast({
         title: "Utilisateur créé",
-        description: `L'utilisateur ${newUserEmail} a été créé avec succès`,
+        description: inviteError
+          ? `L'utilisateur ${newUserEmail} a été créé. Lien d'invitation non envoyé - demandez à l'utilisateur de s'inscrire manuellement.`
+          : `L'utilisateur ${newUserEmail} a été créé et un lien d'invitation a été envoyé.`,
       })
 
       setNewUserEmail("")

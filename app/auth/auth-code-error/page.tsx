@@ -18,10 +18,16 @@ export default function AuthCodeErrorPage() {
           <div className="text-sm text-muted-foreground space-y-2">
             <p>Cela peut arriver si :</p>
             <ul className="list-disc list-inside space-y-1 ml-2">
-              <li>Le lien a expiré (valide 1 heure)</li>
+              <li>Le lien a expiré (valide 24 heures)</li>
               <li>Le lien a déjà été utilisé</li>
               <li>Il y a eu une erreur de réseau</li>
             </ul>
+          </div>
+          <div className="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              💡 <strong>Conseil :</strong> Demandez un nouveau lien de connexion sur la page de connexion. Les nouveaux
+              liens sont valides pendant 24 heures.
+            </p>
           </div>
           <div className="space-y-2">
             <Link href="/login" className="w-full">
