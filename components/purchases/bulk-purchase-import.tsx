@@ -321,7 +321,7 @@ Onduleur 3000W,West Africa Solar,20,45000,2025-09-07,67500,,60000`
                         {isNaN(row.unit_price) || row.unit_price === 0 ? (
                           <span className="text-red-600">Invalide</span>
                         ) : (
-                          `${row.unit_price.toLocaleString()} FCFA`
+                          `${Math.round(row.unit_price).toLocaleString()} FCFA`
                         )}
                       </TableCell>
                       <TableCell>
