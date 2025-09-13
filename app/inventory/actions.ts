@@ -1,7 +1,6 @@
 "use server"
 
 import { z } from "zod"
-import { put } from "@vercel/blob"
 import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
@@ -42,14 +41,22 @@ export type State = {
   success?: boolean
 }
 
-async function uploadImage(imageFile: File): Promise<string | null> {
+async function processImageForDatabase(imageFile: File): Promise<string | null> {
   try {
-    const blob = await put(`products/${Date.now()}-${imageFile.name}`, imageFile, {
-      access: "public",
-    })
-    return blob.url
+    // Check file size (limit to 5MB)
+    if (imageFile.size > 5 * 1024 * 1024) {
+      console.error("Image file too large (max 5MB)")
+      return null
+    }
+
+    // Convert to base64
+    const arrayBuffer = await imageFile.arrayBuffer()
+    const base64 = Buffer.from(arrayBuffer).toString("base64")
+    const mimeType = imageFile.type
+
+    return `data:${mimeType};base64,${base64}`
   } catch (error) {
-    console.error("Image upload error:", error)
+    console.error("Image processing error:", error)
     return null
   }
 }
@@ -94,15 +101,15 @@ export async function createProduct(prevState: State, formData: FormData) {
     seuil_stock_bas,
   } = validatedFields.data
 
-  let imageUrl: string | null = null
+  let imageData: string | null = null
   const imageFile = formData.get("image") as File
   if (imageFile && imageFile.size > 0) {
-    imageUrl = await uploadImage(imageFile)
-    if (!imageUrl) {
+    imageData = await processImageForDatabase(imageFile)
+    if (!imageData) {
       return {
-        message: "Failed to upload image. Please try again.",
+        message: "Failed to process image. Please ensure the image is under 5MB and in a supported format.",
         success: false,
-        errors: { image: ["Image upload failed"] },
+        errors: { image: ["Image processing failed - check file size and format"] },
       }
     }
   }
@@ -120,7 +127,7 @@ export async function createProduct(prevState: State, formData: FormData) {
     type,
     unit,
     seuil_stock_bas,
-    image: imageUrl, // Added image URL to database
+    image: imageData, // Store base64 image data directly in database
     created_by: user.id,
   })
 
@@ -174,18 +181,18 @@ export async function updateProduct(id: string, prevState: State, formData: Form
     seuil_stock_bas,
   } = validatedFields.data
 
-  let imageUrl: string | undefined = undefined
+  let imageData: string | undefined = undefined
   const imageFile = formData.get("image") as File
   if (imageFile && imageFile.size > 0) {
-    const uploadedUrl = await uploadImage(imageFile)
-    if (!uploadedUrl) {
+    const processedImage = await processImageForDatabase(imageFile)
+    if (!processedImage) {
       return {
-        message: "Failed to upload image. Please try again.",
+        message: "Failed to process image. Please ensure the image is under 5MB and in a supported format.",
         success: false,
-        errors: { image: ["Image upload failed"] },
+        errors: { image: ["Image processing failed - check file size and format"] },
       }
     }
-    imageUrl = uploadedUrl
+    imageData = processedImage
   }
 
   const supabase = createClient()
@@ -203,8 +210,8 @@ export async function updateProduct(id: string, prevState: State, formData: Form
     seuil_stock_bas,
   }
 
-  if (imageUrl) {
-    updateData.image = imageUrl
+  if (imageData) {
+    updateData.image = imageData // Store base64 image data directly in database
   }
 
   const { error } = await supabase.from("products").update(updateData).eq("id", id)
