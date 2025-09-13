@@ -36,12 +36,15 @@ export default function LoginForm() {
     if (isFirstUse) {
       console.log("[v0] First use detected - allowing admin creation for:", email)
       // Allow first user creation - skip authorization checks
-      const redirectTo = new URL("/auth/callback", window.location.origin)
+      const redirectTo =
+        process.env.NODE_ENV === "production"
+          ? `${window.location.origin}/auth/callback`
+          : process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`
 
       const { error: signInError } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          emailRedirectTo: redirectTo.toString(),
+          emailRedirectTo: redirectTo,
         },
       })
 
@@ -113,12 +116,15 @@ export default function LoginForm() {
     }
 
     console.log("[v0] User validation successful for:", email)
-    const redirectTo = new URL("/auth/callback", window.location.origin)
+    const redirectTo =
+      process.env.NODE_ENV === "production"
+        ? `${window.location.origin}/auth/callback`
+        : process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`
 
     const { error: signInError } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: redirectTo.toString(),
+        emailRedirectTo: redirectTo,
       },
     })
 
