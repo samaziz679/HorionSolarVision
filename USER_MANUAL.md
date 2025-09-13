@@ -212,27 +212,118 @@ Le tableau de bord affiche :
 ## Administration
 
 ### Gestion des Utilisateurs
-**Rôles disponibles :**
-- **Admin** : Accès complet au système
-- **Manager** : Gestion opérationnelle
-- **Vendeur** : Ventes et consultation stock
-- **Comptable** : Rapports et analyses financières
 
-### Créer un Utilisateur
-1. Allez dans **Administration** → **Utilisateurs**
-2. Cliquez **Nouvel Utilisateur**
-3. Remplissez :
-   - **Email** : Identifiant de connexion
-   - **Nom complet** : Nom d'affichage
-   - **Rôle** : Niveau d'accès
-   - **Statut** : Actif/Inactif
+Le système Solar Vision ERP utilise un système d'authentification à deux niveaux :
 
-### Journal d'Audit
-Le système enregistre automatiquement :
-- Toutes les actions utilisateurs
-- Modifications de données
-- Connexions et déconnexions
-- Adresses IP et navigateurs
+1. **Authentification Supabase** : Gestion sécurisée des connexions et sessions
+2. **Système de Rôles Personnalisé** : Contrôle des permissions et accès aux modules
+
+#### Processus d'Inscription des Nouveaux Utilisateurs
+
+**Étape 1 : Invitation par Magic Link**
+1. L'administrateur va dans **Administration** → **Utilisateurs**
+2. Clique sur **Nouvel Utilisateur**
+3. Saisit l'email et les informations du nouvel utilisateur
+4. Le système envoie automatiquement un lien magique par email
+
+**Étape 2 : Activation par l'Utilisateur**
+1. L'utilisateur reçoit un email avec un lien de confirmation
+2. Il clique sur le lien pour activer son compte
+3. Le système crée automatiquement un profil avec le rôle "vendeur" et statut "pending"
+
+**Étape 3 : Attribution des Rôles par l'Admin**
+1. L'administrateur voit le nouvel utilisateur dans la liste
+2. Il peut modifier le rôle et changer le statut de "pending" à "active"
+3. L'utilisateur peut maintenant accéder au système selon ses permissions
+
+#### Rôles et Permissions
+
+**Admin** : Accès complet au système
+- Gestion des utilisateurs et rôles
+- Configuration du système
+- Accès à tous les modules
+- Consultation du journal d'audit
+
+**Manager** : Gestion opérationnelle
+- Gestion des achats et ventes
+- Rapports et analyses
+- Gestion des stocks
+- Pas d'accès à l'administration des utilisateurs
+
+**Vendeur** : Opérations de vente
+- Création et consultation des ventes
+- Consultation du stock disponible
+- Gestion des clients
+- Accès limité aux rapports
+
+#### Interface de Gestion des Utilisateurs
+
+L'interface comprend deux onglets principaux :
+
+**Onglet "Utilisateurs"**
+- Liste complète des utilisateurs du système
+- Informations affichées : Email, Nom, Rôle, Statut, Date de création
+- Actions disponibles : Modifier le rôle et statut
+- Bouton "Nouvel Utilisateur" pour inviter de nouveaux membres
+
+**Onglet "Journal d'Audit"**
+- Historique complet des actions importantes
+- Traçabilité : Qui a fait quoi et quand
+- Détails des modifications (anciennes et nouvelles valeurs)
+- Informations techniques : Adresse IP, navigateur utilisé
+
+#### Résolution des Problèmes d'Authentification
+
+**Problème : Erreur 404 après clic sur le lien magique**
+- **Cause** : Route de callback manquante ou mal configurée
+- **Solution** : Vérifier que l'intégration Supabase est correctement configurée dans Vercel
+
+**Problème : Utilisateur ne peut pas se connecter après inscription**
+- **Cause** : Statut "pending" ou rôle non attribué
+- **Solution** : L'admin doit changer le statut à "active" dans la gestion des utilisateurs
+
+**Problème : Accès refusé à certains modules**
+- **Cause** : Permissions insuffisantes pour le rôle attribué
+- **Solution** : Vérifier et ajuster le rôle de l'utilisateur
+
+#### Configuration Supabase
+
+**Variables d'Environnement Requises :**
+\`\`\`
+NEXT_PUBLIC_SUPABASE_URL=https://votre-projet.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=votre-clé-anonyme
+SUPABASE_SERVICE_ROLE_KEY=votre-clé-service
+\`\`\`
+
+**Configuration de l'Authentification :**
+1. Dans Supabase Dashboard → Authentication → Settings
+2. Activer "Enable email confirmations"
+3. Configurer l'URL de redirection : `https://votre-domaine.vercel.app/auth/callback`
+
+### Configuration des Intégrations Vercel
+
+#### Sélection de l'Intégration Supabase par Défaut
+
+Si vous avez plusieurs projets Supabase connectés à Vercel :
+
+1. **Accédez aux Paramètres du Projet Vercel**
+2. **Allez dans l'onglet "Integrations"**
+3. **Trouvez la section Supabase**
+4. **Sélectionnez le projet correct** (ex: "HorionSolarVision")
+5. **Cliquez sur "Set as Default"** ou configurez les variables d'environnement
+
+**Important :** Assurez-vous que les variables d'environnement pointent vers le bon projet Supabase :
+- Vérifiez que `NEXT_PUBLIC_SUPABASE_URL` correspond au projet souhaité
+- Confirmez que les clés API sont du bon projet
+
+#### Vérification de la Configuration
+
+Pour vérifier que la bonne base de données est utilisée :
+
+1. **Connectez-vous à votre application**
+2. **Allez dans Administration → Utilisateurs**
+3. **Vérifiez que vous voyez les bons utilisateurs**
+4. **Si les données ne correspondent pas**, vérifiez les variables d'environnement
 
 ---
 
