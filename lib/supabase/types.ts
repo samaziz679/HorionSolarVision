@@ -235,6 +235,8 @@ export type Database = {
           phone: string | null
           email: string | null
           address: string | null
+          contact_person: string | null
+          notes: string | null
           created_at: string
           created_by: string | null
         }
@@ -244,6 +246,8 @@ export type Database = {
           phone?: string | null
           email?: string | null
           address?: string | null
+          contact_person?: string | null
+          notes?: string | null
           created_at?: string
           created_by?: string | null
         }
@@ -253,14 +257,290 @@ export type Database = {
           phone?: string | null
           email?: string | null
           address?: string | null
+          contact_person?: string | null
+          notes?: string | null
           created_at?: string
           created_by?: string | null
         }
         Relationships: []
       }
+      company_settings: {
+        Row: {
+          id: string
+          company_name: string | null
+          company_address: string | null
+          company_phone: string | null
+          company_email: string | null
+          currency: string | null
+          tax_rate: number | null
+          created_at: string
+          updated_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          company_name?: string | null
+          company_address?: string | null
+          company_phone?: string | null
+          company_email?: string | null
+          currency?: string | null
+          tax_rate?: number | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          company_name?: string | null
+          company_address?: string | null
+          company_phone?: string | null
+          company_email?: string | null
+          currency?: string | null
+          tax_rate?: number | null
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Relationships: []
+      }
+      stock_lots: {
+        Row: {
+          id: string
+          product_id: string
+          lot_number: string
+          purchase_id: string | null
+          quantity_received: number
+          quantity_available: number
+          purchase_date: string
+          expiry_date: string | null
+          cost_per_unit: number
+          created_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          lot_number: string
+          purchase_id?: string | null
+          quantity_received: number
+          quantity_available: number
+          purchase_date: string
+          expiry_date?: string | null
+          cost_per_unit: number
+          created_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          lot_number?: string
+          purchase_id?: string | null
+          quantity_received?: number
+          quantity_available?: number
+          purchase_date?: string
+          expiry_date?: string | null
+          cost_per_unit?: number
+          created_at?: string
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_lots_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_lots_purchase_id_fkey"
+            columns: ["purchase_id"]
+            isOneToOne: false
+            referencedRelation: "purchases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movements: {
+        Row: {
+          id: string
+          stock_lot_id: string
+          movement_type: string
+          quantity: number
+          reference_type: string | null
+          reference_id: string | null
+          notes: string | null
+          created_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          stock_lot_id: string
+          movement_type: string
+          quantity: number
+          reference_type?: string | null
+          reference_id?: string | null
+          notes?: string | null
+          created_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          stock_lot_id?: string
+          movement_type?: string
+          quantity?: number
+          reference_type?: string | null
+          reference_id?: string | null
+          notes?: string | null
+          created_at?: string
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_stock_lot_id_fkey"
+            columns: ["stock_lot_id"]
+            isOneToOne: false
+            referencedRelation: "stock_lots"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          full_name: string | null
+          email: string
+          status: string
+          created_at: string
+          updated_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          full_name?: string | null
+          email: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          full_name?: string | null
+          email?: string
+          status?: string
+          created_at?: string
+          updated_at?: string
+          created_by?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          user_id: string
+          role: string
+          created_at: string
+          created_by: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          role: string
+          created_at?: string
+          created_by?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          role?: string
+          created_at?: string
+          created_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_roles_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          id: string
+          user_id: string | null
+          action: string
+          table_name: string | null
+          record_id: string | null
+          old_values: Json | null
+          new_values: Json | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          action: string
+          table_name?: string | null
+          record_id?: string | null
+          old_values?: Json | null
+          new_values?: Json | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          action?: string
+          table_name?: string | null
+          record_id?: string | null
+          old_values?: Json | null
+          new_values?: Json | null
+          created_at?: string
+        }
+        Relationships: []
+      }
+      unauthorized_attempts: {
+        Row: {
+          id: string
+          email: string
+          ip_address: string | null
+          user_agent: string | null
+          attempted_at: string
+          reason: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          ip_address?: string | null
+          user_agent?: string | null
+          attempted_at?: string
+          reason?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          attempted_at?: string
+          reason?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
-      [_ in never]: never
+      current_stock_with_batches: {
+        Row: {
+          product_id: string
+          product_name: string
+          total_available: number
+          oldest_batch_date: string | null
+          batches_count: number
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
@@ -382,3 +662,11 @@ export type PurchaseWithDetails = Purchase & {
 
 // Adding missing PurchaseWithItems export
 export type PurchaseWithItems = PurchaseWithDetails
+
+export type CompanySettings = Tables<"company_settings">
+export type StockLot = Tables<"stock_lots">
+export type StockMovement = Tables<"stock_movements">
+export type UserProfile = Tables<"user_profiles">
+export type UserRole = Tables<"user_roles">
+export type AuditLog = Tables<"audit_logs">
+export type UnauthorizedAttempt = Tables<"unauthorized_attempts">
