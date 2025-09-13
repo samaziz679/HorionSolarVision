@@ -4,7 +4,7 @@ import type { Client } from "@/lib/supabase/types"
 
 export async function fetchClients() {
   noStore()
-  const supabase = await createSupabaseServerClient()
+  const supabase = createSupabaseServerClient()
   const { data, error } = await supabase.from("clients").select("*").order("created_at", { ascending: false })
 
   if (error) {
@@ -19,7 +19,7 @@ export async function fetchClientById(id: string) {
   noStore()
   if (!id) return null
 
-  const supabase = await createSupabaseServerClient()
+  const supabase = createSupabaseServerClient()
   const { data, error } = await supabase.from("clients").select("*").eq("id", id).single()
 
   if (error) {
@@ -33,7 +33,7 @@ export async function fetchClientById(id: string) {
 
 export async function fetchClientsForForm() {
   noStore()
-  const supabase = await createSupabaseServerClient()
+  const supabase = createSupabaseServerClient()
   const { data, error } = await supabase.from("clients").select("id, name")
 
   if (error) {
