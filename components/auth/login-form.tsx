@@ -23,6 +23,31 @@ export default function LoginForm() {
     const email = formData.get("email") as string
     const supabase = createClient()
 
+    const { count: profileCount } = await supabase.from("user_profiles").select("*", { count: "exact", head: true })
+
+    const isFirstUse = profileCount === 0
+
+    if (isFirstUse) {
+      console.log("[v0] First use detected - allowing admin creation for:", email)
+      // Allow first user creation - skip authorization checks
+      const redirectTo = new URL("/auth/callback", window.location.origin)
+
+      const { error: signInError } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: redirectTo.toString(),
+        },
+      })
+
+      if (signInError) {
+        setError(signInError.message)
+      } else {
+        setIsMagicLinkSent(true)
+      }
+      setIsSubmitting(false)
+      return
+    }
+
     const { data: userProfile, error: profileError } = await supabase
       .from("user_profiles")
       .select("id, email, status")
