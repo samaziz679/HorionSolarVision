@@ -78,11 +78,14 @@ export async function createPurchase(prevState: State, formData: FormData) {
     return { message: "Database Error: Failed to create purchase.", success: false }
   }
 
+  const lotNumber = `LOT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+
   const { error: stockLotError } = await supabase.from("stock_lots").insert({
     product_id,
     purchase_id: purchase.id,
-    quantity_received: quantity, // Changed from quantity_purchased
-    quantity_remaining: quantity, // Fixed column name from quantity_available to quantity_remaining
+    lot_number: lotNumber,
+    quantity_received: quantity,
+    quantity_remaining: quantity,
     unit_cost: unit_price,
     purchase_date,
     created_by: user.id,
@@ -90,8 +93,6 @@ export async function createPurchase(prevState: State, formData: FormData) {
 
   if (stockLotError) {
     console.error("Stock Lot Error:", stockLotError)
-    // If stock lot creation fails, we should ideally rollback the purchase
-    // For now, we'll continue but log the error
     console.error("Warning: Purchase created but stock lot creation failed")
   }
 
@@ -140,7 +141,7 @@ export async function updatePurchase(id: string, prevState: State, formData: For
 
   const { data: stockLot, error: stockLotFetchError } = await supabase
     .from("stock_lots")
-    .select("quantity_received, quantity_remaining") // Fixed column name from quantity_available to quantity_remaining
+    .select("quantity_received, quantity_remaining")
     .eq("purchase_id", id)
     .single()
 
@@ -149,7 +150,7 @@ export async function updatePurchase(id: string, prevState: State, formData: For
     return { message: "Database Error: Failed to check stock lot status.", success: false }
   }
 
-  const consumedQuantity = stockLot.quantity_received - stockLot.quantity_remaining // Fixed column name
+  const consumedQuantity = stockLot.quantity_received - stockLot.quantity_remaining
 
   if (quantity < consumedQuantity) {
     return {
@@ -189,7 +190,7 @@ export async function updatePurchase(id: string, prevState: State, formData: For
       .from("stock_lots")
       .update({
         quantity_received: quantity,
-        quantity_remaining: newAvailableQuantity, // Fixed column name from quantity_available to quantity_remaining
+        quantity_remaining: newAvailableQuantity,
         unit_cost: unit_price,
         purchase_date,
       })
@@ -217,7 +218,7 @@ export async function deletePurchase(id: string) {
 
   const { data: stockLot, error: stockLotFetchError } = await supabase
     .from("stock_lots")
-    .select("quantity_received, quantity_remaining") // Fixed column name from quantity_available to quantity_remaining
+    .select("quantity_received, quantity_remaining")
     .eq("purchase_id", id)
     .single()
 
@@ -227,8 +228,6 @@ export async function deletePurchase(id: string) {
   }
 
   if (stockLot && stockLot.quantity_remaining < stockLot.quantity_received) {
-    // Fixed column name
-    // Changed from quantity_purchased
     return {
       message: "Cannot delete purchase: Some items from this batch have already been sold.",
       success: false,
@@ -286,7 +285,7 @@ export async function previewBulkPurchases(purchases: BulkPurchaseRow[]) {
   const supplierMap = new Map(existingSuppliers.map((s) => [s.name.toLowerCase(), s]))
 
   const preview: PreviewRow[] = purchases.map((row, index) => {
-    const rowNumber = index + 2 // +2 because CSV has header and arrays are 0-indexed
+    const rowNumber = index + 2
     const errors: string[] = []
 
     // Check product
@@ -358,7 +357,7 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
   // Process each purchase
   for (let i = 0; i < purchases.length; i++) {
     const row = purchases[i]
-    const rowNum = i + 2 // +2 because CSV has header and arrays are 0-indexed
+    const rowNum = i + 2
 
     console.log(`[v0] Processing row ${rowNum}:`, {
       product_name: row.product_name,
@@ -401,7 +400,7 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
           .from("products")
           .insert({
             name: row.product_name,
-            quantity: 0, // Will be updated by stock lot creation
+            quantity: 0,
             prix_achat: row.unit_price,
             prix_vente_detail_1: row.prix_vente_detail_1,
             prix_vente_detail_2: row.prix_vente_detail_2,
@@ -432,7 +431,6 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
         }
       }
 
-      // Validate data
       if (row.quantity <= 0) {
         errors.push(`Ligne ${rowNum}: Quantité doit être positive`)
         continue
@@ -455,7 +453,6 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
         purchase_date: purchaseDate,
       })
 
-      // Create purchase
       const { data: purchase, error: purchaseError } = await supabase
         .from("purchases")
         .insert({
@@ -478,11 +475,14 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
 
       console.log(`[v0] Purchase created successfully for row ${rowNum}:`, purchase)
 
+      const lotNumber = `LOT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
+
       const stockLotData = {
         product_id: product.id,
         purchase_id: purchase.id,
+        lot_number: lotNumber,
         quantity_received: row.quantity,
-        quantity_remaining: row.quantity, // Fixed column name from quantity_available to quantity_remaining
+        quantity_remaining: row.quantity,
         unit_cost: row.unit_price,
         purchase_date: purchaseDate,
         created_by: user.id,
@@ -490,7 +490,6 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
 
       console.log(`[v0] Creating stock lot for row ${rowNum} with data:`, stockLotData)
 
-      // Create stock lot
       const { error: stockLotError } = await supabase.from("stock_lots").insert(stockLotData)
 
       if (stockLotError) {
@@ -511,7 +510,6 @@ export async function bulkCreatePurchases(purchases: BulkPurchaseRow[]) {
   console.log(`[v0] Created items:`, createdItems)
   console.log(`[v0] Errors:`, errors)
 
-  // Revalidate paths if any purchases were successful
   if (successCount > 0) {
     revalidatePath("/purchases")
     revalidatePath("/inventory")
