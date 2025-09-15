@@ -206,9 +206,7 @@ export default function ReportsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
-                    {analytics.totalRevenue.toLocaleString()} FCFA
-                  </div>
+                  <div className="text-2xl font-bold text-green-600">{analytics.totalRevenue.toLocaleString()} CFA</div>
                   <p className="text-xs text-muted-foreground flex items-center mt-1">
                     <TrendingUp className="h-3 w-3 mr-1 text-green-500" />
                     +0% vs mois dernier
@@ -225,7 +223,7 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className={`text-2xl font-bold ${analytics.netProfit >= 0 ? "text-green-600" : "text-red-600"}`}>
-                    {analytics.netProfit.toLocaleString()} FCFA
+                    {analytics.netProfit.toLocaleString()} CFA
                   </div>
                   <p className="text-xs text-muted-foreground flex items-center mt-1">
                     <Percent className="h-3 w-3 mr-1" />
@@ -243,7 +241,7 @@ export default function ReportsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-orange-600">
-                    {analytics.totalExpenses.toLocaleString()} FCFA
+                    {analytics.totalExpenses.toLocaleString()} CFA
                   </div>
                   <p className="text-xs text-muted-foreground flex items-center mt-1">
                     <Percent className="h-3 w-3 mr-1" />
@@ -370,7 +368,7 @@ export default function ReportsPage() {
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-bold">{product.quantity}</p>
-                          <p className="text-xs text-muted-foreground">{product.revenue.toLocaleString()} FCFA</p>
+                          <p className="text-xs text-muted-foreground">{product.revenue.toLocaleString()} CFA</p>
                         </div>
                       </div>
                     ))}
@@ -393,7 +391,7 @@ export default function ReportsPage() {
                       <div key={index} className="space-y-2">
                         <div className="flex justify-between text-sm">
                           <span>{item.source}</span>
-                          <span className="font-medium">{item.amount.toLocaleString()} FCFA</span>
+                          <span className="font-medium">{item.amount.toLocaleString()} CFA</span>
                         </div>
                         <Progress value={item.percentage} className="h-2" />
                         <p className="text-xs text-muted-foreground">{item.percentage}% du total</p>
@@ -441,13 +439,13 @@ export default function ReportsPage() {
                     {analytics.monthlyData.map((month, index) => (
                       <TableRow key={index}>
                         <TableCell className="font-medium">{month.month}</TableCell>
-                        <TableCell className="text-green-600">+{month.revenue.toLocaleString()} FCFA</TableCell>
-                        <TableCell className="text-red-600">-{month.expenses.toLocaleString()} FCFA</TableCell>
+                        <TableCell className="text-green-600">+{month.revenue.toLocaleString()} CFA</TableCell>
+                        <TableCell className="text-red-600">-{month.expenses.toLocaleString()} CFA</TableCell>
                         <TableCell
                           className={month.profit >= 0 ? "text-green-600 font-medium" : "text-red-600 font-medium"}
                         >
                           {month.profit >= 0 ? "+" : ""}
-                          {month.profit.toLocaleString()} FCFA
+                          {month.profit.toLocaleString()} CFA
                         </TableCell>
                         <TableCell>
                           <Badge
@@ -483,25 +481,25 @@ export default function ReportsPage() {
                     <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                       <span className="text-sm font-medium">Valeur Stock (Prix Achat)</span>
                       <span className="text-lg font-bold text-blue-600">
-                        {analytics.totalStockValue.toLocaleString()} FCFA
+                        {analytics.totalStockValue.toLocaleString()} CFA
                       </span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                       <span className="text-sm font-medium">Valeur Stock (Prix Détail 1)</span>
                       <span className="text-lg font-bold text-green-600">
-                        {analytics.stockValueDetail1.toLocaleString()} FCFA
+                        {analytics.stockValueDetail1.toLocaleString()} CFA
                       </span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
                       <span className="text-sm font-medium">Valeur Stock (Prix Détail 2)</span>
                       <span className="text-lg font-bold text-purple-600">
-                        {analytics.stockValueDetail2.toLocaleString()} FCFA
+                        {analytics.stockValueDetail2.toLocaleString()} CFA
                       </span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
                       <span className="text-sm font-medium">Valeur Stock (Prix Gros)</span>
                       <span className="text-lg font-bold text-orange-600">
-                        {analytics.stockValueGros.toLocaleString()} FCFA
+                        {analytics.stockValueGros.toLocaleString()} CFA
                       </span>
                     </div>
                   </div>
@@ -545,7 +543,7 @@ export default function ReportsPage() {
                             {movement.quantity > 0 ? "+" : ""}
                             {movement.quantity}
                           </p>
-                          <p className="text-xs text-muted-foreground">{movement.value.toLocaleString()} FCFA</p>
+                          <p className="text-xs text-muted-foreground">{movement.value.toLocaleString()} CFA</p>
                         </div>
                       </div>
                     ))}
@@ -569,7 +567,7 @@ export default function ReportsPage() {
                   <div>
                     <div className="flex justify-between text-sm mb-1">
                       <span>Chiffre d'Affaires</span>
-                      <span>{analytics.totalRevenue.toLocaleString()} / 2,000,000 FCFA</span>
+                      <span>{analytics.totalRevenue.toLocaleString()} / 2,000,000 CFA</span>
                     </div>
                     <Progress value={Math.min((analytics.totalRevenue / 2000000) * 100, 100)} className="h-2" />
                     <p className="text-xs text-muted-foreground mt-1">
@@ -603,7 +601,7 @@ export default function ReportsPage() {
                           <span className="text-sm font-medium">{client.name}</span>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold">{client.totalSpent.toLocaleString()} FCFA</p>
+                          <p className="text-sm font-bold">{client.totalSpent.toLocaleString()} CFA</p>
                           <p className="text-xs text-muted-foreground">{client.orderCount} commandes</p>
                         </div>
                       </div>

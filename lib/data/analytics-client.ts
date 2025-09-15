@@ -71,7 +71,6 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
 
     console.log("[v0] Analytics date range:", { start, end })
 
-    // Get total revenue from sales
     const { data: salesData } = await supabase
       .from("sales")
       .select("total, sale_date, client_id, product_id, quantity")
@@ -99,7 +98,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         *,
         products (name)
       `)
-      .gt("quantity_available", 0)
+      .gt("quantity_remaining", 0)
 
     const { data: stockMovementsData } = await supabase
       .from("stock_movements")
@@ -216,19 +215,18 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         ? Math.round(((totalBatchesEverCreated.count - totalBatches) / totalBatchesEverCreated.count) * 100)
         : 0
 
-    // Create aging inventory analysis
     const agingInventory =
       stockLotsData
         ?.map((lot) => {
           const purchaseDate = new Date(lot.purchase_date)
           const daysOld = Math.floor((now.getTime() - purchaseDate.getTime()) / (1000 * 60 * 60 * 24))
-          const value = (lot.quantity_available || 0) * (lot.unit_cost || 0)
+          const value = (lot.quantity_remaining || 0) * (lot.unit_cost || 0)
 
           return {
             productName: lot.products?.name || "Unknown Product",
             lotNumber: lot.lot_number,
             daysOld,
-            quantity: lot.quantity_available || 0,
+            quantity: lot.quantity_remaining || 0,
             value,
           }
         })

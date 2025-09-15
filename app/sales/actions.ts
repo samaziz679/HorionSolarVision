@@ -131,10 +131,23 @@ async function restoreStockFromSale(supabase: any, saleId: string): Promise<{ su
   for (const movement of movements) {
     const restoreQuantity = Math.abs(movement.quantity) // Convert negative back to positive
 
+    const { data: currentLot, error: fetchLotError } = await supabase
+      .from("stock_lots")
+      .select("quantity_remaining")
+      .eq("id", movement.lot_id)
+      .single()
+
+    if (fetchLotError) {
+      console.error("Error fetching current lot:", fetchLotError)
+      return { success: false, message: "Failed to fetch current lot" }
+    }
+
+    const newQuantity = currentLot.quantity_remaining + restoreQuantity
+
     const { error: updateError } = await supabase
       .from("stock_lots")
       .update({
-        quantity_remaining: supabase.raw(`quantity_remaining + ${restoreQuantity}`),
+        quantity_remaining: newQuantity,
       })
       .eq("id", movement.lot_id)
 
