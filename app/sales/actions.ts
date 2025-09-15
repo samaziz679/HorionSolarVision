@@ -195,8 +195,6 @@ export async function createSale(prevState: State, formData: FormData) {
       unit_price: validatedFields.data.unit_price,
       total: total,
       sale_date: validatedFields.data.sale_date,
-      quantity_sold: validatedFields.data.quantity,
-      total_price: total,
       created_by: user.id,
       notes: validatedFields.data.notes,
     })
@@ -267,7 +265,6 @@ export async function updateSale(id: string, prevState: State, formData: FormDat
     return { message: restoreResult.message || "Failed to restore stock.", success: false }
   }
 
-  // Update the sale
   const { error } = await supabase
     .from("sales")
     .update({
@@ -278,8 +275,6 @@ export async function updateSale(id: string, prevState: State, formData: FormDat
       unit_price: validatedFields.data.unit_price,
       total: total,
       sale_date: validatedFields.data.sale_date,
-      quantity_sold: validatedFields.data.quantity,
-      total_price: total,
       notes: validatedFields.data.notes,
     })
     .eq("id", id)

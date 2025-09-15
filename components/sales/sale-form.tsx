@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Sale, Product, Client } from "@/lib/supabase/types"
-import { formatCurrency } from "@/lib/currency"
+import { formatMoney } from "@/lib/currency"
 
 type SaleFormProps = {
   sale?: Sale
@@ -233,7 +233,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
       <div className="flex justify-end">
         <div className="text-xl font-bold">
           <span>Total: </span>
-          <span>{formatCurrency(totalAmount)}</span>
+          <span>{formatMoney(totalAmount)}</span>
         </div>
       </div>
 
