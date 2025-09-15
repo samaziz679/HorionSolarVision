@@ -89,6 +89,7 @@ async function deductStockFIFO(
 
     // Create stock movement record
     const { error: movementError } = await supabase.from("stock_movements").insert({
+      product_id: productId, // Add the missing product_id
       lot_id: lot.id,
       movement_type: "OUT",
       quantity: -deductFromThisLot, // Negative for outgoing
