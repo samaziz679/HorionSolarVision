@@ -9,6 +9,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { AlertTriangle, Mail } from "lucide-react"
 
+const getOriginUrl = () => {
+  if (typeof window !== "undefined") {
+    return window.location.origin
+  }
+  return process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+}
+
 export default function LoginForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -38,8 +45,8 @@ export default function LoginForm() {
       // Allow first user creation - skip authorization checks
       const redirectTo =
         process.env.NODE_ENV === "production"
-          ? `${window.location.origin}/auth/callback`
-          : process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`
+          ? `${getOriginUrl()}/auth/callback`
+          : process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${getOriginUrl()}/auth/callback`
 
       const { error: signInError } = await supabase.auth.signInWithOtp({
         email,
@@ -118,8 +125,8 @@ export default function LoginForm() {
     console.log("[v0] User validation successful for:", email)
     const redirectTo =
       process.env.NODE_ENV === "production"
-        ? `${window.location.origin}/auth/callback`
-        : process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/auth/callback`
+        ? `${getOriginUrl()}/auth/callback`
+        : process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${getOriginUrl()}/auth/callback`
 
     const { error: signInError } = await supabase.auth.signInWithOtp({
       email,

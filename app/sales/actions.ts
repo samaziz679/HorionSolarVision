@@ -46,7 +46,7 @@ async function deductStockFIFO(
     .from("stock_lots")
     .select("*")
     .eq("product_id", productId)
-    .gt("quantity_available", 0)
+    .gt("quantity_remaining", 0)
     .order("purchase_date", { ascending: true })
 
   if (fetchError) {
@@ -59,7 +59,7 @@ async function deductStockFIFO(
   }
 
   // Check if we have enough total stock
-  const totalAvailable = stockLots.reduce((sum, lot) => sum + lot.quantity_available, 0)
+  const totalAvailable = stockLots.reduce((sum, lot) => sum + lot.quantity_remaining, 0)
   if (totalAvailable < quantityToDeduct) {
     return {
       success: false,
@@ -73,13 +73,13 @@ async function deductStockFIFO(
   for (const lot of stockLots) {
     if (remainingToDeduct <= 0) break
 
-    const deductFromThisLot = Math.min(remainingToDeduct, lot.quantity_available)
-    const newAvailableQuantity = lot.quantity_available - deductFromThisLot
+    const deductFromThisLot = Math.min(remainingToDeduct, lot.quantity_remaining)
+    const newAvailableQuantity = lot.quantity_remaining - deductFromThisLot
 
     // Update stock lot quantity
     const { error: updateError } = await supabase
       .from("stock_lots")
-      .update({ quantity_available: newAvailableQuantity })
+      .update({ quantity_remaining: newAvailableQuantity })
       .eq("id", lot.id)
 
     if (updateError) {
@@ -89,7 +89,7 @@ async function deductStockFIFO(
 
     // Create stock movement record
     const { error: movementError } = await supabase.from("stock_movements").insert({
-      stock_lot_id: lot.id,
+      lot_id: lot.id,
       movement_type: "OUT",
       quantity: -deductFromThisLot, // Negative for outgoing
       reference_type: "SALE",
@@ -133,9 +133,9 @@ async function restoreStockFromSale(supabase: any, saleId: string): Promise<{ su
     const { error: updateError } = await supabase
       .from("stock_lots")
       .update({
-        quantity_available: supabase.raw(`quantity_available + ${restoreQuantity}`),
+        quantity_remaining: supabase.raw(`quantity_remaining + ${restoreQuantity}`),
       })
-      .eq("id", movement.stock_lot_id)
+      .eq("id", movement.lot_id)
 
     if (updateError) {
       console.error("Error restoring stock lot:", updateError)
