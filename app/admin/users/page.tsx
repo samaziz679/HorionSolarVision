@@ -11,7 +11,12 @@ async function checkForAdminUsers() {
 
     const { data: adminUsers, error } = await supabase
       .from("user_roles")
-      .select("id, email, role, status")
+      .select(`
+        id,
+        role,
+        status,
+        user_profiles!inner(email, full_name)
+      `)
       .eq("role", "admin")
       .eq("status", "active")
 
