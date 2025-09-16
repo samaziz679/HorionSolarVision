@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { createClient } from "@/lib/supabase/client"
+import { supabaseAdmin } from "@/lib/supabase/admin"
 
 export type UserRole = "admin" | "stock_manager" | "commercial" | "finance" | "visitor" | "seller"
 export type UserStatus = "active" | "suspended" | "pending"
@@ -147,7 +148,8 @@ export async function getPendingUsers(): Promise<
     created_at: string
   }>
 > {
-  const supabase = createSupabaseServerClient()
+  const supabase = supabaseAdmin
+  const regularSupabase = createSupabaseServerClient()
 
   // Get all authenticated users from auth.users
   const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
@@ -157,8 +159,8 @@ export async function getPendingUsers(): Promise<
     return []
   }
 
-  // Get all users that have profiles
-  const { data: profileUsers, error: profileError } = await supabase.from("user_profiles").select("user_id")
+  // Get all users that have profiles using regular client
+  const { data: profileUsers, error: profileError } = await regularSupabase.from("user_profiles").select("user_id")
 
   if (profileError) {
     console.error("[v0] Error fetching profile users:", profileError)
