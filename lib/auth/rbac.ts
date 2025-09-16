@@ -151,6 +151,8 @@ export async function getPendingUsers(): Promise<
   const supabase = supabaseAdmin
   const regularSupabase = createSupabaseServerClient()
 
+  console.log("[v0] Starting getPendingUsers...")
+
   // Get all authenticated users from auth.users
   const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
 
@@ -159,6 +161,12 @@ export async function getPendingUsers(): Promise<
     return []
   }
 
+  console.log("[v0] Auth users found:", authUsers.users.length)
+  console.log(
+    "[v0] Auth users emails:",
+    authUsers.users.map((u) => u.email),
+  )
+
   // Get all users that have profiles using regular client
   const { data: profileUsers, error: profileError } = await regularSupabase.from("user_profiles").select("user_id")
 
@@ -166,6 +174,9 @@ export async function getPendingUsers(): Promise<
     console.error("[v0] Error fetching profile users:", profileError)
     return []
   }
+
+  console.log("[v0] Profile users found:", profileUsers?.length || 0)
+  console.log("[v0] Profile user IDs:", profileUsers?.map((p) => p.user_id) || [])
 
   const profileUserIds = new Set(profileUsers?.map((p) => p.user_id) || [])
 
@@ -177,6 +188,9 @@ export async function getPendingUsers(): Promise<
       email: user.email || "",
       created_at: user.created_at,
     }))
+
+  console.log("[v0] Pending users found:", pendingUsers.length)
+  console.log("[v0] Pending users:", pendingUsers)
 
   return pendingUsers
 }
