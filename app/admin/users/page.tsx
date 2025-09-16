@@ -42,8 +42,8 @@ export default async function AdminUsersPage() {
     try {
       await requireRole(["admin"])
     } catch (error) {
-      console.log("[v0] Role check failed, redirecting to login")
-      redirect("/login")
+      console.log("[v0] Role check failed, redirecting to dashboard")
+      redirect("/dashboard")
     }
   }
 
