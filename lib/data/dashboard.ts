@@ -101,12 +101,11 @@ export async function getDashboardData(supabase: any) {
     .order("sale_date", { ascending: false })
     .limit(5)
 
-  // Get low stock items
   const { data: lowStockData } = await supabase
-    .from("current_stock_with_batches")
-    .select("name, total_quantity")
-    .lt("total_quantity", 10)
-    .limit(5)
+    .from("products")
+    .select("name, quantity, seuil_stock_bas")
+    .or("quantity.eq.0,quantity.lte.seuil_stock_bas")
+    .limit(10)
 
   const recentSales = (recentSalesData || []).map((sale: any) => ({
     id: sale.id,
@@ -114,10 +113,18 @@ export async function getDashboardData(supabase: any) {
     client_name: sale.clients?.name ?? "Unknown Client",
   }))
 
-  const lowStockItems = (lowStockData || []).map((item: any) => ({
-    name: item.name,
-    quantity: item.total_quantity,
-  }))
+  const lowStockItems = (lowStockData || [])
+    .filter((item: any) => {
+      const quantity = item.quantity || 0
+      const threshold = item.seuil_stock_bas || 5
+      return quantity === 0 || quantity <= threshold
+    })
+    .map((item: any) => ({
+      name: item.name,
+      quantity: item.quantity || 0,
+      threshold: item.seuil_stock_bas || 5,
+      status: (item.quantity || 0) === 0 ? "Critical" : "Low Stock",
+    }))
 
   return {
     totalSales: totalSales ?? 0,

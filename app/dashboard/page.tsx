@@ -3,6 +3,7 @@ import { cookies } from "next/headers"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { getDashboardData } from "@/lib/data/dashboard"
 import { getCompanyConfig } from "@/lib/config/company"
+import { formatMoney } from "@/lib/currency"
 
 export default async function DashboardPage() {
   const cookieStore = cookies()
@@ -81,9 +82,7 @@ export default async function DashboardPage() {
                     <p className="text-sm font-medium leading-none">Vente #{sale.id}</p>
                     <p className="text-sm text-muted-foreground">{sale.client_name}</p>
                   </div>
-                  <div className="ml-auto font-medium text-solar-orange">
-                    {company.currency} {sale.total_amount}
-                  </div>
+                  <div className="ml-auto font-medium text-solar-orange">{formatMoney(sale.total_amount)}</div>
                 </div>
               ))}
             </div>
@@ -97,16 +96,37 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {dashboardData.lowStockItems.map((item, index) => (
-                <div key={index} className="flex items-center p-2 rounded-lg hover:bg-blue-50/50 transition-colors">
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">{item.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Stock: <span className="text-amber-600 font-medium">{item.quantity}</span>
-                    </p>
+              {dashboardData.lowStockItems.length > 0 ? (
+                dashboardData.lowStockItems.map((item, index) => (
+                  <div key={index} className="flex items-center p-2 rounded-lg hover:bg-blue-50/50 transition-colors">
+                    <div className="ml-4 space-y-1 flex-1">
+                      <p className="text-sm font-medium leading-none">{item.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-muted-foreground">
+                          Stock:{" "}
+                          <span className={`font-medium ${item.quantity === 0 ? "text-red-600" : "text-amber-600"}`}>
+                            {item.quantity}
+                          </span>
+                        </p>
+                        <span className="text-xs text-muted-foreground">/ Seuil: {item.threshold}</span>
+                      </div>
+                    </div>
+                    <div className="ml-auto">
+                      <span
+                        className={`text-xs px-2 py-1 rounded-full font-medium ${
+                          item.status === "Critical" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                        }`}
+                      >
+                        {item.status === "Critical" ? "Rupture" : "Stock Bas"}
+                      </span>
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground">Aucun article en rupture de stock</p>
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
