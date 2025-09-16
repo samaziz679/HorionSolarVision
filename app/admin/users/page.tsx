@@ -14,11 +14,14 @@ async function checkForAdminUsers() {
       .select(`
         id,
         role,
-        status,
-        user_profiles!inner(email, full_name)
+        user_profiles!inner(
+          email, 
+          full_name,
+          status
+        )
       `)
       .eq("role", "admin")
-      .eq("status", "active")
+      .eq("user_profiles.status", "active")
 
     if (error) {
       console.error("[v0] Error checking for admin users:", error)
