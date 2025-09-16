@@ -62,9 +62,36 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase.from("user_roles").select("*").eq("user_id", user.id).single()
+  const { data: profile, error } = await supabase
+    .from("user_roles")
+    .select(`
+      *,
+      user_profiles!inner(
+        email,
+        full_name,
+        status
+      )
+    `)
+    .eq("user_id", user.id)
+    .single()
 
-  return profile
+  if (error) {
+    console.error("[v0] Error fetching user profile:", error)
+    return null
+  }
+
+  if (!profile) return null
+
+  return {
+    id: profile.id,
+    user_id: profile.user_id,
+    email: profile.user_profiles.email,
+    full_name: profile.user_profiles.full_name,
+    role: profile.role,
+    status: profile.user_profiles.status,
+    created_at: profile.created_at,
+    updated_at: profile.updated_at,
+  }
 }
 
 export async function hasPermission(userRole: UserRole, module: string, action?: string): Promise<boolean> {
@@ -104,9 +131,36 @@ export async function getCurrentUserProfileClient(): Promise<UserProfile | null>
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile } = await supabase.from("user_roles").select("*").eq("user_id", user.id).single()
+  const { data: profile, error } = await supabase
+    .from("user_roles")
+    .select(`
+      *,
+      user_profiles!inner(
+        email,
+        full_name,
+        status
+      )
+    `)
+    .eq("user_id", user.id)
+    .single()
 
-  return profile
+  if (error) {
+    console.error("[v0] Error fetching user profile:", error)
+    return null
+  }
+
+  if (!profile) return null
+
+  return {
+    id: profile.id,
+    user_id: profile.user_id,
+    email: profile.user_profiles.email,
+    full_name: profile.user_profiles.full_name,
+    role: profile.role,
+    status: profile.user_profiles.status,
+    created_at: profile.created_at,
+    updated_at: profile.updated_at,
+  }
 }
 
 export async function logAudit(
