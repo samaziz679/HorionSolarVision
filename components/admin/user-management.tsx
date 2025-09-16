@@ -64,28 +64,8 @@ const createClient = () => {
   )
 }
 
-const ROLE_MAPPING = {
-  // French UI label -> English database value
-  Vendeur: "seller",
-  Manager: "stock_manager",
-  Admin: "admin",
-  Commercial: "commercial",
-  Finance: "finance",
-  Visiteur: "visitor",
-} as const
-
-const ROLE_DISPLAY = {
-  // English database value -> French UI label
-  seller: "Vendeur",
-  stock_manager: "Manager",
-  admin: "Admin",
-  commercial: "Commercial",
-  finance: "Finance",
-  visitor: "Visiteur",
-} as const
-
-type DatabaseRole = keyof typeof ROLE_DISPLAY
-type DisplayRole = keyof typeof ROLE_MAPPING
+const AVAILABLE_ROLES = ["admin", "stock_manager", "commercial", "finance", "visitor", "seller"] as const
+type AvailableRole = (typeof AVAILABLE_ROLES)[number]
 
 export function UserManagement({ initialSetup = false }: { initialSetup?: boolean }) {
   const [users, setUsers] = useState<UserProfile[]>([])
@@ -99,14 +79,14 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
   const [selectedPendingUser, setSelectedPendingUser] = useState<PendingUser | null>(null)
   const { toast } = useToast()
 
-  // Form states
+  // Form states - Using English role values directly
   const [newUserEmail, setNewUserEmail] = useState("")
   const [newUserFullName, setNewUserFullName] = useState("")
-  const [newUserRole, setNewUserRole] = useState<DatabaseRole>("seller")
-  const [editUserRole, setEditUserRole] = useState<DatabaseRole>("seller")
+  const [newUserRole, setNewUserRole] = useState<AvailableRole>("seller")
+  const [editUserRole, setEditUserRole] = useState<AvailableRole>("seller")
   const [editUserStatus, setEditUserStatus] = useState<UserStatus>("active")
   const [activateUserFullName, setActivateUserFullName] = useState("")
-  const [activateUserRole, setActivateUserRole] = useState<DatabaseRole>("seller")
+  const [activateUserRole, setActivateUserRole] = useState<AvailableRole>("seller")
 
   useEffect(() => {
     loadUsers()
@@ -132,10 +112,12 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
 
   async function loadPendingUsers() {
     try {
+      console.log("[v0] Loading pending users...")
       const pendingUserList = await getPendingUsers()
+      console.log("[v0] Pending users loaded:", pendingUserList)
       setPendingUsers(pendingUserList)
     } catch (error) {
-      console.error("Error loading pending users:", error)
+      console.error("[v0] Error loading pending users:", error)
     }
   }
 
@@ -180,11 +162,13 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
     if (!selectedPendingUser) return
 
     try {
+      console.log("[v0] Activating user:", selectedPendingUser.email, "with role:", activateUserRole)
+
       const success = await activateUser(
         selectedPendingUser.id,
         selectedPendingUser.email,
         activateUserFullName,
-        activateUserRole, // Now using database role value directly
+        activateUserRole, // Using English role directly
       )
 
       if (!success) {
@@ -206,14 +190,14 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
       setIsActivateDialogOpen(false)
       setSelectedPendingUser(null)
       setActivateUserFullName("")
-      setActivateUserRole("seller") // Reset to database value
+      setActivateUserRole("seller")
 
       // Reload both lists
       loadUsers()
       loadPendingUsers()
       loadAuditLogs()
     } catch (error) {
-      console.error("Error activating user:", error)
+      console.error("[v0] Error activating user:", error)
       toast({
         title: "Erreur",
         description: "Impossible d'activer l'utilisateur",
@@ -225,13 +209,13 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
   function openActivateDialog(pendingUser: PendingUser) {
     setSelectedPendingUser(pendingUser)
     setActivateUserFullName(pendingUser.email.split("@")[0]) // Default name from email
-    setActivateUserRole("seller") // Use database value
+    setActivateUserRole("seller")
     setIsActivateDialogOpen(true)
   }
 
   function openEditDialog(user: UserProfile) {
     setSelectedUser(user)
-    setEditUserRole(user.role as DatabaseRole) // Cast to database role type
+    setEditUserRole(user.role as AvailableRole)
     setEditUserStatus(user.status)
     setIsEditDialogOpen(true)
   }
@@ -376,17 +360,16 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="role">Rôle</Label>
-                    <Select value={newUserRole} onValueChange={(value: DatabaseRole) => setNewUserRole(value)}>
+                    <Select value={newUserRole} onValueChange={(value: AvailableRole) => setNewUserRole(value)}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="seller">Vendeur</SelectItem>
-                        <SelectItem value="stock_manager">Manager</SelectItem>
-                        <SelectItem value="commercial">Commercial</SelectItem>
-                        <SelectItem value="finance">Finance</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                        <SelectItem value="visitor">Visiteur</SelectItem>
+                        {AVAILABLE_ROLES.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {role}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -429,9 +412,7 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
                       <TableCell className="font-medium">{user.email}</TableCell>
                       <TableCell>{user.full_name || "Non défini"}</TableCell>
                       <TableCell>
-                        <Badge variant={getRoleBadgeVariant(user.role)}>
-                          {ROLE_DISPLAY[user.role as DatabaseRole] || user.role}
-                        </Badge>
+                        <Badge variant={getRoleBadgeVariant(user.role)}>{user.role}</Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant={getStatusBadgeVariant(user.status)}>{user.status}</Badge>
@@ -573,53 +554,7 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
         </TabsContent>
       </Tabs>
 
-      {/* Edit User Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Modifier l'Utilisateur</DialogTitle>
-            <DialogDescription>Modifiez le rôle et le statut de {selectedUser?.email}</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="editRole">Rôle</Label>
-              <Select value={editUserRole} onValueChange={(value: DatabaseRole) => setEditUserRole(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="seller">Vendeur</SelectItem>
-                  <SelectItem value="stock_manager">Manager</SelectItem>
-                  <SelectItem value="commercial">Commercial</SelectItem>
-                  <SelectItem value="finance">Finance</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="visitor">Visiteur</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="editStatus">Statut</Label>
-              <Select value={editUserStatus} onValueChange={(value: UserStatus) => setEditUserStatus(value)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Actif</SelectItem>
-                  <SelectItem value="suspended">Suspendu</SelectItem>
-                  <SelectItem value="pending">En Attente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Annuler
-            </Button>
-            <Button onClick={() => updateUser(selectedUser!, editUserRole, editUserStatus)}>Mettre à Jour</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
+      {/* Activate User Dialog - Simplified role selection */}
       <Dialog open={isActivateDialogOpen} onOpenChange={setIsActivateDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -640,17 +575,16 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
             </div>
             <div className="grid gap-2">
               <Label htmlFor="activateRole">Rôle</Label>
-              <Select value={activateUserRole} onValueChange={(value: DatabaseRole) => setActivateUserRole(value)}>
+              <Select value={activateUserRole} onValueChange={(value: AvailableRole) => setActivateUserRole(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="seller">Vendeur</SelectItem>
-                  <SelectItem value="stock_manager">Manager</SelectItem>
-                  <SelectItem value="commercial">Commercial</SelectItem>
-                  <SelectItem value="finance">Finance</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                  <SelectItem value="visitor">Visiteur</SelectItem>
+                  {AVAILABLE_ROLES.map((role) => (
+                    <SelectItem key={role} value={role}>
+                      {role}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -674,7 +608,7 @@ async function createUser(
   initialSetup: boolean,
   newUserEmail: string,
   newUserFullName: string,
-  newUserRole: DatabaseRole,
+  newUserRole: AvailableRole,
 ) {
   try {
     const supabase = createClient()
@@ -689,7 +623,7 @@ async function createUser(
         user_id: initialSetup && currentUser ? currentUser.id : undefined,
         email: newUserEmail,
         full_name: newUserFullName,
-        role: initialSetup ? "admin" : newUserRole, // Now using database role values
+        role: initialSetup ? "admin" : newUserRole, // Using database role values
         status: initialSetup ? "active" : "pending",
       })
       .select()
@@ -705,7 +639,7 @@ async function createUser(
   }
 }
 
-async function updateUser(selectedUser: UserProfile, editUserRole: DatabaseRole, editUserStatus: UserStatus) {
+async function updateUser(selectedUser: UserProfile, editUserRole: AvailableRole, editUserStatus: UserStatus) {
   if (!selectedUser) return { success: false, message: "Aucun utilisateur sélectionné" }
 
   try {
