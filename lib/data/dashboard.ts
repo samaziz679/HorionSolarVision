@@ -75,6 +75,50 @@ export async function getRecentSales() {
   }))
 }
 
+export async function getFinancialHealth(supabase: any) {
+  noStore()
+
+  // Get total revenue from sales
+  const { data: revenueData } = await supabase
+    .from("sales")
+    .select("total")
+    .gte("sale_date", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+
+  const totalRevenue = (revenueData || []).reduce((sum: number, sale: any) => sum + (sale.total || 0), 0)
+
+  // Get operating expenses (not including inventory purchases)
+  const { data: expenseData } = await supabase
+    .from("expenses")
+    .select("amount")
+    .gte("expense_date", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+
+  const totalExpenses = (expenseData || []).reduce((sum: number, expense: any) => sum + (expense.amount || 0), 0)
+
+  // Get cost of goods sold (COGS) from purchases
+  const { data: cogsData } = await supabase
+    .from("purchases")
+    .select("total")
+    .gte("purchase_date", new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
+
+  const totalCOGS = (cogsData || []).reduce((sum: number, purchase: any) => sum + (purchase.total || 0), 0)
+
+  // Calculate metrics
+  const grossProfit = totalRevenue - totalCOGS
+  const netProfit = grossProfit - totalExpenses
+  const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0
+  const expenseRatio = totalRevenue > 0 ? (totalExpenses / totalRevenue) * 100 : 0
+
+  return {
+    totalRevenue,
+    totalExpenses,
+    totalCOGS,
+    grossProfit,
+    netProfit,
+    profitMargin,
+    expenseRatio,
+  }
+}
+
 export async function getDashboardData(supabase: any) {
   noStore()
 
@@ -102,9 +146,9 @@ export async function getDashboardData(supabase: any) {
     .limit(5)
 
   const { data: lowStockData } = await supabase
-    .from("products")
-    .select("name, quantity, seuil_stock_bas")
-    .or("quantity.eq.0,quantity.lte.seuil_stock_bas")
+    .from("current_stock_with_batches")
+    .select("name, total_stock, seuil_stock_bas, is_low_stock")
+    .or("total_stock.eq.0,is_low_stock.eq.true")
     .limit(10)
 
   const recentSales = (recentSalesData || []).map((sale: any) => ({
@@ -113,18 +157,12 @@ export async function getDashboardData(supabase: any) {
     client_name: sale.clients?.name ?? "Unknown Client",
   }))
 
-  const lowStockItems = (lowStockData || [])
-    .filter((item: any) => {
-      const quantity = item.quantity || 0
-      const threshold = item.seuil_stock_bas || 5
-      return quantity === 0 || quantity <= threshold
-    })
-    .map((item: any) => ({
-      name: item.name,
-      quantity: item.quantity || 0,
-      threshold: item.seuil_stock_bas || 5,
-      status: (item.quantity || 0) === 0 ? "Critical" : "Low Stock",
-    }))
+  const lowStockItems = (lowStockData || []).map((item: any) => ({
+    name: item.name,
+    quantity: item.total_stock || 0,
+    threshold: item.seuil_stock_bas || 5,
+    status: (item.total_stock || 0) === 0 ? "Critique" : "Stock Bas",
+  }))
 
   return {
     totalSales: totalSales ?? 0,

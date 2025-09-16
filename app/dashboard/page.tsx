@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { getDashboardData } from "@/lib/data/dashboard"
+import { getDashboardData, getFinancialHealth } from "@/lib/data/dashboard"
 import { getCompanyConfig } from "@/lib/config/company"
 import { formatMoney } from "@/lib/currency"
 
@@ -18,6 +18,7 @@ export default async function DashboardPage() {
   })
 
   const dashboardData = await getDashboardData(supabase)
+  const financialHealth = await getFinancialHealth(supabase)
 
   return (
     <div className="space-y-6">
@@ -26,7 +27,6 @@ export default async function DashboardPage() {
         <p className="text-muted-foreground">{company.tagline}</p>
       </div>
 
-      {/* ... existing dashboard cards ... */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-solar-orange">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -65,6 +65,65 @@ export default async function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold text-amber-600">{dashboardData.totalSuppliers}</div>
             <p className="text-xs text-muted-foreground">+201 depuis la dernière heure</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Santé Financière</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Marge Bénéficiaire</span>
+                <span className="text-sm font-medium text-green-600">{financialHealth.profitMargin.toFixed(1)}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-solar-orange h-2 rounded-full"
+                  style={{ width: `${Math.min(financialHealth.profitMargin, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-amber-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Alertes Stock</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Ratio Dépenses/CA</span>
+                <span className="text-sm font-medium text-amber-600">{financialHealth.expenseRatio.toFixed(1)}%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div
+                  className="bg-amber-500 h-2 rounded-full"
+                  style={{ width: `${Math.min(financialHealth.expenseRatio, 100)}%` }}
+                ></div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-sky-blue">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Top Produits</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span className="text-sm text-muted-foreground">Croissance CA</span>
+                <span className="text-sm font-medium text-sky-blue">0%</span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="bg-sky-blue h-2 rounded-full" style={{ width: "0%" }}></div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -114,10 +173,10 @@ export default async function DashboardPage() {
                     <div className="ml-auto">
                       <span
                         className={`text-xs px-2 py-1 rounded-full font-medium ${
-                          item.status === "Critical" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
+                          item.status === "Critique" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-700"
                         }`}
                       >
-                        {item.status === "Critical" ? "Rupture" : "Stock Bas"}
+                        {item.status}
                       </span>
                     </div>
                   </div>
