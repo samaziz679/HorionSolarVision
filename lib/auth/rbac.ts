@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { createClient } from "@/lib/supabase/client"
 
-export type UserRole = "admin" | "manager" | "vendeur"
+export type UserRole = "admin" | "stock_manager" | "commercial" | "finance" | "visitor" | "seller"
 export type UserStatus = "active" | "suspended" | "pending"
 
 export interface UserProfile {
@@ -43,13 +43,25 @@ export const ROLE_PERMISSIONS = {
     ],
     actions: ["create", "read", "update", "delete", "manage_users"],
   },
-  manager: {
-    modules: ["dashboard", "inventory", "sales", "purchases", "clients", "suppliers", "expenses", "reports"],
+  stock_manager: {
+    modules: ["dashboard", "inventory", "purchases", "suppliers", "reports"],
     actions: ["create", "read", "update", "delete"],
   },
-  vendeur: {
+  commercial: {
+    modules: ["dashboard", "sales", "clients", "reports"],
+    actions: ["create", "read", "update", "delete"],
+  },
+  finance: {
+    modules: ["dashboard", "expenses", "reports", "sales", "purchases"],
+    actions: ["create", "read", "update", "delete"],
+  },
+  visitor: {
+    modules: ["dashboard"],
+    actions: ["read"],
+  },
+  seller: {
     modules: ["dashboard", "sales", "clients"],
-    actions: ["create", "read"], // Can only create new sales, not modify existing
+    actions: ["create", "read"],
   },
 } as const
 

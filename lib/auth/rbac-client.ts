@@ -1,7 +1,7 @@
 import { createBrowserClient } from "@supabase/ssr"
 import type { Database } from "@/lib/supabase/types"
 
-export type UserRole = "admin" | "manager" | "vendeur"
+export type UserRole = "admin" | "stock_manager" | "commercial" | "finance" | "visitor" | "seller"
 export type UserStatus = "active" | "suspended" | "pending"
 
 export interface UserProfile {
@@ -28,24 +28,22 @@ export const ROLE_PERMISSIONS = {
       "reports",
       "settings",
       "admin",
-      "solar-sizer", // Added solar-sizer module for admin role
+      "solar-sizer",
     ],
   },
-  manager: {
-    modules: [
-      "dashboard",
-      "inventory",
-      "sales",
-      "purchases",
-      "clients",
-      "suppliers",
-      "expenses",
-      "reports",
-      "settings",
-      "solar-sizer", // Added solar-sizer module for manager role
-    ],
+  stock_manager: {
+    modules: ["dashboard", "inventory", "purchases", "suppliers", "reports"],
   },
-  vendeur: {
+  commercial: {
+    modules: ["dashboard", "sales", "clients", "reports"],
+  },
+  finance: {
+    modules: ["dashboard", "expenses", "reports", "sales", "purchases"],
+  },
+  visitor: {
+    modules: ["dashboard"],
+  },
+  seller: {
     modules: ["dashboard", "sales", "clients"],
   },
 } as const
@@ -143,7 +141,7 @@ export async function getAllUsers(): Promise<UserProfile[]> {
 export async function syncUserRole(
   userId: string,
   email: string,
-  role: UserRole = "vendeur",
+  role: UserRole = "seller",
   status: UserStatus = "active",
 ): Promise<boolean> {
   if (typeof window === "undefined") return false
@@ -209,13 +207,8 @@ export async function updateUserStatus(userId: string, status: UserStatus): Prom
 export function hasPermission(userRole: UserRole, requiredPermission: string): boolean {
   const rolePermissions = {
     admin: ["*"], // Admin has all permissions
-    manager: [
+    stock_manager: [
       "dashboard.view",
-      "sales.view",
-      "sales.create",
-      "clients.view",
-      "clients.create",
-      "clients.edit",
       "inventory.view",
       "inventory.create",
       "inventory.edit",
@@ -225,12 +218,29 @@ export function hasPermission(userRole: UserRole, requiredPermission: string): b
       "suppliers.view",
       "suppliers.create",
       "suppliers.edit",
+      "reports.view",
+    ],
+    commercial: [
+      "dashboard.view",
+      "sales.view",
+      "sales.create",
+      "sales.edit",
+      "clients.view",
+      "clients.create",
+      "clients.edit",
+      "reports.view",
+    ],
+    finance: [
+      "dashboard.view",
       "expenses.view",
       "expenses.create",
       "expenses.edit",
       "reports.view",
+      "sales.view",
+      "purchases.view",
     ],
-    vendeur: ["dashboard.view", "sales.view", "sales.create", "clients.view", "clients.create"],
+    visitor: ["dashboard.view"],
+    seller: ["dashboard.view", "sales.view", "sales.create", "clients.view", "clients.create"],
   }
 
   const permissions = rolePermissions[userRole] || []
@@ -247,36 +257,15 @@ export async function getPendingUsers(): Promise<
   if (typeof window === "undefined") return []
 
   try {
-    const supabase = createClient()
+    const response = await fetch("/api/admin/pending-users")
 
-    // Get all authenticated users from auth.users using RPC function
-    const { data: authUsers, error: authError } = await supabase.rpc("get_auth_users")
-
-    if (authError) {
-      console.error("[v0] Error fetching auth users:", authError)
+    if (!response.ok) {
+      console.error("[v0] Error fetching pending users:", response.statusText)
       return []
     }
 
-    // Get all users that have profiles
-    const { data: profileUsers, error: profileError } = await supabase.from("user_profiles").select("user_id")
-
-    if (profileError) {
-      console.error("[v0] Error fetching profile users:", profileError)
-      return []
-    }
-
-    const profileUserIds = new Set(profileUsers?.map((p) => p.user_id) || [])
-
-    // Find users in auth but not in profiles (pending users)
-    const pendingUsers = (authUsers || [])
-      .filter((user: any) => !profileUserIds.has(user.id))
-      .map((user: any) => ({
-        id: user.id,
-        email: user.email || "",
-        created_at: user.created_at,
-      }))
-
-    return pendingUsers
+    const data = await response.json()
+    return data.pendingUsers || []
   } catch (error) {
     console.error("[v0] Error getting pending users:", error)
     return []
@@ -287,30 +276,21 @@ export async function activateUser(userId: string, email: string, fullName: stri
   if (typeof window === "undefined") return false
 
   try {
-    const supabase = createClient()
-
-    // Create user profile
-    const { error: profileError } = await supabase.from("user_profiles").insert({
-      user_id: userId,
-      email: email,
-      full_name: fullName,
-      status: "active",
+    const response = await fetch("/api/admin/activate-user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        userId,
+        email,
+        fullName,
+        role,
+      }),
     })
 
-    if (profileError) {
-      console.error("[v0] Error creating user profile:", profileError)
-      return false
-    }
-
-    // Create user role
-    const { error: roleError } = await supabase.from("user_roles").insert({
-      user_id: userId,
-      role: role,
-      status: "active",
-    })
-
-    if (roleError) {
-      console.error("[v0] Error creating user role:", roleError)
+    if (!response.ok) {
+      console.error("[v0] Error activating user:", response.statusText)
       return false
     }
 
