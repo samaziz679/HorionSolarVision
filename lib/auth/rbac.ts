@@ -62,35 +62,41 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile, error } = await supabase
+  // First get the user role
+  const { data: roleData, error: roleError } = await supabase
     .from("user_roles")
-    .select(`
-      *,
-      user_profiles!inner(
-        email,
-        full_name,
-        status
-      )
-    `)
+    .select("*")
     .eq("user_id", user.id)
     .single()
 
-  if (error) {
-    console.error("[v0] Error fetching user profile:", error)
+  if (roleError) {
+    console.error("[v0] Error fetching user role:", roleError)
     return null
   }
 
-  if (!profile) return null
+  // Then get the user profile
+  const { data: profileData, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("email, full_name, status")
+    .eq("user_id", user.id)
+    .single()
+
+  if (profileError) {
+    console.error("[v0] Error fetching user profile:", profileError)
+    return null
+  }
+
+  if (!roleData || !profileData) return null
 
   return {
-    id: profile.id,
-    user_id: profile.user_id,
-    email: profile.user_profiles.email,
-    full_name: profile.user_profiles.full_name,
-    role: profile.role,
-    status: profile.user_profiles.status,
-    created_at: profile.created_at,
-    updated_at: profile.updated_at,
+    id: roleData.id,
+    user_id: roleData.user_id,
+    email: profileData.email,
+    full_name: profileData.full_name,
+    role: roleData.role,
+    status: profileData.status,
+    created_at: roleData.created_at,
+    updated_at: roleData.updated_at,
   }
 }
 
@@ -131,35 +137,41 @@ export async function getCurrentUserProfileClient(): Promise<UserProfile | null>
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: profile, error } = await supabase
+  // First get the user role
+  const { data: roleData, error: roleError } = await supabase
     .from("user_roles")
-    .select(`
-      *,
-      user_profiles!inner(
-        email,
-        full_name,
-        status
-      )
-    `)
+    .select("*")
     .eq("user_id", user.id)
     .single()
 
-  if (error) {
-    console.error("[v0] Error fetching user profile:", error)
+  if (roleError) {
+    console.error("[v0] Error fetching user role:", roleError)
     return null
   }
 
-  if (!profile) return null
+  // Then get the user profile
+  const { data: profileData, error: profileError } = await supabase
+    .from("user_profiles")
+    .select("email, full_name, status")
+    .eq("user_id", user.id)
+    .single()
+
+  if (profileError) {
+    console.error("[v0] Error fetching user profile:", profileError)
+    return null
+  }
+
+  if (!roleData || !profileData) return null
 
   return {
-    id: profile.id,
-    user_id: profile.user_id,
-    email: profile.user_profiles.email,
-    full_name: profile.user_profiles.full_name,
-    role: profile.role,
-    status: profile.user_profiles.status,
-    created_at: profile.created_at,
-    updated_at: profile.updated_at,
+    id: roleData.id,
+    user_id: roleData.user_id,
+    email: profileData.email,
+    full_name: profileData.full_name,
+    role: roleData.role,
+    status: profileData.status,
+    created_at: roleData.created_at,
+    updated_at: roleData.updated_at,
   }
 }
 
