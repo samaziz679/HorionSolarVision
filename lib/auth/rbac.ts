@@ -128,6 +128,80 @@ export async function requireRole(allowedRoles: UserRole[]): Promise<UserProfile
   return profile
 }
 
+export async function getPendingUsers(): Promise<
+  Array<{
+    id: string
+    email: string
+    created_at: string
+  }>
+> {
+  const supabase = createSupabaseServerClient()
+
+  // Get all authenticated users from auth.users
+  const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
+
+  if (authError) {
+    console.error("[v0] Error fetching auth users:", authError)
+    return []
+  }
+
+  // Get all users that have profiles
+  const { data: profileUsers, error: profileError } = await supabase.from("user_profiles").select("user_id")
+
+  if (profileError) {
+    console.error("[v0] Error fetching profile users:", profileError)
+    return []
+  }
+
+  const profileUserIds = new Set(profileUsers?.map((p) => p.user_id) || [])
+
+  // Find users in auth but not in profiles (pending users)
+  const pendingUsers = authUsers.users
+    .filter((user) => !profileUserIds.has(user.id))
+    .map((user) => ({
+      id: user.id,
+      email: user.email || "",
+      created_at: user.created_at,
+    }))
+
+  return pendingUsers
+}
+
+export async function activateUser(userId: string, email: string, fullName: string, role: UserRole): Promise<boolean> {
+  const supabase = createSupabaseServerClient()
+
+  try {
+    // Create user profile
+    const { error: profileError } = await supabase.from("user_profiles").insert({
+      user_id: userId,
+      email: email,
+      full_name: fullName,
+      status: "active",
+    })
+
+    if (profileError) {
+      console.error("[v0] Error creating user profile:", profileError)
+      return false
+    }
+
+    // Create user role
+    const { error: roleError } = await supabase.from("user_roles").insert({
+      user_id: userId,
+      role: role,
+    })
+
+    if (roleError) {
+      console.error("[v0] Error creating user role:", roleError)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error("[v0] Error activating user:", error)
+    return false
+  }
+}
+
 // Client-side functions
 export async function getCurrentUserProfileClient(): Promise<UserProfile | null> {
   const supabase = createClient()

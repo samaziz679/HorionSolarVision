@@ -19,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useToast } from "@/hooks/use-toast"
-import { Plus, Edit, Shield, Clock, UserPlus } from "lucide-react"
+import { Plus, Edit, Shield, Clock, UserPlus, UserCheck, AlertCircle } from "lucide-react"
 import { createBrowserClient } from "@supabase/ssr"
 import {
   getAllUsers,
@@ -29,6 +29,7 @@ import {
   type UserRole,
   type UserStatus,
 } from "@/lib/auth/rbac-client"
+import { getPendingUsers, activateUser } from "@/lib/auth/rbac"
 import type { Database } from "@/lib/supabase/types"
 
 interface AuditLog {
@@ -46,6 +47,12 @@ interface AuditLog {
     email: string
     full_name: string
   }
+}
+
+interface PendingUser {
+  id: string
+  email: string
+  created_at: string
 }
 
 const createClient = () => {
@@ -85,10 +92,13 @@ async function logAudit(action: string, tableName: string, recordId: string, old
 export function UserManagement({ initialSetup = false }: { initialSetup?: boolean }) {
   const [users, setUsers] = useState<UserProfile[]>([])
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([])
+  const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([])
   const [loading, setLoading] = useState(true)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isActivateDialogOpen, setIsActivateDialogOpen] = useState(false)
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
+  const [selectedPendingUser, setSelectedPendingUser] = useState<PendingUser | null>(null)
   const { toast } = useToast()
 
   // Form states
@@ -97,10 +107,13 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
   const [newUserRole, setNewUserRole] = useState<UserRole>("vendeur")
   const [editUserRole, setEditUserRole] = useState<UserRole>("vendeur")
   const [editUserStatus, setEditUserStatus] = useState<UserStatus>("active")
+  const [activateUserFullName, setActivateUserFullName] = useState("")
+  const [activateUserRole, setActivateUserRole] = useState<UserRole>("vendeur")
 
   useEffect(() => {
     loadUsers()
     loadAuditLogs()
+    loadPendingUsers()
   }, [])
 
   async function loadUsers() {
@@ -116,6 +129,15 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function loadPendingUsers() {
+    try {
+      const pendingUserList = await getPendingUsers()
+      setPendingUsers(pendingUserList)
+    } catch (error) {
+      console.error("Error loading pending users:", error)
     }
   }
 
@@ -156,112 +178,57 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
     }
   }
 
-  async function createUser() {
+  async function activatePendingUser() {
+    if (!selectedPendingUser) return
+
     try {
-      const supabase = createClient()
+      const success = await activateUser(
+        selectedPendingUser.id,
+        selectedPendingUser.email,
+        activateUserFullName,
+        activateUserRole,
+      )
 
-      const {
-        data: { user: currentUser },
-      } = await supabase.auth.getUser()
-
-      const { data, error } = await supabase
-        .from("user_roles")
-        .insert({
-          user_id: initialSetup && currentUser ? currentUser.id : undefined,
-          email: newUserEmail,
-          full_name: newUserFullName,
-          role: initialSetup ? "admin" : newUserRole, // Force admin role for initial setup
-          status: initialSetup ? "active" : "pending", // Activate immediately for initial setup
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-
-      if (!initialSetup) {
-        const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(newUserEmail, {
-          redirectTo: `${window.location.origin}/dashboard`,
-          data: {
-            full_name: newUserFullName,
-            role: newUserRole,
-          },
-        })
-
-        if (inviteError) {
-          console.warn("Could not send invitation email:", inviteError)
-        }
+      if (!success) {
+        throw new Error("Failed to activate user")
       }
 
-      await logAudit("CREATE_USER", "user_roles", data.id, null, {
-        email: newUserEmail,
-        role: initialSetup ? "admin" : newUserRole,
+      await logAudit("ACTIVATE_USER", "user_profiles", selectedPendingUser.id, null, {
+        email: selectedPendingUser.email,
+        full_name: activateUserFullName,
+        role: activateUserRole,
+        status: "active",
       })
 
       toast({
-        title: initialSetup ? "Compte administrateur créé" : "Utilisateur créé",
-        description: initialSetup
-          ? `Votre compte administrateur a été configuré avec succès.`
-          : `L'utilisateur ${newUserEmail} a été créé.`,
+        title: "Utilisateur activé",
+        description: `L'utilisateur ${selectedPendingUser.email} a été activé avec succès`,
       })
 
-      setNewUserEmail("")
-      setNewUserFullName("")
-      setNewUserRole("vendeur")
-      setIsCreateDialogOpen(false)
-      loadUsers()
-      loadAuditLogs()
+      setIsActivateDialogOpen(false)
+      setSelectedPendingUser(null)
+      setActivateUserFullName("")
+      setActivateUserRole("vendeur")
 
-      if (initialSetup) {
-        window.location.reload()
-      }
+      // Reload both lists
+      loadUsers()
+      loadPendingUsers()
+      loadAuditLogs()
     } catch (error) {
-      console.error("Error creating user:", error)
+      console.error("Error activating user:", error)
       toast({
         title: "Erreur",
-        description: "Impossible de créer l'utilisateur",
+        description: "Impossible d'activer l'utilisateur",
         variant: "destructive",
       })
     }
   }
 
-  async function updateUser() {
-    if (!selectedUser) return
-
-    try {
-      const oldValues = { role: selectedUser.role, status: selectedUser.status }
-
-      if (editUserRole !== selectedUser.role) {
-        const success = await updateUserRole(selectedUser.user_id, editUserRole)
-        if (!success) throw new Error("Failed to update role")
-      }
-
-      if (editUserStatus !== selectedUser.status) {
-        const success = await updateUserStatus(selectedUser.user_id, editUserStatus)
-        if (!success) throw new Error("Failed to update status")
-      }
-
-      await logAudit("UPDATE_USER", "user_roles", selectedUser.id, oldValues, {
-        role: editUserRole,
-        status: editUserStatus,
-      })
-
-      toast({
-        title: "Utilisateur mis à jour",
-        description: `L'utilisateur ${selectedUser.email} a été mis à jour`,
-      })
-
-      setIsEditDialogOpen(false)
-      setSelectedUser(null)
-      loadUsers()
-      loadAuditLogs()
-    } catch (error) {
-      console.error("Error updating user:", error)
-      toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour l'utilisateur",
-        variant: "destructive",
-      })
-    }
+  function openActivateDialog(pendingUser: PendingUser) {
+    setSelectedPendingUser(pendingUser)
+    setActivateUserFullName(pendingUser.email.split("@")[0]) // Default name from email
+    setActivateUserRole("vendeur")
+    setIsActivateDialogOpen(true)
   }
 
   function openEditDialog(user: UserProfile) {
@@ -351,6 +318,14 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
       <Tabs defaultValue="users" className="w-full">
         <TabsList>
           <TabsTrigger value="users">Utilisateurs</TabsTrigger>
+          <TabsTrigger value="pending" className="relative">
+            Utilisateurs en Attente
+            {pendingUsers.length > 0 && (
+              <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 text-xs">
+                {pendingUsers.length}
+              </Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="audit">Journal d'Audit</TabsTrigger>
         </TabsList>
 
@@ -455,6 +430,61 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
                   ))}
                 </TableBody>
               </Table>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="pending" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-bold">Utilisateurs en Attente d'Activation</h2>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-orange-500" />
+                Comptes en Attente
+              </CardTitle>
+              <CardDescription>
+                Ces utilisateurs se sont inscrits mais n'ont pas encore été activés par un administrateur
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {pendingUsers.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <UserCheck className="mx-auto h-12 w-12 mb-4 opacity-50" />
+                  <p>Aucun utilisateur en attente d'activation</p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Date d'inscription</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingUsers.map((pendingUser) => (
+                      <TableRow key={pendingUser.id}>
+                        <TableCell className="font-medium">{pendingUser.email}</TableCell>
+                        <TableCell>{new Date(pendingUser.created_at).toLocaleDateString("fr-FR")}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => openActivateDialog(pendingUser)}
+                            className="text-green-600 hover:text-green-700"
+                          >
+                            <UserCheck className="h-4 w-4 mr-2" />
+                            Activer
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -570,6 +600,140 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isActivateDialogOpen} onOpenChange={setIsActivateDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Activer l'Utilisateur</DialogTitle>
+            <DialogDescription>
+              Activez le compte de {selectedPendingUser?.email} et assignez-lui un rôle
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="activateFullName">Nom Complet</Label>
+              <Input
+                id="activateFullName"
+                value={activateUserFullName}
+                onChange={(e) => setActivateUserFullName(e.target.value)}
+                placeholder="Nom Prénom"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="activateRole">Rôle</Label>
+              <Select value={activateUserRole} onValueChange={(value: UserRole) => setActivateUserRole(value)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vendeur">Vendeur</SelectItem>
+                  <SelectItem value="manager">Manager</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsActivateDialogOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={activatePendingUser} disabled={!activateUserFullName}>
+              <UserCheck className="h-4 w-4 mr-2" />
+              Activer l'Utilisateur
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
+}
+
+async function createUser(initialSetup: boolean, newUserEmail: string, newUserFullName: string, newUserRole: UserRole) {
+  try {
+    const supabase = createClient()
+
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser()
+
+    const { data, error } = await supabase
+      .from("user_roles")
+      .insert({
+        user_id: initialSetup && currentUser ? currentUser.id : undefined,
+        email: newUserEmail,
+        full_name: newUserFullName,
+        role: initialSetup ? "admin" : newUserRole, // Force admin role for initial setup
+        status: initialSetup ? "active" : "pending", // Activate immediately for initial setup
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+
+    if (!initialSetup) {
+      const { error: inviteError } = await supabase.auth.admin.inviteUserByEmail(newUserEmail, {
+        redirectTo: `${window.location.origin}/dashboard`,
+        data: {
+          full_name: newUserFullName,
+          role: newUserRole,
+        },
+      })
+
+      if (inviteError) {
+        console.warn("Could not send invitation email:", inviteError)
+      }
+    }
+
+    await logAudit("CREATE_USER", "user_roles", data.id, null, {
+      email: newUserEmail,
+      role: initialSetup ? "admin" : newUserRole,
+    })
+
+    return {
+      success: true,
+      message: initialSetup
+        ? `Votre compte administrateur a été configuré avec succès.`
+        : `L'utilisateur ${newUserEmail} a été créé.`,
+    }
+  } catch (error) {
+    console.error("Error creating user:", error)
+    return {
+      success: false,
+      message: "Impossible de créer l'utilisateur",
+    }
+  }
+}
+
+async function updateUser(selectedUser: UserProfile, editUserRole: UserRole, editUserStatus: UserStatus) {
+  if (!selectedUser) return { success: false, message: "Aucun utilisateur sélectionné" }
+
+  try {
+    const oldValues = { role: selectedUser.role, status: selectedUser.status }
+
+    if (editUserRole !== selectedUser.role) {
+      const success = await updateUserRole(selectedUser.user_id, editUserRole)
+      if (!success) throw new Error("Failed to update role")
+    }
+
+    if (editUserStatus !== selectedUser.status) {
+      const success = await updateUserStatus(selectedUser.user_id, editUserStatus)
+      if (!success) throw new Error("Failed to update status")
+    }
+
+    await logAudit("UPDATE_USER", "user_roles", selectedUser.id, oldValues, {
+      role: editUserRole,
+      status: editUserStatus,
+    })
+
+    return {
+      success: true,
+      message: `L'utilisateur ${selectedUser.email} a été mis à jour`,
+    }
+  } catch (error) {
+    console.error("Error updating user:", error)
+    return {
+      success: false,
+      message: "Impossible de mettre à jour l'utilisateur",
+    }
+  }
 }
