@@ -24,6 +24,14 @@ export async function updateCompanySettings(formData: FormData) {
     // Handle logo upload if provided
     if (logoFile && logoFile.size > 0) {
       try {
+        if (!process.env.BLOB_READ_WRITE_TOKEN) {
+          console.error("BLOB_READ_WRITE_TOKEN environment variable is missing")
+          return {
+            success: false,
+            error: "Configuration manquante pour l'upload de fichiers. Veuillez contacter l'administrateur.",
+          }
+        }
+
         // Upload to Vercel Blob
         const blob = await put(`company/logo-${Date.now()}.${logoFile.name.split(".").pop()}`, logoFile, {
           access: "public",
@@ -31,7 +39,10 @@ export async function updateCompanySettings(formData: FormData) {
         logoUrl = blob.url
       } catch (error) {
         console.error("Error uploading logo:", error)
-        // Continue with current logo if upload fails
+        return {
+          success: false,
+          error: "Erreur lors de l'upload du logo. Veuillez réessayer ou contacter l'administrateur.",
+        }
       }
     }
 
