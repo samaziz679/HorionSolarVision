@@ -5,23 +5,14 @@ import { createSupabaseServerClient } from "@/lib/supabase/server"
 
 async function checkForAdminUsers() {
   try {
-    const supabase = createSupabaseServerClient()
+    const supabase = createSupabaseServerClient(true) // Pass true for service role
 
     console.log("[v0] Checking for admin users...")
 
-    const { data: adminUsers, error } = await supabase
+    const { data: adminRoles, error } = await supabase
       .from("user_roles")
-      .select(`
-        id,
-        role,
-        user_profiles!inner(
-          email, 
-          full_name,
-          status
-        )
-      `)
+      .select("id, role, user_id")
       .eq("role", "admin")
-      .eq("user_profiles.status", "active")
 
     if (error) {
       console.error("[v0] Error checking for admin users:", error)
@@ -29,10 +20,10 @@ async function checkForAdminUsers() {
       return false
     }
 
-    console.log("[v0] Admin users found:", adminUsers?.length || 0)
-    console.log("[v0] Admin users data:", adminUsers)
+    console.log("[v0] Admin roles found:", adminRoles?.length || 0)
+    console.log("[v0] Admin roles data:", adminRoles)
 
-    return adminUsers && adminUsers.length > 0
+    return adminRoles && adminRoles.length > 0
   } catch (error) {
     console.error("[v0] Exception in checkForAdminUsers:", error)
     // If there's any exception, assume no admin users exist to allow initial setup
