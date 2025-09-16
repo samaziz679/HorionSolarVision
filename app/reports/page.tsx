@@ -60,6 +60,10 @@ export default function ReportsPage() {
             startDate = new Date(currentYear, currentMonth - 1, 1).toISOString().split("T")[0]
             endDate = new Date(currentYear, currentMonth, 0).toISOString().split("T")[0]
             break
+          case "12-months":
+            startDate = new Date(currentYear, currentMonth - 12, 1).toISOString().split("T")[0]
+            endDate = now.toISOString().split("T")[0]
+            break
           case "all":
           default:
             // Last 6 months
@@ -174,6 +178,7 @@ export default function ReportsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">6 derniers mois</SelectItem>
+                <SelectItem value="12-months">12 derniers mois</SelectItem>
                 <SelectItem value="current-month">Mois actuel</SelectItem>
                 <SelectItem value="last-month">Mois dernier</SelectItem>
               </SelectContent>
@@ -182,10 +187,99 @@ export default function ReportsPage() {
               <Calendar className="h-4 w-4" />
               <span>
                 Période:{" "}
-                {period === "all" ? "6 derniers mois" : period === "current-month" ? "août 2025" : "juillet 2025"}
+                {period === "all"
+                  ? "6 derniers mois"
+                  : period === "12-months"
+                    ? "12 derniers mois"
+                    : period === "current-month"
+                      ? "août 2025"
+                      : "juillet 2025"}
               </span>
             </div>
           </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-green-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Santé Financière</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Marge Bénéficiaire</span>
+                  <span className="text-sm font-medium text-green-600">{profitMargin}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-solar-orange h-2 rounded-full"
+                    style={{ width: `${Math.min(Number(profitMargin), 100)}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-muted-foreground">Ratio Dépenses/CA</span>
+                  <span className="text-sm font-medium text-amber-600">{expenseRatio}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-amber-500 h-2 rounded-full"
+                    style={{ width: `${Math.min(Number(expenseRatio), 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-amber-500">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Alertes Stock</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {analytics.stockAlerts.slice(0, 3).map((item, index) => (
+                  <div key={index} className="flex items-center justify-between p-2 bg-red-50 rounded-lg">
+                    <div>
+                      <p className="text-sm font-medium">{item.name}</p>
+                      <p className="text-xs text-muted-foreground">Stock: {item.currentStock}</p>
+                    </div>
+                    <Badge variant={item.status === "critical" ? "destructive" : "secondary"} className="text-xs">
+                      {item.status === "critical" ? "Critique" : "Faible"}
+                    </Badge>
+                  </div>
+                ))}
+                {analytics.stockAlerts.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Aucune alerte stock</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-sky-blue">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Top Produits</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {analytics.topProducts.slice(0, 3).map((product, index) => (
+                  <div key={index} className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div
+                        className={`w-2 h-2 rounded-full ${index === 0 ? "bg-yellow-500" : index === 1 ? "bg-gray-400" : "bg-orange-500"}`}
+                      />
+                      <span className="text-sm font-medium">{product.name}</span>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-bold">{product.quantity}</p>
+                      <p className="text-xs text-muted-foreground">{product.revenue.toLocaleString()} CFA</p>
+                    </div>
+                  </div>
+                ))}
+                {analytics.topProducts.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">Aucune donnée produit</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         <Tabs defaultValue="overview" className="space-y-6">

@@ -25,6 +25,7 @@ export interface AnalyticsData {
   stockAlerts: Array<{
     name: string
     currentStock: number
+    threshold?: number
     status: "critical" | "low" | "ok"
   }>
   revenueBySource: Array<{
@@ -128,28 +129,28 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
 
     const totalStockValue =
       productsData?.reduce((sum, product) => {
-        const quantity = product.total_quantity || 0
+        const quantity = product.total_stock || 0
         const avgCost = product.average_cost || 0
         return sum + quantity * avgCost
       }, 0) || 0
 
     const stockValueDetail1 =
       productsData?.reduce((sum, product) => {
-        const quantity = product.total_quantity || 0
+        const quantity = product.total_stock || 0
         const price = product.prix_vente_detail_1 || 0
         return sum + quantity * price
       }, 0) || 0
 
     const stockValueDetail2 =
       productsData?.reduce((sum, product) => {
-        const quantity = product.total_quantity || 0
+        const quantity = product.total_stock || 0
         const price = product.prix_vente_detail_2 || 0
         return sum + quantity * price
       }, 0) || 0
 
     const stockValueGros =
       productsData?.reduce((sum, product) => {
-        const quantity = product.total_quantity || 0
+        const quantity = product.total_stock || 0
         const price = product.prix_vente_gros || 0
         return sum + quantity * price
       }, 0) || 0
@@ -161,11 +162,11 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       stockValueGros,
     })
 
-    const outOfStockCount = productsData?.filter((product) => (product.total_quantity || 0) === 0).length || 0
+    const outOfStockCount = productsData?.filter((product) => (product.total_stock || 0) === 0).length || 0
 
     // Calculate stock rotation (simplified: total sales value / average stock value)
     const totalSalesQuantity = salesData?.reduce((sum, sale) => sum + (sale.quantity || 0), 0) || 0
-    const averageStockQuantity = productsData?.reduce((sum, product) => sum + (product.total_quantity || 0), 0) || 0
+    const averageStockQuantity = productsData?.reduce((sum, product) => sum + (product.total_stock || 0), 0) || 0
     const stockRotation =
       averageStockQuantity > 0 ? Math.round((totalSalesQuantity / averageStockQuantity) * 10) / 10 : 0
 
@@ -315,16 +316,22 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
 
     const stockAlerts =
       productsData
-        ?.map((product) => ({
-          name: product.name,
-          currentStock: product.total_quantity || 0,
-          status:
-            (product.total_quantity || 0) <= 5
-              ? (product.total_quantity || 0) === 0
+        ?.map((product) => {
+          const currentStock = product.total_stock || 0
+          const threshold = product.seuil_stock_bas || 5
+
+          return {
+            name: product.name,
+            currentStock: currentStock,
+            threshold: threshold,
+            status:
+              currentStock === 0
                 ? ("critical" as const)
-                : ("low" as const)
-              : ("ok" as const),
-        }))
+                : currentStock <= threshold
+                  ? ("low" as const)
+                  : ("ok" as const),
+          }
+        })
         .filter((alert) => alert.status !== "ok") || []
 
     // Revenue by source (simplified - all direct sales for now)

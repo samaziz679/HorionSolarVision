@@ -6,11 +6,18 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(amount: number) {
-  const currency = process.env.NEXT_PUBLIC_CURRENCY || "USD"
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("fr-FR", {
     style: "currency",
-    currency: currency,
-  }).format(amount)
+    currency: "XOF", // West African CFA Franc
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  })
+    .format(amount)
+    .replace("XOF", "F CFA")
+}
+
+export function formatMoney(amount: number): string {
+  return `F CFA ${amount.toLocaleString("fr-FR")}`
 }
 
 export function formatDate(dateString: string) {
