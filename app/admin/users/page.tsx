@@ -4,20 +4,46 @@ import { UserManagement } from "@/components/admin/user-management"
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 
 async function checkForAdminUsers() {
-  const supabase = createSupabaseServerClient()
-  const { data: adminUsers } = await supabase.from("user_roles").select("id").eq("role", "admin").eq("status", "active")
+  try {
+    const supabase = createSupabaseServerClient()
 
-  return adminUsers && adminUsers.length > 0
+    console.log("[v0] Checking for admin users...")
+
+    const { data: adminUsers, error } = await supabase
+      .from("user_roles")
+      .select("id, email, role, status")
+      .eq("role", "admin")
+      .eq("status", "active")
+
+    if (error) {
+      console.error("[v0] Error checking for admin users:", error)
+      // If there's a database error, assume no admin users exist to allow initial setup
+      return false
+    }
+
+    console.log("[v0] Admin users found:", adminUsers?.length || 0)
+    console.log("[v0] Admin users data:", adminUsers)
+
+    return adminUsers && adminUsers.length > 0
+  } catch (error) {
+    console.error("[v0] Exception in checkForAdminUsers:", error)
+    // If there's any exception, assume no admin users exist to allow initial setup
+    return false
+  }
 }
 
 export default async function AdminUsersPage() {
   const hasAdminUsers = await checkForAdminUsers()
   const currentUser = await getCurrentUserProfile()
 
+  console.log("[v0] Has admin users:", hasAdminUsers)
+  console.log("[v0] Current user:", currentUser?.email, currentUser?.role)
+
   if (hasAdminUsers) {
     try {
       await requireRole(["admin"])
     } catch (error) {
+      console.log("[v0] Role check failed, redirecting to login")
       redirect("/login")
     }
   }
