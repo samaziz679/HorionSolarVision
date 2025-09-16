@@ -236,3 +236,120 @@ export function hasPermission(userRole: UserRole, requiredPermission: string): b
   const permissions = rolePermissions[userRole] || []
   return permissions.includes("*") || permissions.includes(requiredPermission)
 }
+
+export async function getPendingUsers(): Promise<
+  Array<{
+    id: string
+    email: string
+    created_at: string
+  }>
+> {
+  if (typeof window === "undefined") return []
+
+  try {
+    const supabase = createClient()
+
+    // Get all authenticated users from auth.users using RPC function
+    const { data: authUsers, error: authError } = await supabase.rpc("get_auth_users")
+
+    if (authError) {
+      console.error("[v0] Error fetching auth users:", authError)
+      return []
+    }
+
+    // Get all users that have profiles
+    const { data: profileUsers, error: profileError } = await supabase.from("user_profiles").select("user_id")
+
+    if (profileError) {
+      console.error("[v0] Error fetching profile users:", profileError)
+      return []
+    }
+
+    const profileUserIds = new Set(profileUsers?.map((p) => p.user_id) || [])
+
+    // Find users in auth but not in profiles (pending users)
+    const pendingUsers = (authUsers || [])
+      .filter((user: any) => !profileUserIds.has(user.id))
+      .map((user: any) => ({
+        id: user.id,
+        email: user.email || "",
+        created_at: user.created_at,
+      }))
+
+    return pendingUsers
+  } catch (error) {
+    console.error("[v0] Error getting pending users:", error)
+    return []
+  }
+}
+
+export async function activateUser(userId: string, email: string, fullName: string, role: UserRole): Promise<boolean> {
+  if (typeof window === "undefined") return false
+
+  try {
+    const supabase = createClient()
+
+    // Create user profile
+    const { error: profileError } = await supabase.from("user_profiles").insert({
+      user_id: userId,
+      email: email,
+      full_name: fullName,
+      status: "active",
+    })
+
+    if (profileError) {
+      console.error("[v0] Error creating user profile:", profileError)
+      return false
+    }
+
+    // Create user role
+    const { error: roleError } = await supabase.from("user_roles").insert({
+      user_id: userId,
+      role: role,
+      status: "active",
+    })
+
+    if (roleError) {
+      console.error("[v0] Error creating user role:", roleError)
+      return false
+    }
+
+    return true
+  } catch (error) {
+    console.error("[v0] Error activating user:", error)
+    return false
+  }
+}
+
+export async function logAudit(
+  action: string,
+  tableName?: string,
+  recordId?: string,
+  oldValues?: any,
+  newValues?: any,
+) {
+  if (typeof window === "undefined") return
+
+  try {
+    const supabase = createClient()
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return
+
+    const userAgent = navigator.userAgent
+
+    await supabase.from("audit_logs").insert({
+      user_id: user.id,
+      action,
+      table_name: tableName,
+      record_id: recordId,
+      old_values: oldValues,
+      new_values: newValues,
+      user_agent: userAgent,
+    })
+  } catch (error) {
+    console.error("Error logging audit:", error)
+  }
+}

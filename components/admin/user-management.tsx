@@ -25,11 +25,13 @@ import {
   getAllUsers,
   updateUserRole,
   updateUserStatus,
+  getPendingUsers,
+  activateUser,
+  logAudit,
   type UserProfile,
   type UserRole,
   type UserStatus,
 } from "@/lib/auth/rbac-client"
-import { getPendingUsers, activateUser } from "@/lib/auth/rbac"
 import type { Database } from "@/lib/supabase/types"
 
 interface AuditLog {
@@ -60,33 +62,6 @@ const createClient = () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
   )
-}
-
-async function logAudit(action: string, tableName: string, recordId: string, oldValues: any, newValues: any) {
-  if (typeof window === "undefined") return
-
-  try {
-    const supabase = createClient()
-    const {
-      data: { user },
-    } = await supabase.auth.getUser()
-
-    if (!user) return
-
-    const userAgent = navigator.userAgent
-
-    await supabase.from("audit_logs").insert({
-      user_id: user.id,
-      action,
-      table_name: tableName,
-      record_id: recordId,
-      old_values: oldValues,
-      new_values: newValues,
-      user_agent: userAgent,
-    })
-  } catch (error) {
-    console.error("Error logging audit:", error)
-  }
 }
 
 export function UserManagement({ initialSetup = false }: { initialSetup?: boolean }) {
@@ -303,7 +278,11 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
                 />
               </div>
             </div>
-            <Button onClick={createUser} disabled={!newUserEmail || !newUserFullName} className="w-full">
+            <Button
+              onClick={() => createUser(true, newUserEmail, newUserFullName, newUserRole)}
+              disabled={!newUserEmail || !newUserFullName}
+              className="w-full"
+            >
               <Shield className="h-4 w-4 mr-2" />
               Créer Mon Compte Administrateur
             </Button>
@@ -384,7 +363,10 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
                   <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
                     Annuler
                   </Button>
-                  <Button onClick={createUser} disabled={!newUserEmail}>
+                  <Button
+                    onClick={() => createUser(false, newUserEmail, newUserFullName, newUserRole)}
+                    disabled={!newUserEmail}
+                  >
                     Créer
                   </Button>
                 </DialogFooter>
@@ -596,7 +578,7 @@ export function UserManagement({ initialSetup = false }: { initialSetup?: boolea
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={updateUser}>Mettre à Jour</Button>
+            <Button onClick={() => updateUser(selectedUser!, editUserRole, editUserStatus)}>Mettre à Jour</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
