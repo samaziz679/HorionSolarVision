@@ -167,7 +167,9 @@ export async function getPendingUsers(): Promise<
       authUsers.users.map((u) => u.email),
     )
 
-    const { data: profileUsers, error: profileError } = await supabase.from("user_profiles").select("user_id")
+    const { data: profileUsers, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("user_id, email, full_name, status")
 
     if (profileError) {
       console.error("[v0] Error fetching profile users:", profileError)
@@ -175,7 +177,16 @@ export async function getPendingUsers(): Promise<
     }
 
     console.log("[v0] Profile users found:", profileUsers?.length || 0)
-    console.log("[v0] Profile user IDs:", profileUsers?.map((p) => p.user_id) || [])
+    console.log("[v0] Profile user details:", profileUsers)
+
+    const { data: roleUsers, error: roleError } = await supabase.from("user_roles").select("user_id, role")
+
+    if (roleError) {
+      console.error("[v0] Error fetching role users:", roleError)
+    } else {
+      console.log("[v0] Role users found:", roleUsers?.length || 0)
+      console.log("[v0] Role user details:", roleUsers)
+    }
 
     const profileUserIds = new Set(profileUsers?.map((p) => p.user_id) || [])
 
