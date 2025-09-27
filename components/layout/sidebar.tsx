@@ -19,7 +19,7 @@ import {
 } from "lucide-react"
 import { usePathname } from "next/navigation"
 import UserButton from "@/components/auth/user-button"
-import { getCurrentUserProfileClient, ROLE_PERMISSIONS, type UserRole } from "@/lib/auth/rbac-client"
+import { getCurrentUserProfileClient, ROLE_PERMISSIONS, type UserRole } from "@/lib/auth/rbac"
 import { useCompany } from "@/components/providers/company-provider"
 
 interface NavigationItem {
