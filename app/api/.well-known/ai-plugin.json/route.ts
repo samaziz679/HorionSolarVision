@@ -4,10 +4,10 @@ export async function GET() {
   const manifest = {
     schema_version: "v1",
     name_for_human: "Solar Vision ERP - Assistant Vocal",
-    name_for_model: "solar_vision_erp",
-    description_for_human: "Assistant de vente vocal pour le système ERP Solar Vision au Burkina Faso",
+    name_for_model: "solar_vision_voice_sales",
+    description_for_human: "Assistant vocal pour les ventes en français - Système ERP solaire Burkina Faso",
     description_for_model:
-      "Un système ERP pour la gestion des ventes de produits solaires avec commandes vocales en français",
+      "Voice assistant for French sales commands in Solar Vision ERP system. Processes voice commands like 'Vendre 3 batteries à M. Ouedraogo au prix grossiste' and creates sales transactions.",
     auth: {
       type: "none",
     },
@@ -20,5 +20,10 @@ export async function GET() {
     legal_info_url: `${process.env.NEXT_PUBLIC_SITE_URL}/legal`,
   }
 
-  return NextResponse.json(manifest)
+  return NextResponse.json(manifest, {
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+  })
 }

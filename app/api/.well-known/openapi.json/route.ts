@@ -4,9 +4,9 @@ export async function GET() {
   const openApiSpec = {
     openapi: "3.0.1",
     info: {
-      title: "Solar Vision ERP API",
-      description: "API pour l'assistant de vente vocal du système ERP Solar Vision",
-      version: "1.0.0",
+      title: "Solar Vision ERP - Voice Sales API",
+      description: "API pour l'assistant vocal de ventes en français",
+      version: "v1.0.0",
     },
     servers: [
       {
@@ -17,8 +17,8 @@ export async function GET() {
       "/api/mcp/process-voice-command": {
         post: {
           operationId: "processVoiceCommand",
-          summary: "Traiter une commande vocale de vente",
-          description: "Analyse et traite une commande vocale en français pour créer une vente",
+          summary: "Traite une commande vocale en français",
+          description: "Analyse et valide une commande vocale de vente en français",
           requestBody: {
             required: true,
             content: {
@@ -49,16 +49,13 @@ export async function GET() {
                       parsedData: {
                         type: "object",
                         properties: {
-                          productId: { type: "string" },
                           product: { type: "string" },
-                          clientId: { type: "string" },
-                          client: { type: "string" },
                           quantity: { type: "number" },
-                          priceType: { type: "string", enum: ["detail_1", "detail_2", "gros"] },
-                          unitPrice: { type: "number" },
-                          total: { type: "number" },
+                          client: { type: "string" },
+                          priceType: { type: "string" },
                         },
                       },
+                      error: { type: "string" },
                     },
                   },
                 },
@@ -70,8 +67,8 @@ export async function GET() {
       "/api/mcp/create-sale": {
         post: {
           operationId: "createSale",
-          summary: "Créer une vente",
-          description: "Crée une nouvelle vente dans le système ERP",
+          summary: "Crée une vente à partir des données vocales",
+          description: "Enregistre une vente dans le système ERP",
           requestBody: {
             required: true,
             content: {
@@ -82,11 +79,10 @@ export async function GET() {
                     productId: { type: "string" },
                     clientId: { type: "string" },
                     quantity: { type: "number" },
-                    priceType: { type: "string" },
+                    pricePlan: { type: "string" },
                     unitPrice: { type: "number" },
-                    total: { type: "number" },
                   },
-                  required: ["productId", "clientId", "quantity", "unitPrice", "total"],
+                  required: ["productId", "clientId", "quantity", "pricePlan", "unitPrice"],
                 },
               },
             },
@@ -100,16 +96,9 @@ export async function GET() {
                     type: "object",
                     properties: {
                       success: { type: "boolean" },
-                      sale: {
-                        type: "object",
-                        properties: {
-                          id: { type: "string" },
-                          total: { type: "number" },
-                          product: { type: "string" },
-                          client: { type: "string" },
-                          quantity: { type: "number" },
-                        },
-                      },
+                      saleId: { type: "string" },
+                      message: { type: "string" },
+                      error: { type: "string" },
                     },
                   },
                 },
@@ -121,5 +110,10 @@ export async function GET() {
     },
   }
 
-  return NextResponse.json(openApiSpec)
+  return NextResponse.json(openApiSpec, {
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+    },
+  })
 }
