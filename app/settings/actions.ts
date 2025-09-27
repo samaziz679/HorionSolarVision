@@ -16,8 +16,7 @@ export async function updateCompanySettings(formData: FormData) {
     const address = formData.get("address") as string
     const logoFile = formData.get("logo") as File
 
-    // Get current settings to preserve logo if not updating
-    const { data: currentSettings } = await supabase.from("company_settings").select("logo").single()
+    const { data: currentSettings } = await supabase.from("company_settings").select("logo").maybeSingle()
 
     let logoUrl = currentSettings?.logo || "/images/company/logo.png"
 

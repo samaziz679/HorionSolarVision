@@ -5,7 +5,7 @@ export async function GET() {
   try {
     const supabase = createClient()
 
-    const { data, error } = await supabase.from("company_settings").select("*").single()
+    const { data, error } = await supabase.from("company_settings").select("*").maybeSingle()
 
     if (error) {
       return NextResponse.json({

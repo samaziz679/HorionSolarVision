@@ -34,7 +34,7 @@ export async function getCompanyConfigBrowser(): Promise<CompanyConfig> {
   try {
     const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-    const { data, error } = await supabase.from("company_settings").select("*").single()
+    const { data, error } = await supabase.from("company_settings").select("*").maybeSingle()
 
     if (error || !data) {
       console.log("No company settings found, using defaults")

@@ -49,7 +49,7 @@ export function CompanyProvider({ children }: CompanyProviderProps) {
       try {
         const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
-        const { data, error } = await supabase.from("company_settings").select("*").single()
+        const { data, error } = await supabase.from("company_settings").select("*").maybeSingle()
 
         if (error) {
           console.log("[v0] No company settings found, using defaults:", error.message)
@@ -72,6 +72,8 @@ export function CompanyProvider({ children }: CompanyProviderProps) {
 
           console.log("[v0] Loaded company config successfully:", config)
           setCompany(config)
+        } else {
+          console.log("[v0] No company settings found, using defaults")
         }
       } catch (error) {
         console.error("[v0] Error loading company config:", error)

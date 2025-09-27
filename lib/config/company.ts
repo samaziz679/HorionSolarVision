@@ -28,7 +28,7 @@ const defaultConfig = {
 export async function getCompanyConfig() {
   try {
     const supabase = createClient()
-    const { data: settings } = await supabase.from("company_settings").select("tagline, logo").single()
+    const { data: settings } = await supabase.from("company_settings").select("tagline, logo").maybeSingle()
 
     if (settings) {
       return {
@@ -47,7 +47,7 @@ export async function getCompanyConfig() {
 export async function getCompanyConfigClient() {
   try {
     const supabase = createBrowserClient()
-    const { data: settings } = await supabase.from("company_settings").select("tagline, logo").single()
+    const { data: settings } = await supabase.from("company_settings").select("tagline, logo").maybeSingle()
 
     if (settings) {
       return {

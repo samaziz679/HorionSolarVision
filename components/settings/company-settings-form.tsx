@@ -32,7 +32,7 @@ export function CompanySettingsForm() {
     const loadSettings = async () => {
       try {
         const supabase = createClient()
-        const { data } = await supabase.from("company_settings").select("*").single()
+        const { data } = await supabase.from("company_settings").select("*").maybeSingle()
 
         if (data) {
           const companySettings = {
@@ -46,6 +46,18 @@ export function CompanySettingsForm() {
           }
           setSettings(companySettings)
           setLogoPreview(companySettings.logo)
+        } else {
+          const defaultSettings = {
+            name: "Solar Vision ERP",
+            tagline: "Bienvenue dans le système ERP Solar Vision",
+            logo: "/images/company/logo.png",
+            currency: "FCFA",
+            email: "contact@solarvision.bf",
+            phone: "+226 XX XX XX XX",
+            address: "Ouagadougou, Burkina Faso",
+          }
+          setSettings(defaultSettings)
+          setLogoPreview(defaultSettings.logo)
         }
       } catch (error) {
         console.error("Error loading company settings:", error)
@@ -75,7 +87,6 @@ export function CompanySettingsForm() {
           title: "Paramètres mis à jour",
           description: "Les informations de votre entreprise ont été mises à jour avec succès.",
         })
-        // Reload the page to reflect changes
         window.location.reload()
       } else {
         toast({

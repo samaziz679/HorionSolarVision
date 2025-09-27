@@ -31,7 +31,7 @@ export async function getCompanyConfigClient(): Promise<CompanyConfig> {
 
   try {
     const supabase = createClient()
-    const { data, error } = await supabase.from("company_settings").select("*").single()
+    const { data, error } = await supabase.from("company_settings").select("*").maybeSingle()
 
     console.log("Company settings query result:", { data, error })
 
