@@ -62,27 +62,9 @@ export function Sidebar() {
           console.log("[v0] User permissions:", permissions)
           console.log("[v0] Available modules:", permissions.modules)
 
-          const voiceAssistantItem = ALL_NAVIGATION_ITEMS.find((item) => item.href === "/voice-sales")
-          if (voiceAssistantItem) {
-            const hasVoiceAccess = permissions.modules.includes(voiceAssistantItem.module as any)
-            console.log(`[v0] === VOICE ASSISTANT DEBUG ===`)
-            console.log(`[v0] Voice Assistant Item:`, voiceAssistantItem)
-            console.log(`[v0] Required Module: "${voiceAssistantItem.module}"`)
-            console.log(`[v0] User Role: "${profile.role}"`)
-            console.log(`[v0] User Modules:`, permissions.modules)
-            console.log(`[v0] Has Sales Module: ${permissions.modules.includes("sales")}`)
-            console.log(`[v0] Voice Assistant Access: ${hasVoiceAccess}`)
-            console.log(`[v0] === END VOICE ASSISTANT DEBUG ===`)
-          }
-
           const filteredItems = ALL_NAVIGATION_ITEMS.filter((item) => {
             const hasAccess = permissions.modules.includes(item.module as any)
             console.log(`[v0] Item "${item.label}" (module: ${item.module}): ${hasAccess ? "VISIBLE" : "HIDDEN"}`)
-
-            if (item.href === "/voice-sales") {
-              console.log(`[v0] 🎤 VOICE ASSISTANT: ${hasAccess ? "✅ WILL SHOW" : "❌ WILL HIDE"}`)
-            }
-
             return hasAccess
           })
 
@@ -90,9 +72,6 @@ export function Sidebar() {
             "[v0] Final filtered navigation items:",
             filteredItems.map((item) => `${item.label} (${item.href})`),
           )
-
-          const voiceInFinalList = filteredItems.some((item) => item.href === "/voice-sales")
-          console.log(`[v0] 🎤 Voice Assistant in final navigation: ${voiceInFinalList ? "✅ YES" : "❌ NO"}`)
 
           setNavigationItems(filteredItems)
         } else {
