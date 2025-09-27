@@ -52,16 +52,16 @@ export function CompanyProvider({ children }: CompanyProviderProps) {
         const { data, error } = await supabase.from("company_settings").select("*").single()
 
         if (error) {
-          console.log("No company settings found, using defaults")
+          console.log("[v0] No company settings found, using defaults:", error.message)
           setIsLoaded(true)
           return
         }
 
         if (data) {
           const config: CompanyConfig = {
-            name: data.company_name || defaultConfig.name,
-            logo: data.logo_url || defaultConfig.logo,
-            slogan: data.slogan || defaultConfig.slogan,
+            name: data.name || defaultConfig.name,
+            logo: data.logo || defaultConfig.logo,
+            slogan: data.tagline || defaultConfig.slogan,
             currency: data.currency || defaultConfig.currency,
             contact: {
               email: data.email || defaultConfig.contact.email,
@@ -70,11 +70,11 @@ export function CompanyProvider({ children }: CompanyProviderProps) {
             },
           }
 
-          console.log("Loaded company config:", config)
+          console.log("[v0] Loaded company config successfully:", config)
           setCompany(config)
         }
       } catch (error) {
-        console.error("Error loading company config:", error)
+        console.error("[v0] Error loading company config:", error)
       } finally {
         setIsLoaded(true)
       }

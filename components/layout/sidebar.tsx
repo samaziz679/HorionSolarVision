@@ -62,13 +62,18 @@ export function Sidebar() {
           console.log("[v0] User permissions:", permissions) // Added debug logging
           const filteredItems = ALL_NAVIGATION_ITEMS.filter((item) => permissions.modules.includes(item.module as any))
           console.log("[v0] Filtered navigation items:", filteredItems) // Added debug logging
+          console.log(
+            "[v0] Voice assistant should be visible for roles with 'sales' module:",
+            permissions.modules.includes("sales"),
+          ) // Added debug logging
           setNavigationItems(filteredItems)
         }
       } catch (error) {
-        console.error("Error loading user role:", error)
+        console.error("[v0] Error loading user role:", error)
         const basicItems = ALL_NAVIGATION_ITEMS.filter((item) =>
-          ["dashboard", "sales", "clients"].includes(item.module),
+          ["dashboard", "sales", "clients", "voice-sales"].includes(item.module),
         )
+        console.log("[v0] Using basic navigation items (fallback):", basicItems)
         setNavigationItems(basicItems)
       } finally {
         setLoading(false)
