@@ -55,10 +55,13 @@ export function Sidebar() {
     async function loadUserRole() {
       try {
         const profile = await getCurrentUserProfileClient()
+        console.log("[v0] User profile loaded:", profile) // Added debug logging
         if (profile && profile.status === "active") {
           setUserRole(profile.role)
           const permissions = ROLE_PERMISSIONS[profile.role]
+          console.log("[v0] User permissions:", permissions) // Added debug logging
           const filteredItems = ALL_NAVIGATION_ITEMS.filter((item) => permissions.modules.includes(item.module as any))
+          console.log("[v0] Filtered navigation items:", filteredItems) // Added debug logging
           setNavigationItems(filteredItems)
         }
       } catch (error) {
