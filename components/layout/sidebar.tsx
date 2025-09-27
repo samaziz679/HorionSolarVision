@@ -38,7 +38,7 @@ const ALL_NAVIGATION_ITEMS: NavigationItem[] = [
   { href: "/suppliers", label: "Fournisseurs", icon: Users, module: "suppliers" },
   { href: "/expenses", label: "Dépenses", icon: DollarSign, module: "expenses" },
   { href: "/reports", label: "Rapports", icon: LineChart, module: "reports" },
-  { href: "/solar-sizer", label: "Dimensionnement Solaire", icon: Sun, module: "solar-sizer" },
+  { href: "/solar-sizer", label: "Dimensionnement Solaire", icon: Sun, module: "dashboard" },
   { href: "/voice-sales", label: "Assistant Vocal", icon: Mic, module: "sales" },
   { href: "/admin/users", label: "Gestion Utilisateurs", icon: Users, module: "admin" },
   { href: "/settings", label: "Paramètres", icon: Settings, module: "settings" },
@@ -55,25 +55,48 @@ export function Sidebar() {
     async function loadUserRole() {
       try {
         const profile = await getCurrentUserProfileClient()
-        console.log("[v0] User profile loaded:", profile) // Added debug logging
+        console.log("[v0] User profile loaded:", profile)
         if (profile && profile.status === "active") {
           setUserRole(profile.role)
           const permissions = ROLE_PERMISSIONS[profile.role]
-          console.log("[v0] User permissions:", permissions) // Added debug logging
-          const filteredItems = ALL_NAVIGATION_ITEMS.filter((item) => permissions.modules.includes(item.module as any))
-          console.log("[v0] Filtered navigation items:", filteredItems) // Added debug logging
+          console.log("[v0] User permissions:", permissions)
+          console.log("[v0] Available modules:", permissions.modules)
+
+          const filteredItems = ALL_NAVIGATION_ITEMS.filter((item) => {
+            const hasAccess = permissions.modules.includes(item.module as any)
+            console.log(`[v0] Item "${item.label}" (module: ${item.module}): ${hasAccess ? "VISIBLE" : "HIDDEN"}`)
+            return hasAccess
+          })
+
           console.log(
-            "[v0] Voice assistant should be visible for roles with 'sales' module:",
-            permissions.modules.includes("sales"),
-          ) // Added debug logging
+            "[v0] Final filtered navigation items:",
+            filteredItems.map((item) => item.label),
+          )
+
+          // Special check for voice assistant
+          const voiceAssistantItem = ALL_NAVIGATION_ITEMS.find((item) => item.href === "/voice-sales")
+          if (voiceAssistantItem) {
+            const hasVoiceAccess = permissions.modules.includes(voiceAssistantItem.module as any)
+            console.log(
+              `[v0] Voice Assistant access check: module="${voiceAssistantItem.module}", hasAccess=${hasVoiceAccess}`,
+            )
+            console.log(`[v0] User role "${profile.role}" modules:`, permissions.modules)
+          }
+
           setNavigationItems(filteredItems)
+        } else {
+          console.log("[v0] No active user profile found")
         }
       } catch (error) {
         console.error("[v0] Error loading user role:", error)
+        // Fallback for errors - show basic items including voice assistant for testing
         const basicItems = ALL_NAVIGATION_ITEMS.filter((item) =>
-          ["dashboard", "sales", "clients", "voice-sales"].includes(item.module),
+          ["dashboard", "sales", "clients"].includes(item.module),
         )
-        console.log("[v0] Using basic navigation items (fallback):", basicItems)
+        console.log(
+          "[v0] Using basic navigation items (fallback):",
+          basicItems.map((item) => item.label),
+        )
         setNavigationItems(basicItems)
       } finally {
         setLoading(false)
