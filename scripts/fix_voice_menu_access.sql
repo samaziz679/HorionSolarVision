@@ -3,6 +3,7 @@
 -- admin, commercial, seller, and finance roles
 
 -- Step 1: Check if there are users without role assignments
+-- Removed non-existent columns and fixed the logic to use correct schema
 DO $$
 DECLARE
   user_record RECORD;
@@ -25,8 +26,9 @@ BEGIN
       LEFT JOIN user_roles ur ON au.id = ur.user_id
       WHERE ur.id IS NULL
     LOOP
-      INSERT INTO user_roles (user_id, role, status, email)
-      VALUES (user_record.id, 'seller', 'active', user_record.email);
+      -- Removed status and email columns that don't exist in user_roles
+      INSERT INTO user_roles (user_id, role)
+      VALUES (user_record.id, 'seller'::user_role);
       
       RAISE NOTICE 'Assigned seller role to user: %', user_record.email;
     END LOOP;
@@ -34,6 +36,7 @@ BEGIN
 END $$;
 
 -- Step 2: Ensure the first user is an admin (if no admin exists)
+-- Fixed to use correct schema without status and email columns
 DO $$
 DECLARE
   admin_count INTEGER;
@@ -43,7 +46,7 @@ BEGIN
   -- Check if there's at least one admin
   SELECT COUNT(*) INTO admin_count
   FROM user_roles
-  WHERE role = 'admin' AND status = 'active';
+  WHERE role = 'admin';
 
   IF admin_count = 0 THEN
     -- Get the first user
@@ -54,10 +57,11 @@ BEGIN
 
     IF first_user_id IS NOT NULL THEN
       -- Update or insert admin role for first user
-      INSERT INTO user_roles (user_id, role, status, email)
-      VALUES (first_user_id, 'admin', 'active', first_user_email)
+      -- Removed status and email, added proper conflict handling
+      INSERT INTO user_roles (user_id, role)
+      VALUES (first_user_id, 'admin'::user_role)
       ON CONFLICT (user_id) 
-      DO UPDATE SET role = 'admin', status = 'active';
+      DO UPDATE SET role = 'admin'::user_role;
 
       RAISE NOTICE 'Promoted first user to admin: %', first_user_email;
     END IF;
@@ -67,14 +71,17 @@ BEGIN
 END $$;
 
 -- Step 3: Show final user roles
+-- Fixed to join with user_profiles for email and status info
 SELECT 
   ur.user_id,
-  ur.email,
+  up.email,
+  up.full_name,
   ur.role,
-  ur.status,
+  up.status as profile_status,
   CASE 
     WHEN ur.role IN ('admin', 'commercial', 'seller', 'finance') THEN '✓ Has voice assistant access'
     ELSE '✗ No voice assistant access'
   END as voice_access
 FROM user_roles ur
+LEFT JOIN user_profiles up ON ur.user_id = up.user_id
 ORDER BY ur.created_at ASC;

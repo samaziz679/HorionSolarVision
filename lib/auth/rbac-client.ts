@@ -68,26 +68,55 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
     } = await supabase.auth.getUser()
 
     if (!user) {
+      console.log("[v0] No authenticated user found")
       return null
     }
 
-    const { data: userRole, error } = await supabase.from("user_roles").select("*").eq("user_id", user.id).single()
+    console.log("[v0] Authenticated user ID:", user.id)
 
-    if (error || !userRole) {
+    const { data: userRole, error: roleError } = await supabase
+      .from("user_roles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single()
+
+    if (roleError || !userRole) {
+      console.log("[v0] No role found for user:", roleError?.message)
       return null
     }
 
-    const { data: userProfile } = await supabase.from("user_profiles").select("*").eq("user_id", user.id).single()
+    console.log("[v0] User role found:", userRole.role)
 
-    const profile = {
-      ...userRole,
+    const { data: userProfile, error: profileError } = await supabase
+      .from("user_profiles")
+      .select("*")
+      .eq("user_id", user.id)
+      .single()
+
+    if (profileError) {
+      console.log("[v0] No profile found, using defaults:", profileError.message)
+    }
+
+    const profile: UserProfile = {
+      id: userRole.id,
+      user_id: userRole.user_id,
+      role: userRole.role,
+      status: (userProfile?.status as UserStatus) || "active", // Get status from user_profiles
+      created_at: userRole.created_at,
+      created_by: userRole.created_by,
       email: userProfile?.email || user.email || "",
       full_name: userProfile?.full_name || "",
     }
 
+    console.log("[v0] Final profile:", {
+      role: profile.role,
+      status: profile.status,
+      email: profile.email,
+    })
+
     return profile
   } catch (error) {
-    console.error("Error in getCurrentUserProfile:", error)
+    console.error("[v0] Error in getCurrentUserProfile:", error)
     return null
   }
 }
