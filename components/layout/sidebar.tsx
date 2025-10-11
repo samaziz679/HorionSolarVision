@@ -39,7 +39,7 @@ const ALL_NAVIGATION_ITEMS: NavigationItem[] = [
   { href: "/expenses", label: "Dépenses", icon: DollarSign, module: "expenses" },
   { href: "/reports", label: "Rapports", icon: LineChart, module: "reports" },
   { href: "/solar-sizer", label: "Dimensionnement Solaire", icon: Sun, module: "dashboard" },
-  { href: "/dashboard/voice-sales", label: "Assistant Vocal", icon: Mic, module: "sales" },
+  { href: "/dashboard/voice-sales", label: "Assistant Vocal", icon: Mic, module: "voice_assistant" },
   { href: "/admin/users", label: "Gestion Utilisateurs", icon: Users, module: "admin" },
   { href: "/settings", label: "Paramètres", icon: Settings, module: "settings" },
 ]

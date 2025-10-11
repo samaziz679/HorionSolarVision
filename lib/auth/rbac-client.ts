@@ -29,22 +29,23 @@ export const ROLE_PERMISSIONS = {
       "settings",
       "admin",
       "solar-sizer",
+      "voice_assistant",
     ],
   },
   stock_manager: {
-    modules: ["dashboard", "inventory", "purchases", "suppliers", "reports"],
+    modules: ["dashboard", "inventory", "purchases", "suppliers", "reports", "voice_assistant"],
   },
   commercial: {
-    modules: ["dashboard", "sales", "clients", "reports"],
+    modules: ["dashboard", "sales", "clients", "reports", "voice_assistant"],
   },
   finance: {
-    modules: ["dashboard", "expenses", "reports", "sales", "purchases"],
+    modules: ["dashboard", "expenses", "reports", "sales", "purchases", "voice_assistant"],
   },
   visitor: {
-    modules: ["dashboard"],
+    modules: ["dashboard", "voice_assistant"],
   },
   seller: {
-    modules: ["dashboard", "sales", "clients"],
+    modules: ["dashboard", "sales", "clients", "voice_assistant"],
   },
 } as const
 
@@ -260,6 +261,7 @@ export function hasPermission(userRole: UserRole, requiredPermission: string): b
       "suppliers.create",
       "suppliers.edit",
       "reports.view",
+      "voice_assistant.view",
     ],
     commercial: [
       "dashboard.view",
@@ -270,6 +272,7 @@ export function hasPermission(userRole: UserRole, requiredPermission: string): b
       "clients.create",
       "clients.edit",
       "reports.view",
+      "voice_assistant.view",
     ],
     finance: [
       "dashboard.view",
@@ -279,9 +282,10 @@ export function hasPermission(userRole: UserRole, requiredPermission: string): b
       "reports.view",
       "sales.view",
       "purchases.view",
+      "voice_assistant.view",
     ],
-    visitor: ["dashboard.view"],
-    seller: ["dashboard.view", "sales.view", "sales.create", "clients.view", "clients.create"],
+    visitor: ["dashboard.view", "voice_assistant.view"],
+    seller: ["dashboard.view", "sales.view", "sales.create", "clients.view", "clients.create", "voice_assistant.view"],
   }
 
   const permissions = rolePermissions[userRole] || []

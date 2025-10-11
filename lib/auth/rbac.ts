@@ -41,27 +41,28 @@ export const ROLE_PERMISSIONS = {
       "reports",
       "settings",
       "admin",
+      "voice_assistant",
     ],
     actions: ["create", "read", "update", "delete", "manage_users"],
   },
   stock_manager: {
-    modules: ["dashboard", "inventory", "purchases", "suppliers", "reports"],
+    modules: ["dashboard", "inventory", "purchases", "suppliers", "reports", "voice_assistant"],
     actions: ["create", "read", "update", "delete"],
   },
   commercial: {
-    modules: ["dashboard", "sales", "clients", "reports"],
+    modules: ["dashboard", "sales", "clients", "reports", "voice_assistant"],
     actions: ["create", "read", "update", "delete"],
   },
   finance: {
-    modules: ["dashboard", "expenses", "reports", "sales", "purchases"],
+    modules: ["dashboard", "expenses", "reports", "sales", "purchases", "voice_assistant"],
     actions: ["create", "read", "update", "delete"],
   },
   visitor: {
-    modules: ["dashboard"],
+    modules: ["dashboard", "voice_assistant"],
     actions: ["read"],
   },
   seller: {
-    modules: ["dashboard", "sales", "clients"],
+    modules: ["dashboard", "sales", "clients", "voice_assistant"],
     actions: ["create", "read"],
   },
 } as const
