@@ -44,16 +44,6 @@ const ALL_NAVIGATION_ITEMS: NavigationItem[] = [
   { href: "/settings", label: "Paramètres", icon: Settings, module: "settings" },
 ]
 
-const ensureVoiceAssistantVisible = (items: NavigationItem[]) => {
-  const hasVoiceAssistant = items.some((item) => item.module === "voice_assistant")
-  if (hasVoiceAssistant) return items
-
-  const voiceAssistantItem = ALL_NAVIGATION_ITEMS.find((item) => item.module === "voice_assistant")
-  if (!voiceAssistantItem) return items
-
-  return [...items, voiceAssistantItem]
-}
-
 export function Sidebar() {
   const pathname = usePathname()
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>(ALL_NAVIGATION_ITEMS)
@@ -61,73 +51,42 @@ export function Sidebar() {
   const [loading, setLoading] = useState(true)
   const company = useCompany()
 
-  console.log("[v0] Sidebar component rendering")
-  console.log("[v0] Initial navigation items count:", ALL_NAVIGATION_ITEMS.length)
-  console.log(
-    "[v0] Voice assistant item exists:",
-    ALL_NAVIGATION_ITEMS.some((item) => item.module === "voice_assistant"),
-  )
-
   useEffect(() => {
-    console.log("[v0] Sidebar useEffect starting...")
-
     async function loadUserRole() {
-      console.log("[v0] loadUserRole function called")
       try {
-        console.log("[v0] Calling getCurrentUserProfileClient...")
         const profile = await getCurrentUserProfileClient()
-        console.log("[v0] User profile loaded:", profile)
 
         if (profile && profile.status === "active") {
           setUserRole(profile.role)
           const permissions = ROLE_PERMISSIONS[profile.role]
-          console.log("[v0] User permissions:", permissions)
-          console.log("[v0] Available modules:", permissions.modules)
 
           const filteredItems = ALL_NAVIGATION_ITEMS.filter((item) => {
-            const hasAccess = permissions.modules.includes(item.module as any)
-            console.log(`[v0] Item "${item.label}" (module: ${item.module}): ${hasAccess ? "VISIBLE" : "HIDDEN"}`)
-            return hasAccess
+            // Voice assistant is always visible
+            if (item.module === "voice_assistant") return true
+            // Filter other items based on permissions
+            return permissions.modules.includes(item.module as any)
           })
 
-          console.log(
-            "[v0] Final filtered navigation items:",
-            filteredItems.map((item) => `${item.label} (${item.href})`),
-          )
-
-          const finalItems = ensureVoiceAssistantVisible(filteredItems)
-          console.log(
-            "[v0] After ensureVoiceAssistantVisible:",
-            finalItems.map((item) => item.label),
-          )
-          setNavigationItems(finalItems)
+          setNavigationItems(filteredItems)
         } else {
-          console.log("[v0] No active user profile found, profile:", profile)
+          const basicItems = ALL_NAVIGATION_ITEMS.filter((item) =>
+            ["dashboard", "sales", "clients", "voice_assistant"].includes(item.module),
+          )
+          setNavigationItems(basicItems)
         }
       } catch (error) {
         console.error("[v0] Error loading user role:", error)
-        const basicItems = ensureVoiceAssistantVisible(
-          ALL_NAVIGATION_ITEMS.filter((item) => ["dashboard", "sales", "clients"].includes(item.module)),
-        )
-        console.log(
-          "[v0] Using basic navigation items (fallback):",
-          basicItems.map((item) => item.label),
+        const basicItems = ALL_NAVIGATION_ITEMS.filter((item) =>
+          ["dashboard", "sales", "clients", "voice_assistant"].includes(item.module),
         )
         setNavigationItems(basicItems)
       } finally {
-        console.log("[v0] loadUserRole finally block, setting loading to false")
         setLoading(false)
       }
     }
 
     loadUserRole()
   }, [])
-
-  console.log("[v0] Sidebar rendering with", navigationItems.length, "items")
-  console.log(
-    "[v0] Navigation items:",
-    navigationItems.map((item) => `${item.label} (${item.module})`),
-  )
 
   return (
     <div className="hidden border-r bg-muted/40 md:block">

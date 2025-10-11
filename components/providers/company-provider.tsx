@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "@/lib/supabase/client"
 
 interface CompanyConfig {
   name: string
@@ -47,7 +47,7 @@ export function CompanyProvider({ children }: CompanyProviderProps) {
 
     async function loadCompanyConfig() {
       try {
-        const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+        const supabase = createClient()
 
         const { data, error } = await supabase.from("company_settings").select("*").maybeSingle()
 
