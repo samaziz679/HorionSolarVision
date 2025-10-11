@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss"
+import colors from "tailwindcss/colors"
+import animatePlugin from "tailwindcss-animate"
 
 const config = {
   darkMode: ["class"],
@@ -20,6 +22,8 @@ const config = {
     },
     extend: {
       colors: {
+        sky: colors.sky,
+        stone: colors.stone,
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
@@ -75,7 +79,7 @@ const config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [animatePlugin],
 } satisfies Config
 
 export default config
