@@ -91,7 +91,7 @@ export default function DebugRBACPage() {
         { href: "/dashboard", label: "Tableau de bord", module: "dashboard" },
         { href: "/inventory", label: "Inventaire", module: "inventory" },
         { href: "/sales", label: "Ventes", module: "sales" },
-        { href: "/dashboard/voice-sales", label: "Assistant Vocal", module: "sales" },
+        { href: "/dashboard/voice-sales", label: "Assistant Vocal", module: "voice_assistant" },
         { href: "/purchases", label: "Achats", module: "purchases" },
         { href: "/clients", label: "Clients", module: "clients" },
         { href: "/suppliers", label: "Fournisseurs", module: "suppliers" },
@@ -274,6 +274,7 @@ export default function DebugRBACPage() {
                     debugInfo.userProfile?.role &&
                     (["admin"].includes(debugInfo.userProfile.role) ||
                       (item.module === "sales" && ["commercial", "seller"].includes(debugInfo.userProfile.role)) ||
+                      (item.module === "voice_assistant" && ["admin"].includes(debugInfo.userProfile.role)) ||
                       item.module === "dashboard")
 
                   return (
@@ -285,7 +286,7 @@ export default function DebugRBACPage() {
                         <Badge variant={shouldBeVisible ? "default" : "secondary"}>
                           {shouldBeVisible ? "Should Show" : "Should Hide"}
                         </Badge>
-                        {item.label === "Assistant Vocal" && <Badge variant="destructive">VOICE ASSISTANT</Badge>}
+                        {item.module === "voice_assistant" && <Badge variant="destructive">VOICE ASSISTANT</Badge>}
                       </div>
                     </div>
                   )
