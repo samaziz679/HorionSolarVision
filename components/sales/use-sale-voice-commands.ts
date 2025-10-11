@@ -55,37 +55,86 @@ function levenshteinDistance(a: string, b: string): number {
   return matrix[b.length][a.length]
 }
 
-// Fuzzy product matching with tolerance for minor misspellings
 function fuzzyFindProduct(
   query: string,
   products: { id: string; name: string; sku?: string }[],
 ): { id: string; name: string } | null {
-  const normalizedQuery = query.toLowerCase().trim()
+  // Remove common French words and clean the query
+  const normalizedQuery = query
+    .toLowerCase()
+    .trim()
+    .replace(/\b(le|la|les|un|une|des|de|du|d')\b/g, "") // Remove articles
+    .replace(/\s+/g, " ") // Normalize spaces
+    .trim()
 
-  // First try exact match
+  if (!normalizedQuery) return null
+
+  console.log("[v0] Searching for product:", normalizedQuery)
+
+  // First try exact match (case-insensitive)
   const exactMatch = products.find(
     (p) => p.name.toLowerCase() === normalizedQuery || p.sku?.toLowerCase() === normalizedQuery,
   )
-  if (exactMatch) return exactMatch
+  if (exactMatch) {
+    console.log("[v0] Exact match found:", exactMatch.name)
+    return exactMatch
+  }
 
-  // Then try substring match
+  // Try substring match (case-insensitive)
   const substringMatch = products.find(
     (p) => p.name.toLowerCase().includes(normalizedQuery) || normalizedQuery.includes(p.name.toLowerCase()),
   )
-  if (substringMatch) return substringMatch
+  if (substringMatch) {
+    console.log("[v0] Substring match found:", substringMatch.name)
+    return substringMatch
+  }
 
-  // Finally try fuzzy match with Levenshtein distance
+  // Try matching individual words (for partial matches like "15000 belta")
+  const queryWords = normalizedQuery.split(/\s+/)
+  for (const product of products) {
+    const productWords = product.name.toLowerCase().split(/\s+/)
+    let matchCount = 0
+
+    for (const queryWord of queryWords) {
+      for (const productWord of productWords) {
+        // Check if words are similar enough
+        if (
+          productWord.includes(queryWord) ||
+          queryWord.includes(productWord) ||
+          levenshteinDistance(queryWord, productWord) <= 2
+        ) {
+          matchCount++
+          break
+        }
+      }
+    }
+
+    // If at least half the words match, consider it a match
+    if (matchCount >= Math.ceil(queryWords.length / 2)) {
+      console.log("[v0] Word-based match found:", product.name)
+      return product
+    }
+  }
+
+  // Finally try fuzzy match with more lenient threshold
   let bestMatch: { id: string; name: string } | null = null
   let bestDistance = Number.POSITIVE_INFINITY
 
   for (const product of products) {
     const distance = levenshteinDistance(normalizedQuery, product.name.toLowerCase())
-    const threshold = Math.max(3, Math.floor(product.name.length * 0.3)) // 30% tolerance
+    // More lenient threshold: 40% of the longer string length
+    const threshold = Math.max(2, Math.floor(Math.max(normalizedQuery.length, product.name.length) * 0.4))
 
     if (distance < threshold && distance < bestDistance) {
       bestDistance = distance
       bestMatch = product
     }
+  }
+
+  if (bestMatch) {
+    console.log("[v0] Fuzzy match found:", bestMatch.name, "distance:", bestDistance)
+  } else {
+    console.log("[v0] No match found for:", normalizedQuery)
   }
 
   return bestMatch
@@ -125,19 +174,23 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
       const normalized = text.toLowerCase().trim()
       console.log("[v0] Processing voice command:", normalized)
 
-      // Product selection: "sélectionner [nom du produit]" or "produit [nom]"
       if (normalized.includes("sélectionner") || normalized.includes("produit")) {
+        // Remove command keywords and common words
         const productQuery = normalized
           .replace(/sélectionner/gi, "")
+          .replace(/sélectionnez/gi, "")
           .replace(/produit/gi, "")
-          .replace(/le/gi, "")
-          .replace(/la/gi, "")
+          .replace(/produits/gi, "")
+          .replace(/\b(le|la|les|un|une|des|de|du|d')\b/gi, "")
           .trim()
+
+        console.log("[v0] Extracted product query:", productQuery)
 
         const product = fuzzyFindProduct(productQuery, products)
         if (product) {
           onSelectProduct(product.id)
           setStatusMessage(`Produit sélectionné: ${product.name}`)
+          setError(null)
           console.log("[v0] Product selected:", product.name)
         } else {
           setError(`Produit non trouvé: "${productQuery}"`)
