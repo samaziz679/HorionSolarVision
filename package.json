@@ -5,6 +5,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
+    "export:rbac": "node scripts/export-rbac-metadata.mjs",
     "lint": "next lint",
     "start": "next start"
   },
@@ -55,6 +56,8 @@
     "next": "14.2.16",
     "next-intl": "^3.22.0",
     "next-themes": "latest",
+    "pg": "latest",
+    "pg-native": "latest",
     "react": "^18",
     "react-day-picker": "9.8.0",
     "react-dom": "^18",

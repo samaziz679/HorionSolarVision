@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server"
 import { createClient } from "@/lib/supabase/client"
 import { supabaseAdmin } from "@/lib/supabase/admin"
+import rolePermissions from "./role-permissions.json"
 
 export type UserRole = "admin" | "stock_manager" | "commercial" | "finance" | "visitor" | "seller"
 export type UserStatus = "active" | "suspended" | "pending"
@@ -27,45 +28,14 @@ export interface AuditLog {
   created_at: string
 }
 
-// Role permissions configuration
-export const ROLE_PERMISSIONS = {
-  admin: {
-    modules: [
-      "dashboard",
-      "inventory",
-      "sales",
-      "purchases",
-      "clients",
-      "suppliers",
-      "expenses",
-      "reports",
-      "settings",
-      "admin",
-      "voice_assistant",
-    ],
-    actions: ["create", "read", "update", "delete", "manage_users"],
-  },
-  stock_manager: {
-    modules: ["dashboard", "inventory", "purchases", "suppliers", "reports", "voice_assistant"],
-    actions: ["create", "read", "update", "delete"],
-  },
-  commercial: {
-    modules: ["dashboard", "sales", "clients", "reports", "voice_assistant"],
-    actions: ["create", "read", "update", "delete"],
-  },
-  finance: {
-    modules: ["dashboard", "expenses", "reports", "sales", "purchases", "voice_assistant"],
-    actions: ["create", "read", "update", "delete"],
-  },
-  visitor: {
-    modules: ["dashboard", "voice_assistant"],
-    actions: ["read"],
-  },
-  seller: {
-    modules: ["dashboard", "sales", "clients", "voice_assistant"],
-    actions: ["create", "read"],
-  },
-} as const
+type RolePermissionConfig = {
+  modules: readonly string[]
+  actions: readonly string[]
+}
+
+const rolePermissionsRecord = rolePermissions as Record<UserRole, RolePermissionConfig>
+
+export const ROLE_PERMISSIONS: Record<UserRole, RolePermissionConfig> = rolePermissionsRecord
 
 // Server-side functions
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {
