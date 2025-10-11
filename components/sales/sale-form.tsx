@@ -36,11 +36,17 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   const [quantity, setQuantity] = useState(sale?.quantity || 1)
   const [pricePlan, setPricePlan] = useState(sale?.price_plan || "detail_1")
   const [unitPrice, setUnitPrice] = useState(sale?.unit_price || 0)
+  const [isCustomPrice, setIsCustomPrice] = useState(false)
   const [saleDate, setSaleDate] = useState(
     sale?.sale_date ? new Date(sale.sale_date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
   )
   const [notes, setNotes] = useState(sale?.notes || "")
   const [isVoiceConfirmOpen, setIsVoiceConfirmOpen] = useState(false)
+
+  const handleUnitPriceChange = (price: number) => {
+    setUnitPrice(price)
+    setIsCustomPrice(true)
+  }
 
   const voice = useSaleVoiceCommands({
     products: products.map((p) => ({ id: p.id, name: p.name })),
@@ -49,7 +55,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
     onSelectClient: setSelectedClient,
     onSelectPricePlan: setPricePlan,
     onQuantity: setQuantity,
-    onUnitPrice: setUnitPrice,
+    onUnitPrice: handleUnitPriceChange,
     onRequestSubmit: () => setIsVoiceConfirmOpen(true),
   })
 
@@ -74,12 +80,14 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   const selectedClientData = clients.find((c) => c.id === selectedClient)
 
   useEffect(() => {
+    if (isCustomPrice) return
+
     const product = products.find((p) => p.id === selectedProduct)
     if (product) {
       const priceProperty = pricePlanMapping[pricePlan as keyof typeof pricePlanMapping]
       setUnitPrice(Number(product[priceProperty]))
     }
-  }, [selectedProduct, pricePlan, products])
+  }, [selectedProduct, pricePlan, products, isCustomPrice])
 
   const totalAmount = quantity * unitPrice
 
@@ -118,7 +126,6 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
     setIsVoiceConfirmOpen(false)
     voice.stopListening()
 
-    // Create a synthetic form event to trigger the existing handleSubmit
     const form = document.querySelector("form") as HTMLFormElement
     if (form) {
       const submitEvent = new Event("submit", { bubbles: true, cancelable: true })
@@ -193,8 +200,8 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             )}
 
             <div className="text-xs text-blue-700">
-              <strong>Commandes disponibles:</strong> "sélectionner [produit]", "quantité [nombre]", "détail 1/2",
-              "gros", "réviser"
+              <strong>Commandes disponibles:</strong> "sélectionner [produit]", "client [nom]", "quantité [nombre]",
+              "prix [nombre]", "détail 1/2", "gros", "réviser"
             </div>
           </div>
         )}
@@ -322,7 +329,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
                 type="number"
                 step="0.01"
                 value={unitPrice}
-                onChange={(e) => setUnitPrice(Number(e.target.value) || 0)}
+                onChange={(e) => handleUnitPriceChange(Number(e.target.value) || 0)}
                 required
                 aria-describedby="unit_price-error"
               />

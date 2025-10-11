@@ -328,6 +328,7 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
       }
 
       const priceMatch =
+        normalized.match(/prix\s+unitaire\s+(\d+(?:[.,]\d+)?)/) ||
         normalized.match(/prix\s+(\d+(?:[.,]\d+)?)/) ||
         normalized.match(/(\d+(?:[.,]\d+)?)\s+francs?/) ||
         normalized.match(/(\d+(?:[.,]\d+)?)\s+fcfa/)
@@ -363,7 +364,7 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
       }
 
       setStatusMessage(
-        "Commande non reconnue. Essayez: 'sélectionner [produit]', 'client [nom]', 'quantité [nombre]', 'réviser'",
+        "Commande non reconnue. Essayez: 'sélectionner [produit]', 'client [nom]', 'quantité [nombre]', 'prix [nombre]', 'réviser'",
       )
       console.log("[v0] Command not recognized:", normalized)
     },
