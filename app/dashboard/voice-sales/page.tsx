@@ -1,4 +1,5 @@
 import type { Metadata } from "next"
+import { VoiceAssistant } from "@/components/voice/voice-assistant"
 
 export const metadata: Metadata = {
   title: "Assistant Vocal - Ventes",
@@ -15,13 +16,7 @@ export default function VoiceSalesPage() {
         </div>
       </div>
 
-      <div className="p-8 border rounded-lg bg-card">
-        <h3 className="text-xl font-semibold mb-4">Page de test - Assistant Vocal</h3>
-        <p className="text-muted-foreground">
-          Si vous voyez ce message, le routing fonctionne correctement. L'interface vocale complète sera activée après
-          vérification.
-        </p>
-      </div>
+      <VoiceAssistant />
     </div>
   )
 }
