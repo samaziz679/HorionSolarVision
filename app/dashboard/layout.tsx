@@ -4,6 +4,7 @@ import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 import Sidebar from "@/components/layout/sidebar"
 import Header from "@/components/layout/header"
+import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = cookies()
@@ -37,6 +38,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           {children}
         </main>
       </div>
+      <PWAInstallPrompt />
     </div>
   )
 }
