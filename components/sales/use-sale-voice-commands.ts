@@ -244,16 +244,40 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
 
   const processCommand = useCallback(
     (text: string) => {
-      const normalized = text.toLowerCase().trim()
+      let normalized = text.toLowerCase().trim()
       console.log("[v0] Processing voice command:", normalized)
 
       // Check for review/confirm commands first
-      if (normalized.includes("réviser") || normalized.includes("vérifier") || normalized.includes("review")) {
+      const isStandaloneReview =
+        normalized === "réviser" ||
+        normalized === "vérifier" ||
+        normalized === "confirmer" ||
+        normalized === "review" ||
+        normalized === "confirm" ||
+        (normalized.includes("vérifier") &&
+          !normalized.includes("produit") &&
+          !normalized.includes("prix") &&
+          !normalized.includes("client") &&
+          !normalized.includes("quantité"))
+
+      if (isStandaloneReview) {
         setPendingConfirmation(true)
         onRequestSubmit()
         setStatusMessage("Veuillez confirmer la vente")
         console.log("[v0] Review requested, pending confirmation")
         return
+      }
+
+      // Remove "réviser/changer" from the command and process the rest
+      const processedCommand = normalized
+        .replace(/réviser/gi, "")
+        .replace(/changer/gi, "")
+        .replace(/modifier/gi, "")
+        .trim()
+
+      // If after removing "réviser/changer", we have a field name, process it
+      if (processedCommand) {
+        normalized = processedCommand
       }
 
       if (

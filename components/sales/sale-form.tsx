@@ -201,7 +201,8 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
 
             <div className="text-xs text-blue-700">
               <strong>Commandes disponibles:</strong> Dites simplement le nom du produit, du client, la quantité, le
-              prix, "gros", "détail 1/2", ou "réviser"
+              prix, "gros", "détail 1/2". Pour modifier un champ: "changer produit [nom]". Pour confirmer: "vérifier" ou
+              "confirmer"
             </div>
           </div>
         )}
