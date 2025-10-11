@@ -1,5 +1,4 @@
-import { createBrowserClient } from "@supabase/ssr"
-import type { Database } from "@/lib/supabase/types"
+import { createClient } from "@/lib/supabase/client"
 import rolePermissions from "./role-permissions.json"
 
 export type UserRole = "admin" | "stock_manager" | "commercial" | "finance" | "visitor" | "seller"
@@ -32,24 +31,25 @@ export const ROLE_PERMISSIONS: Record<UserRole, ClientRolePermissionConfig> = Ob
   Object.entries(rolePermissionsRecord).map(([role, config]) => [role, { modules: config.modules }]),
 ) as Record<UserRole, ClientRolePermissionConfig>
 
-const createClient = () => {
-  return createBrowserClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-  )
-}
-
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {
   if (typeof window === "undefined") {
+    console.log("[v0] RBAC: Running on server, returning null")
     return null
   }
 
   try {
     const supabase = createClient()
 
+    console.log("[v0] RBAC: Getting authenticated user...")
     const {
       data: { user },
+      error: userError,
     } = await supabase.auth.getUser()
+
+    if (userError) {
+      console.error("[v0] RBAC: Error getting user:", userError)
+      return null
+    }
 
     if (!user) {
       console.log("[v0] RBAC: No authenticated user found")
@@ -57,20 +57,28 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
     }
 
     console.log("[v0] RBAC: Authenticated user ID:", user.id)
+    console.log("[v0] RBAC: User email:", user.email)
 
+    console.log("[v0] RBAC: Querying user_roles table...")
     const { data: userRole, error: roleError } = await supabase
       .from("user_roles")
       .select("id, user_id, role, created_by, created_at")
       .eq("user_id", user.id)
       .single()
 
-    if (roleError || !userRole) {
-      console.log("[v0] RBAC: No role found for user:", roleError?.message)
+    if (roleError) {
+      console.error("[v0] RBAC: Error querying user_roles:", roleError)
+      return null
+    }
+
+    if (!userRole) {
+      console.log("[v0] RBAC: No role found for user in user_roles table")
       return null
     }
 
     console.log("[v0] RBAC: User role found:", userRole.role)
 
+    console.log("[v0] RBAC: Querying user_profiles table...")
     const { data: userProfile, error: profileError } = await supabase
       .from("user_profiles")
       .select("email, full_name, status")
@@ -85,23 +93,32 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
       id: userRole.id,
       user_id: userRole.user_id,
       role: userRole.role,
-      status: (userProfile?.status as UserStatus) || "active", // Status comes from user_profiles
+      status: (userProfile?.status as UserStatus) || "active",
       created_at: userRole.created_at,
       created_by: userRole.created_by,
       email: userProfile?.email || user.email || "",
       full_name: userProfile?.full_name || "",
     }
 
-    console.log("[v0] RBAC: Final profile:", {
+    console.log("[v0] RBAC: Final profile constructed:", {
       role: profile.role,
       status: profile.status,
       email: profile.email,
-      modules: ROLE_PERMISSIONS[profile.role].modules,
+      full_name: profile.full_name,
     })
+
+    const permissions = ROLE_PERMISSIONS[profile.role]
+    console.log("[v0] RBAC: Role permissions:", permissions)
+    console.log("[v0] RBAC: Available modules:", permissions.modules)
+    console.log("[v0] RBAC: Has voice_assistant?", permissions.modules.includes("voice_assistant"))
 
     return profile
   } catch (error) {
-    console.error("[v0] RBAC: Error in getCurrentUserProfile:", error)
+    console.error("[v0] RBAC: Unexpected error in getCurrentUserProfile:", error)
+    if (error instanceof Error) {
+      console.error("[v0] RBAC: Error message:", error.message)
+      console.error("[v0] RBAC: Error stack:", error.stack)
+    }
     return null
   }
 }

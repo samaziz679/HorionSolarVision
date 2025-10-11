@@ -61,11 +61,23 @@ export function Sidebar() {
   const [loading, setLoading] = useState(true)
   const company = useCompany()
 
+  console.log("[v0] Sidebar component rendering")
+  console.log("[v0] Initial navigation items count:", ALL_NAVIGATION_ITEMS.length)
+  console.log(
+    "[v0] Voice assistant item exists:",
+    ALL_NAVIGATION_ITEMS.some((item) => item.module === "voice_assistant"),
+  )
+
   useEffect(() => {
+    console.log("[v0] Sidebar useEffect starting...")
+
     async function loadUserRole() {
+      console.log("[v0] loadUserRole function called")
       try {
+        console.log("[v0] Calling getCurrentUserProfileClient...")
         const profile = await getCurrentUserProfileClient()
         console.log("[v0] User profile loaded:", profile)
+
         if (profile && profile.status === "active") {
           setUserRole(profile.role)
           const permissions = ROLE_PERMISSIONS[profile.role]
@@ -83,9 +95,14 @@ export function Sidebar() {
             filteredItems.map((item) => `${item.label} (${item.href})`),
           )
 
-          setNavigationItems(ensureVoiceAssistantVisible(filteredItems))
+          const finalItems = ensureVoiceAssistantVisible(filteredItems)
+          console.log(
+            "[v0] After ensureVoiceAssistantVisible:",
+            finalItems.map((item) => item.label),
+          )
+          setNavigationItems(finalItems)
         } else {
-          console.log("[v0] No active user profile found")
+          console.log("[v0] No active user profile found, profile:", profile)
         }
       } catch (error) {
         console.error("[v0] Error loading user role:", error)
@@ -98,12 +115,19 @@ export function Sidebar() {
         )
         setNavigationItems(basicItems)
       } finally {
+        console.log("[v0] loadUserRole finally block, setting loading to false")
         setLoading(false)
       }
     }
 
     loadUserRole()
   }, [])
+
+  console.log("[v0] Sidebar rendering with", navigationItems.length, "items")
+  console.log(
+    "[v0] Navigation items:",
+    navigationItems.map((item) => `${item.label} (${item.module})`),
+  )
 
   return (
     <div className="hidden border-r bg-muted/40 md:block">
