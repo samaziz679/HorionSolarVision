@@ -247,6 +247,74 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
       const normalized = text.toLowerCase().trim()
       console.log("[v0] Processing voice command:", normalized)
 
+      // Check for review/confirm commands first
+      if (normalized.includes("réviser") || normalized.includes("vérifier") || normalized.includes("review")) {
+        setPendingConfirmation(true)
+        onRequestSubmit()
+        setStatusMessage("Veuillez confirmer la vente")
+        console.log("[v0] Review requested, pending confirmation")
+        return
+      }
+
+      if (
+        (normalized.includes("confirmer") || normalized.includes("oui") || normalized.includes("confirm")) &&
+        pendingConfirmation
+      ) {
+        console.log("[v0] Confirmation received")
+        setPendingConfirmation(false)
+        setStatusMessage("Vente confirmée")
+        if (confirmCallbackRef.current) {
+          confirmCallbackRef.current()
+        }
+        return
+      }
+
+      // Check for price plan keywords
+      if (normalized.includes("gros") || normalized.includes("wholesale")) {
+        onSelectPricePlan("gros")
+        setStatusMessage("Plan de prix: Gros")
+        console.log("[v0] Price plan set to: gros")
+        return
+      }
+      if (normalized.includes("détail")) {
+        if (normalized.includes("2")) {
+          onSelectPricePlan("detail_2")
+          setStatusMessage("Plan de prix: Détail 2")
+          console.log("[v0] Price plan set to: detail_2")
+        } else {
+          onSelectPricePlan("detail_1")
+          setStatusMessage("Plan de prix: Détail 1")
+          console.log("[v0] Price plan set to: detail_1")
+        }
+        return
+      }
+
+      // Check for explicit quantity command
+      const quantityMatch = normalized.match(/quantité\s+(\d+)/)
+      if (quantityMatch) {
+        const qty = Number.parseInt(quantityMatch[1], 10)
+        if (!isNaN(qty) && qty > 0) {
+          onQuantity(qty)
+          setStatusMessage(`Quantité: ${qty}`)
+          console.log("[v0] Quantity set to:", qty)
+          return
+        }
+      }
+
+      // Check for explicit price command
+      const priceMatch =
+        normalized.match(/prix\s+unitaire\s+(\d+(?:[.,]\d+)?)/) || normalized.match(/prix\s+(\d+(?:[.,]\d+)?)/)
+      if (priceMatch) {
+        const price = Number.parseFloat(priceMatch[1].replace(",", "."))
+        if (!isNaN(price) && price > 0) {
+          onUnitPrice(price)
+          setStatusMessage(`Prix unitaire: ${price} FCFA`)
+          console.log("[v0] Unit price set to:", price)
+          return
+        }
+      }
+
+      // Check for explicit client command
       if (normalized.includes("client")) {
         const clientQuery = normalized
           .replace(/client/gi, "")
@@ -270,101 +338,56 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
         return
       }
 
-      if (normalized.includes("sélectionner") || normalized.includes("produit")) {
-        const productQuery = normalized
-          .replace(/sélectionner/gi, "")
-          .replace(/sélectionnez/gi, "")
-          .replace(/produit/gi, "")
-          .replace(/produits/gi, "")
-          .replace(/\b(le|la|les|un|une|des|de|du|d')\b/gi, "")
-          .trim()
+      // Try to match as a product (most common case)
+      const productQuery = normalized
+        .replace(/sélectionner/gi, "")
+        .replace(/sélectionnez/gi, "")
+        .replace(/produit/gi, "")
+        .replace(/produits/gi, "")
+        .replace(/\b(le|la|les|un|une|des|de|du|d')\b/gi, "")
+        .trim()
 
-        console.log("[v0] Extracted product query:", productQuery)
-
-        const product = fuzzyFindProduct(productQuery, products)
-        if (product) {
-          onSelectProduct(product.id)
-          setStatusMessage(`Produit sélectionné: ${product.name}`)
-          setError(null)
-          console.log("[v0] Product selected:", product.name)
-        } else {
-          setError(`Produit non trouvé: "${productQuery}"`)
-          console.log("[v0] Product not found:", productQuery)
-        }
+      const product = fuzzyFindProduct(productQuery, products)
+      if (product) {
+        onSelectProduct(product.id)
+        setStatusMessage(`Produit sélectionné: ${product.name}`)
+        setError(null)
+        console.log("[v0] Product selected:", product.name)
         return
       }
 
-      if (normalized.includes("détail") && normalized.includes("1")) {
-        onSelectPricePlan("detail_1")
-        setStatusMessage("Plan de prix: Détail 1")
-        console.log("[v0] Price plan set to: detail_1")
-        return
-      }
-      if (normalized.includes("détail") && normalized.includes("2")) {
-        onSelectPricePlan("detail_2")
-        setStatusMessage("Plan de prix: Détail 2")
-        console.log("[v0] Price plan set to: detail_2")
-        return
-      }
-      if (normalized.includes("gros") || normalized.includes("wholesale")) {
-        onSelectPricePlan("gros")
-        setStatusMessage("Plan de prix: Gros")
-        console.log("[v0] Price plan set to: gros")
+      // Try to match as a client
+      const client = fuzzyFindClient(normalized, clients)
+      if (client) {
+        onSelectClient(client.id)
+        setStatusMessage(`Client sélectionné: ${client.name}`)
+        setError(null)
+        console.log("[v0] Client selected:", client.name)
         return
       }
 
-      const quantityMatch =
-        normalized.match(/quantité\s+(\d+)/) ||
-        normalized.match(/(\d+)\s+unités?/) ||
-        normalized.match(/(\d+)\s+pièces?/)
-      if (quantityMatch) {
-        const qty = Number.parseInt(quantityMatch[1], 10)
-        if (!isNaN(qty) && qty > 0) {
-          onQuantity(qty)
-          setStatusMessage(`Quantité: ${qty}`)
-          console.log("[v0] Quantity set to:", qty)
+      // Try to match as a standalone number (quantity or price)
+      const numberMatch = normalized.match(/^(\d+(?:[.,]\d+)?)$/)
+      if (numberMatch) {
+        const num = Number.parseFloat(numberMatch[1].replace(",", "."))
+        if (!isNaN(num) && num > 0) {
+          // If number is small (< 100), assume it's quantity, otherwise assume it's price
+          if (num < 100) {
+            onQuantity(Math.floor(num))
+            setStatusMessage(`Quantité: ${Math.floor(num)}`)
+            console.log("[v0] Quantity set to:", Math.floor(num))
+          } else {
+            onUnitPrice(num)
+            setStatusMessage(`Prix unitaire: ${num} FCFA`)
+            console.log("[v0] Unit price set to:", num)
+          }
           return
         }
       }
 
-      const priceMatch =
-        normalized.match(/prix\s+unitaire\s+(\d+(?:[.,]\d+)?)/) ||
-        normalized.match(/prix\s+(\d+(?:[.,]\d+)?)/) ||
-        normalized.match(/(\d+(?:[.,]\d+)?)\s+francs?/) ||
-        normalized.match(/(\d+(?:[.,]\d+)?)\s+fcfa/)
-      if (priceMatch) {
-        const price = Number.parseFloat(priceMatch[1].replace(",", "."))
-        if (!isNaN(price) && price > 0) {
-          onUnitPrice(price)
-          setStatusMessage(`Prix unitaire: ${price} FCFA`)
-          console.log("[v0] Unit price set to:", price)
-          return
-        }
-      }
-
-      if (normalized.includes("réviser") || normalized.includes("vérifier") || normalized.includes("review")) {
-        setPendingConfirmation(true)
-        onRequestSubmit()
-        setStatusMessage("Veuillez confirmer la vente")
-        console.log("[v0] Review requested, pending confirmation")
-        return
-      }
-
-      if (
-        (normalized.includes("confirmer") || normalized.includes("oui") || normalized.includes("confirm")) &&
-        pendingConfirmation
-      ) {
-        console.log("[v0] Confirmation received")
-        setPendingConfirmation(false)
-        setStatusMessage("Vente confirmée")
-        if (confirmCallbackRef.current) {
-          confirmCallbackRef.current()
-        }
-        return
-      }
-
+      // If nothing matched, show error
       setStatusMessage(
-        "Commande non reconnue. Essayez: 'sélectionner [produit]', 'client [nom]', 'quantité [nombre]', 'prix [nombre]', 'réviser'",
+        "Commande non reconnue. Dites simplement: nom du produit, nom du client, quantité, prix, 'gros', 'détail', ou 'réviser'",
       )
       console.log("[v0] Command not recognized:", normalized)
     },

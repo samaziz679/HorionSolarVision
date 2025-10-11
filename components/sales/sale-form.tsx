@@ -200,8 +200,8 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             )}
 
             <div className="text-xs text-blue-700">
-              <strong>Commandes disponibles:</strong> "sélectionner [produit]", "client [nom]", "quantité [nombre]",
-              "prix [nombre]", "détail 1/2", "gros", "réviser"
+              <strong>Commandes disponibles:</strong> Dites simplement le nom du produit, du client, la quantité, le
+              prix, "gros", "détail 1/2", ou "réviser"
             </div>
           </div>
         )}
