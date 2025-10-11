@@ -36,11 +36,17 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   const [quantity, setQuantity] = useState(sale?.quantity || 1)
   const [pricePlan, setPricePlan] = useState(sale?.price_plan || "detail_1")
   const [unitPrice, setUnitPrice] = useState(sale?.unit_price || 0)
+  const [saleDate, setSaleDate] = useState(
+    sale?.sale_date ? new Date(sale.sale_date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+  )
+  const [notes, setNotes] = useState(sale?.notes || "")
   const [isVoiceConfirmOpen, setIsVoiceConfirmOpen] = useState(false)
 
   const voice = useSaleVoiceCommands({
     products: products.map((p) => ({ id: p.id, name: p.name })),
+    clients: clients.map((c) => ({ id: c.id, name: c.name })),
     onSelectProduct: setSelectedProduct,
+    onSelectClient: setSelectedClient,
     onSelectPricePlan: setPricePlan,
     onQuantity: setQuantity,
     onUnitPrice: setUnitPrice,
@@ -51,6 +57,10 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
     if (sale) {
       setSelectedProduct(sale.product_id || "")
       setSelectedClient(sale.client_id || "")
+      setSaleDate(
+        sale?.sale_date ? new Date(sale.sale_date).toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+      )
+      setNotes(sale.notes || "")
     }
   }, [sale])
 
@@ -93,6 +103,8 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
     formData.set("quantity", quantity.toString())
     formData.set("price_plan", pricePlan)
     formData.set("unit_price", unitPrice.toString())
+    formData.set("sale_date", saleDate)
+    formData.set("notes", notes)
 
     if (sale) {
       await updateSale(sale.id, { success: false }, formData)
@@ -212,7 +224,8 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               id="sale_date"
               name="sale_date"
               type="date"
-              defaultValue={sale?.sale_date ? new Date(sale.sale_date).toISOString().split("T")[0] : ""}
+              value={saleDate}
+              onChange={(e) => setSaleDate(e.target.value)}
               required
               aria-describedby="sale_date-error"
             />
@@ -325,7 +338,8 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
           <Input
             id="notes"
             name="notes"
-            defaultValue={sale?.notes || ""}
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
             placeholder="Notes supplémentaires sur cette vente"
             aria-describedby="notes-error"
           />
@@ -370,6 +384,16 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
 
               <div className="font-semibold">Prix Unitaire:</div>
               <div>{formatMoney(unitPrice)}</div>
+
+              <div className="font-semibold">Date de Vente:</div>
+              <div>{new Date(saleDate).toLocaleDateString("fr-FR")}</div>
+
+              {notes && (
+                <>
+                  <div className="font-semibold">Notes:</div>
+                  <div>{notes}</div>
+                </>
+              )}
 
               <div className="font-semibold text-lg pt-2 border-t">Total:</div>
               <div className="text-lg font-bold pt-2 border-t">{formatMoney(totalAmount)}</div>

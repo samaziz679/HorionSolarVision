@@ -68,7 +68,10 @@ export async function fetchProductById(id: string) {
 export async function fetchProductsForForm() {
   noStore()
   const supabase = createSupabaseServerClient()
-  const { data, error } = await supabase.from("products").select("id, name, prix_vente_detail_1")
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, name, prix_vente_detail_1, prix_vente_detail_2, prix_vente_gros")
+    .order("name", { ascending: true })
 
   if (error) {
     console.error("Database Error:", error)

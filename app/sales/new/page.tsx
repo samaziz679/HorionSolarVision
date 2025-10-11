@@ -1,5 +1,5 @@
-import { fetchProducts } from "@/lib/data/products"
-import { fetchClients } from "@/lib/data/clients"
+import { fetchProductsForForm } from "@/lib/data/products"
+import { fetchClientsForForm } from "@/lib/data/clients"
 import SaleForm from "@/components/sales/sale-form"
 import {
   Breadcrumb,
@@ -12,18 +12,16 @@ import {
 import Link from "next/link"
 
 export default async function NewSalePage() {
-  const productsResult = await fetchProducts(1, 1000) // Get up to 1000 products
-  const products = productsResult.products || []
-  const clients = await fetchClients()
+  const [products, clients] = await Promise.all([fetchProductsForForm(), fetchClientsForForm()])
 
   const productOptions = products.map((product) => ({
     id: product.id,
     name: product.name,
     prix_vente_detail_1: product.prix_vente_detail_1,
-    prix_vente_detail_2: product.prix_vente_detail_2,
-    prix_vente_gros: product.prix_vente_gros,
-    stock_quantity: product.quantity,
-    image: product.image,
+    prix_vente_detail_2: product.prix_vente_detail_2 || product.prix_vente_detail_1,
+    prix_vente_gros: product.prix_vente_gros || product.prix_vente_detail_1,
+    stock_quantity: 0, // Not needed for form display
+    image: null, // Not needed for initial load
   }))
 
   const clientOptions = clients.map((client) => ({

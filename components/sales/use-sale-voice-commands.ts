@@ -6,7 +6,9 @@ type PricePlan = "detail_1" | "detail_2" | "gros"
 
 type VoiceHookProps = {
   products: { id: string; name: string; sku?: string }[]
+  clients: { id: string; name: string }[]
   onSelectProduct: (productId: string) => void
+  onSelectClient: (clientId: string) => void
   onSelectPricePlan: (plan: PricePlan) => void
   onQuantity: (value: number) => void
   onUnitPrice: (value: number) => void
@@ -59,19 +61,17 @@ function fuzzyFindProduct(
   query: string,
   products: { id: string; name: string; sku?: string }[],
 ): { id: string; name: string } | null {
-  // Remove common French words and clean the query
   const normalizedQuery = query
     .toLowerCase()
     .trim()
-    .replace(/\b(le|la|les|un|une|des|de|du|d')\b/g, "") // Remove articles
-    .replace(/\s+/g, " ") // Normalize spaces
+    .replace(/\b(le|la|les|un|une|des|de|du|d')\b/g, "")
+    .replace(/\s+/g, " ")
     .trim()
 
   if (!normalizedQuery) return null
 
   console.log("[v0] Searching for product:", normalizedQuery)
 
-  // First try exact match (case-insensitive)
   const exactMatch = products.find(
     (p) => p.name.toLowerCase() === normalizedQuery || p.sku?.toLowerCase() === normalizedQuery,
   )
@@ -80,7 +80,6 @@ function fuzzyFindProduct(
     return exactMatch
   }
 
-  // Try substring match (case-insensitive)
   const substringMatch = products.find(
     (p) => p.name.toLowerCase().includes(normalizedQuery) || normalizedQuery.includes(p.name.toLowerCase()),
   )
@@ -89,7 +88,6 @@ function fuzzyFindProduct(
     return substringMatch
   }
 
-  // Try matching individual words (for partial matches like "15000 belta")
   const queryWords = normalizedQuery.split(/\s+/)
   for (const product of products) {
     const productWords = product.name.toLowerCase().split(/\s+/)
@@ -97,7 +95,6 @@ function fuzzyFindProduct(
 
     for (const queryWord of queryWords) {
       for (const productWord of productWords) {
-        // Check if words are similar enough
         if (
           productWord.includes(queryWord) ||
           queryWord.includes(productWord) ||
@@ -109,20 +106,17 @@ function fuzzyFindProduct(
       }
     }
 
-    // If at least half the words match, consider it a match
     if (matchCount >= Math.ceil(queryWords.length / 2)) {
       console.log("[v0] Word-based match found:", product.name)
       return product
     }
   }
 
-  // Finally try fuzzy match with more lenient threshold
   let bestMatch: { id: string; name: string } | null = null
   let bestDistance = Number.POSITIVE_INFINITY
 
   for (const product of products) {
     const distance = levenshteinDistance(normalizedQuery, product.name.toLowerCase())
-    // More lenient threshold: 40% of the longer string length
     const threshold = Math.max(2, Math.floor(Math.max(normalizedQuery.length, product.name.length) * 0.4))
 
     if (distance < threshold && distance < bestDistance) {
@@ -140,8 +134,89 @@ function fuzzyFindProduct(
   return bestMatch
 }
 
+function fuzzyFindClient(query: string, clients: { id: string; name: string }[]): { id: string; name: string } | null {
+  const normalizedQuery = query
+    .toLowerCase()
+    .trim()
+    .replace(/\b(le|la|les|un|une|des|de|du|d')\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+
+  if (!normalizedQuery) return null
+
+  console.log("[v0] Searching for client:", normalizedQuery)
+
+  const exactMatch = clients.find((c) => c.name.toLowerCase() === normalizedQuery)
+  if (exactMatch) {
+    console.log("[v0] Exact client match found:", exactMatch.name)
+    return exactMatch
+  }
+
+  const substringMatch = clients.find(
+    (c) => c.name.toLowerCase().includes(normalizedQuery) || normalizedQuery.includes(c.name.toLowerCase()),
+  )
+  if (substringMatch) {
+    console.log("[v0] Substring client match found:", substringMatch.name)
+    return substringMatch
+  }
+
+  const queryWords = normalizedQuery.split(/\s+/)
+  for (const client of clients) {
+    const clientWords = client.name.toLowerCase().split(/\s+/)
+    let matchCount = 0
+
+    for (const queryWord of queryWords) {
+      for (const clientWord of clientWords) {
+        if (
+          clientWord.includes(queryWord) ||
+          queryWord.includes(clientWord) ||
+          levenshteinDistance(queryWord, clientWord) <= 2
+        ) {
+          matchCount++
+          break
+        }
+      }
+    }
+
+    if (matchCount >= Math.ceil(queryWords.length / 2)) {
+      console.log("[v0] Word-based client match found:", client.name)
+      return client
+    }
+  }
+
+  let bestMatch: { id: string; name: string } | null = null
+  let bestDistance = Number.POSITIVE_INFINITY
+
+  for (const client of clients) {
+    const distance = levenshteinDistance(normalizedQuery, client.name.toLowerCase())
+    const threshold = Math.max(2, Math.floor(Math.max(normalizedQuery.length, client.name.length) * 0.4))
+
+    if (distance < threshold && distance < bestDistance) {
+      bestDistance = distance
+      bestMatch = client
+    }
+  }
+
+  if (bestMatch) {
+    console.log("[v0] Fuzzy client match found:", bestMatch.name, "distance:", bestDistance)
+  } else {
+    console.log("[v0] No client match found for:", normalizedQuery)
+  }
+
+  return bestMatch
+}
+
 export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
-  const { products, onSelectProduct, onSelectPricePlan, onQuantity, onUnitPrice, onRequestSubmit } = props
+  const {
+    products,
+    clients,
+    onSelectProduct,
+    onSelectClient,
+    onSelectPricePlan,
+    onQuantity,
+    onUnitPrice,
+    onRequestSubmit,
+  } = props
 
   const [isSupported, setIsSupported] = useState(false)
   const [isListening, setIsListening] = useState(false)
@@ -153,7 +228,6 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
   const recognitionRef = useRef<any>(null)
   const confirmCallbackRef = useRef<(() => void) | null>(null)
 
-  // Feature detection
   useEffect(() => {
     if (typeof window !== "undefined") {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
@@ -163,19 +237,40 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
         recognitionRef.current = new SpeechRecognition()
         recognitionRef.current.continuous = true
         recognitionRef.current.interimResults = true
-        recognitionRef.current.lang = "fr-FR" // French language support
+        recognitionRef.current.lang = "fr-FR"
       }
     }
   }, [])
 
-  // Process voice commands
   const processCommand = useCallback(
     (text: string) => {
       const normalized = text.toLowerCase().trim()
       console.log("[v0] Processing voice command:", normalized)
 
+      if (normalized.includes("client")) {
+        const clientQuery = normalized
+          .replace(/client/gi, "")
+          .replace(/sélectionner/gi, "")
+          .replace(/sélectionnez/gi, "")
+          .replace(/\b(le|la|les|un|une|des|de|du|d')\b/gi, "")
+          .trim()
+
+        console.log("[v0] Extracted client query:", clientQuery)
+
+        const client = fuzzyFindClient(clientQuery, clients)
+        if (client) {
+          onSelectClient(client.id)
+          setStatusMessage(`Client sélectionné: ${client.name}`)
+          setError(null)
+          console.log("[v0] Client selected:", client.name)
+        } else {
+          setError(`Client non trouvé: "${clientQuery}"`)
+          console.log("[v0] Client not found:", clientQuery)
+        }
+        return
+      }
+
       if (normalized.includes("sélectionner") || normalized.includes("produit")) {
-        // Remove command keywords and common words
         const productQuery = normalized
           .replace(/sélectionner/gi, "")
           .replace(/sélectionnez/gi, "")
@@ -199,7 +294,6 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
         return
       }
 
-      // Price plan selection
       if (normalized.includes("détail") && normalized.includes("1")) {
         onSelectPricePlan("detail_1")
         setStatusMessage("Plan de prix: Détail 1")
@@ -219,7 +313,6 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
         return
       }
 
-      // Quantity: "quantité [nombre]" or "[nombre] unités"
       const quantityMatch =
         normalized.match(/quantité\s+(\d+)/) ||
         normalized.match(/(\d+)\s+unités?/) ||
@@ -234,7 +327,6 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
         }
       }
 
-      // Unit price: "prix [montant]" or "[montant] francs"
       const priceMatch =
         normalized.match(/prix\s+(\d+(?:[.,]\d+)?)/) ||
         normalized.match(/(\d+(?:[.,]\d+)?)\s+francs?/) ||
@@ -249,7 +341,6 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
         }
       }
 
-      // Review: "réviser" or "vérifier"
       if (normalized.includes("réviser") || normalized.includes("vérifier") || normalized.includes("review")) {
         setPendingConfirmation(true)
         onRequestSubmit()
@@ -258,7 +349,6 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
         return
       }
 
-      // Confirm: "confirmer" or "oui"
       if (
         (normalized.includes("confirmer") || normalized.includes("oui") || normalized.includes("confirm")) &&
         pendingConfirmation
@@ -272,14 +362,24 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
         return
       }
 
-      // If no command matched
-      setStatusMessage("Commande non reconnue. Essayez: 'sélectionner [produit]', 'quantité [nombre]', 'réviser'")
+      setStatusMessage(
+        "Commande non reconnue. Essayez: 'sélectionner [produit]', 'client [nom]', 'quantité [nombre]', 'réviser'",
+      )
       console.log("[v0] Command not recognized:", normalized)
     },
-    [products, onSelectProduct, onSelectPricePlan, onQuantity, onUnitPrice, onRequestSubmit, pendingConfirmation],
+    [
+      products,
+      clients,
+      onSelectProduct,
+      onSelectClient,
+      onSelectPricePlan,
+      onQuantity,
+      onUnitPrice,
+      onRequestSubmit,
+      pendingConfirmation,
+    ],
   )
 
-  // Setup recognition handlers
   useEffect(() => {
     if (!recognitionRef.current) return
 
@@ -364,10 +464,8 @@ export function useSaleVoiceCommands(props: VoiceHookProps): VoiceHookReturn {
 
   const handleConfirm = useCallback(() => {
     console.log("[v0] handleConfirm called")
-    // This will be set by the SaleForm component
   }, [])
 
-  // Store the confirm callback
   useEffect(() => {
     confirmCallbackRef.current = handleConfirm
   }, [handleConfirm])
