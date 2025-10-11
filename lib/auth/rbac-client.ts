@@ -1,5 +1,6 @@
 import { createBrowserClient } from "@supabase/ssr"
 import type { Database } from "@/lib/supabase/types"
+import rolePermissions from "./role-permissions.json"
 
 export type UserRole = "admin" | "stock_manager" | "commercial" | "finance" | "visitor" | "seller"
 export type UserStatus = "active" | "suspended" | "pending"
@@ -15,38 +16,21 @@ export interface UserProfile {
   full_name?: string
 }
 
-export const ROLE_PERMISSIONS = {
-  admin: {
-    modules: [
-      "dashboard",
-      "inventory",
-      "sales",
-      "purchases",
-      "clients",
-      "suppliers",
-      "expenses",
-      "reports",
-      "settings",
-      "admin",
-      "solar-sizer",
-    ],
-  },
-  stock_manager: {
-    modules: ["dashboard", "inventory", "purchases", "suppliers", "reports"],
-  },
-  commercial: {
-    modules: ["dashboard", "sales", "clients", "reports"],
-  },
-  finance: {
-    modules: ["dashboard", "expenses", "reports", "sales", "purchases"],
-  },
-  visitor: {
-    modules: ["dashboard"],
-  },
-  seller: {
-    modules: ["dashboard", "sales", "clients"],
-  },
-} as const
+type ClientRolePermissionConfig = {
+  modules: readonly string[]
+}
+
+const rolePermissionsRecord = rolePermissions as Record<
+  UserRole,
+  {
+    modules: readonly string[]
+    actions?: readonly string[]
+  }
+>
+
+export const ROLE_PERMISSIONS: Record<UserRole, ClientRolePermissionConfig> = Object.fromEntries(
+  Object.entries(rolePermissionsRecord).map(([role, config]) => [role, { modules: config.modules }]),
+) as Record<UserRole, ClientRolePermissionConfig>
 
 const createClient = () => {
   return createBrowserClient<Database>(

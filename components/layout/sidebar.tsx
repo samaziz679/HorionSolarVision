@@ -39,10 +39,20 @@ const ALL_NAVIGATION_ITEMS: NavigationItem[] = [
   { href: "/expenses", label: "Dépenses", icon: DollarSign, module: "expenses" },
   { href: "/reports", label: "Rapports", icon: LineChart, module: "reports" },
   { href: "/solar-sizer", label: "Dimensionnement Solaire", icon: Sun, module: "dashboard" },
-  { href: "/dashboard/voice-sales", label: "Assistant Vocal", icon: Mic, module: "sales" },
+  { href: "/dashboard/voice-sales", label: "Assistant Vocal", icon: Mic, module: "voice_assistant" },
   { href: "/admin/users", label: "Gestion Utilisateurs", icon: Users, module: "admin" },
   { href: "/settings", label: "Paramètres", icon: Settings, module: "settings" },
 ]
+
+const ensureVoiceAssistantVisible = (items: NavigationItem[]) => {
+  const hasVoiceAssistant = items.some((item) => item.module === "voice_assistant")
+  if (hasVoiceAssistant) return items
+
+  const voiceAssistantItem = ALL_NAVIGATION_ITEMS.find((item) => item.module === "voice_assistant")
+  if (!voiceAssistantItem) return items
+
+  return [...items, voiceAssistantItem]
+}
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -73,14 +83,16 @@ export function Sidebar() {
             filteredItems.map((item) => `${item.label} (${item.href})`),
           )
 
-          setNavigationItems(filteredItems)
+          setNavigationItems(ensureVoiceAssistantVisible(filteredItems))
         } else {
           console.log("[v0] No active user profile found")
         }
       } catch (error) {
         console.error("[v0] Error loading user role:", error)
-        const basicItems = ALL_NAVIGATION_ITEMS.filter((item) =>
-          ["dashboard", "sales", "clients"].includes(item.module),
+        const basicItems = ensureVoiceAssistantVisible(
+          ALL_NAVIGATION_ITEMS.filter((item) =>
+            ["dashboard", "sales", "clients"].includes(item.module),
+          ),
         )
         console.log(
           "[v0] Using basic navigation items (fallback):",

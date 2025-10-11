@@ -91,7 +91,7 @@ export default function DebugRBACPage() {
         { href: "/dashboard", label: "Tableau de bord", module: "dashboard" },
         { href: "/inventory", label: "Inventaire", module: "inventory" },
         { href: "/sales", label: "Ventes", module: "sales" },
-        { href: "/dashboard/voice-sales", label: "Assistant Vocal", module: "sales" },
+        { href: "/dashboard/voice-sales", label: "Assistant Vocal", module: "voice_assistant" },
         { href: "/purchases", label: "Achats", module: "purchases" },
         { href: "/clients", label: "Clients", module: "clients" },
         { href: "/suppliers", label: "Fournisseurs", module: "suppliers" },
