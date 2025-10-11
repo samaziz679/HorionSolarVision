@@ -52,13 +52,22 @@ export function Sidebar() {
   const company = useCompany()
 
   useEffect(() => {
+    console.log("[v0] Sidebar component mounted")
+    console.log("[v0] Current pathname:", pathname)
+  }, [pathname])
+
+  useEffect(() => {
     async function loadUserRole() {
       try {
+        console.log("[v0] Loading user role and permissions...")
         const profile = await getCurrentUserProfileClient()
+        console.log("[v0] User profile:", profile)
 
         if (profile && profile.status === "active") {
           setUserRole(profile.role)
           const permissions = ROLE_PERMISSIONS[profile.role]
+          console.log("[v0] User role:", profile.role)
+          console.log("[v0] User permissions:", permissions)
 
           const filteredItems = ALL_NAVIGATION_ITEMS.filter((item) => {
             // Voice assistant is always visible
@@ -67,10 +76,23 @@ export function Sidebar() {
             return permissions.modules.includes(item.module as any)
           })
 
+          console.log(
+            "[v0] Filtered navigation items:",
+            filteredItems.map((i) => i.label),
+          )
+          console.log(
+            "[v0] Voice assistant item included:",
+            filteredItems.some((i) => i.module === "voice_assistant"),
+          )
           setNavigationItems(filteredItems)
         } else {
+          console.log("[v0] User profile not active or not found, using basic items")
           const basicItems = ALL_NAVIGATION_ITEMS.filter((item) =>
             ["dashboard", "sales", "clients", "voice_assistant"].includes(item.module),
+          )
+          console.log(
+            "[v0] Basic navigation items:",
+            basicItems.map((i) => i.label),
           )
           setNavigationItems(basicItems)
         }
@@ -79,14 +101,21 @@ export function Sidebar() {
         const basicItems = ALL_NAVIGATION_ITEMS.filter((item) =>
           ["dashboard", "sales", "clients", "voice_assistant"].includes(item.module),
         )
+        console.log(
+          "[v0] Error fallback - basic items:",
+          basicItems.map((i) => i.label),
+        )
         setNavigationItems(basicItems)
       } finally {
         setLoading(false)
+        console.log("[v0] Sidebar loading complete")
       }
     }
 
     loadUserRole()
   }, [])
+
+  console.log("[v0] Sidebar rendering with", navigationItems.length, "items")
 
   return (
     <div className="hidden border-r bg-muted/40 md:block">
