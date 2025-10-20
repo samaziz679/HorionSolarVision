@@ -21,7 +21,7 @@ import { PriceSuggestionCard } from "@/components/reports/price-suggestion-card"
 import { MarginByProductTable } from "@/components/reports/margin-by-product-table"
 import type { MarginSummary, PriceSuggestion } from "@/lib/data/margin-analytics"
 import type { UserRole } from "@/lib/auth/rbac"
-import { canViewMargins, canViewPriceSuggestions } from "@/lib/data/margin-analytics"
+import { canViewMargins, canViewPriceSuggestions } from "@/lib/utils/margin-permissions"
 
 interface ReportsClientProps {
   initialAnalytics: AnalyticsData

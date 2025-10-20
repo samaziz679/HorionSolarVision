@@ -6,9 +6,11 @@ import {
   getMarginSummary as getMarginSummaryServer,
   generatePriceSuggestions as generatePriceSuggestionsServer,
   getMarginByProduct as getMarginByProductServer,
+} from "@/lib/data/margin-analytics"
+import {
   canViewMargins as canViewMarginsServer,
   canViewPriceSuggestions as canViewPriceSuggestionsServer,
-} from "@/lib/data/margin-analytics"
+} from "@/lib/utils/margin-permissions"
 import { getCurrentUserRole as getCurrentUserRoleServer } from "@/lib/auth/rbac"
 
 export default async function ReportsPage() {

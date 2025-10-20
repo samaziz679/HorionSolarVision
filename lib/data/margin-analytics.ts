@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server"
-import type { UserRole } from "@/lib/auth/rbac"
 
 export interface SaleWithMargin {
   id: string
@@ -218,14 +217,6 @@ export async function generatePriceSuggestions(targetMargin = 30): Promise<Price
   })
 
   return suggestions
-}
-
-export function canViewMargins(userRole: UserRole): boolean {
-  return ["admin", "stock_manager", "finance"].includes(userRole)
-}
-
-export function canViewPriceSuggestions(userRole: UserRole): boolean {
-  return ["admin", "stock_manager"].includes(userRole)
 }
 
 export async function getMarginByProduct(
