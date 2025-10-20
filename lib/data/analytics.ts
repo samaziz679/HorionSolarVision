@@ -47,6 +47,12 @@ export interface AnalyticsData {
     threshold: number
   }>
 
+  stockAlerts: Array<{
+    name: string
+    currentStock: number
+    status: "critical" | "low"
+  }>
+
   recentStockMovements: Array<{
     product: string
     type: string
@@ -86,6 +92,14 @@ export interface AnalyticsData {
     description: string
     priority: "high" | "medium" | "low"
   }>
+
+  // Inventory value breakdown by price tier
+  inventoryValueByPricing: {
+    purchasePrice: number
+    retailPrice1: number
+    retailPrice2: number
+    wholesalePrice: number
+  }
 }
 
 export async function getAnalyticsData(startDate?: string, endDate?: string): Promise<AnalyticsData> {
@@ -96,12 +110,12 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     let periodLabel: string
 
     if (!startDate || !endDate) {
-      // Default: show all data (last 6 months)
+      // Default: show all data (last 12 months)
       const currentMonth = currentDate.getMonth() + 1
       const currentYear = currentDate.getFullYear()
-      startDate = new Date(currentYear, currentMonth - 6, 1).toISOString().split("T")[0]
+      startDate = new Date(currentYear, currentMonth - 12, 1).toISOString().split("T")[0]
       endDate = currentDate.toISOString().split("T")[0]
-      periodLabel = "6 derniers mois"
+      periodLabel = "12 derniers mois"
     } else {
       periodLabel = "Période personnalisée"
     }
@@ -161,7 +175,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     // Fetch inventory data
     const { data: inventory, error: inventoryError } = await supabase
       .from("products")
-      .select("name, quantity, prix_achat, seuil_stock_bas")
+      .select("name, quantity, prix_achat, seuil_stock_bas, prix_vente_detail_1, prix_vente_detail_2, prix_vente_gros")
 
     if (inventoryError) {
       console.error("Inventory query error:", inventoryError)
@@ -172,13 +186,24 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     const prevRevenue = prevSales?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
     const totalExpenses = currentExpenses?.reduce((sum, expense) => sum + (expense.amount || 0), 0) || 0
     const totalCOGS = currentPurchases?.reduce((sum, purchase) => sum + (purchase.total || 0), 0) || 0
-    const netProfit = totalRevenue - totalExpenses - totalCOGS
+    const netProfit = totalRevenue - totalExpenses // Fix profit calculation
 
     const revenueGrowth = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0
 
     // Calculate inventory metrics
-    const inventoryValue =
+    const inventoryValuePurchase =
       inventory?.reduce((sum, product) => sum + (product.quantity || 0) * (product.prix_achat || 0), 0) || 0
+
+    const inventoryValueRetail1 =
+      inventory?.reduce((sum, product) => sum + (product.quantity || 0) * (product.prix_vente_detail_1 || 0), 0) || 0
+
+    const inventoryValueRetail2 =
+      inventory?.reduce((sum, product) => sum + (product.quantity || 0) * (product.prix_vente_detail_2 || 0), 0) || 0
+
+    const inventoryValueWholesale =
+      inventory?.reduce((sum, product) => sum + (product.quantity || 0) * (product.prix_vente_gros || 0), 0) || 0
+
+    const inventoryValue = inventoryValuePurchase
     const lowStockItems =
       inventory
         ?.filter((product) => (product.quantity || 0) <= (product.seuil_stock_bas || 10))
@@ -199,29 +224,52 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         return createdDate >= startDateObj && createdDate <= endDateObj
       }).length || 0
 
-    const expenseCategories: Record<string, number> = {}
-    currentExpenses?.forEach((expense) => {
-      // Since we don't have category names, group all as "Dépenses Générales"
-      const category = "Dépenses Générales"
-      expenseCategories[category] = (expenseCategories[category] || 0) + (expense.amount || 0)
+    const { data: expenseCategories } = await supabase
+      .from("expenses")
+      .select(`
+        amount,
+        expense_categories!inner(name_fr)
+      `)
+      .gte("expense_date", startDate)
+      .lte("expense_date", endDate)
+
+    const expenseByCat: Record<string, number> = {}
+    expenseCategories?.forEach((expense: any) => {
+      const category = expense.expense_categories?.name_fr || "Dépenses Générales"
+      expenseByCat[category] = (expenseByCat[category] || 0) + (expense.amount || 0)
     })
 
-    const expenseBreakdown = Object.entries(expenseCategories).map(([category, amount]) => ({
+    const expenseBreakdown = Object.entries(expenseByCat).map(([category, amount]) => ({
       category,
       amount,
       percentage: totalExpenses > 0 ? Math.round((amount / totalExpenses) * 100) : 0,
     }))
 
     const cashFlow = []
-    for (let i = 5; i >= 0; i--) {
-      const monthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1 - i, 1)
-      const monthName = monthDate.toLocaleDateString("fr-FR", { month: "short", year: "numeric" })
+    for (let i = 11; i >= 0; i--) {
+      const monthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
+      const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1).toISOString().split("T")[0]
+      const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).toISOString().split("T")[0]
+      const monthName = monthDate.toISOString().slice(0, 7) // YYYY-MM format
 
-      // For now, use current month data for all months to avoid complex queries
-      const monthRevenue = i === 0 ? totalRevenue : Math.round(totalRevenue * (0.8 + Math.random() * 0.4))
-      const monthExpenseTotal = i === 0 ? totalExpenses : Math.round(totalExpenses * (0.8 + Math.random() * 0.4))
+      // Fetch real monthly sales
+      const { data: monthlySales } = await supabase
+        .from("sales")
+        .select("total")
+        .gte("sale_date", monthStart)
+        .lte("sale_date", monthEnd)
+
+      // Fetch real monthly expenses
+      const { data: monthlyExpenses } = await supabase
+        .from("expenses")
+        .select("amount")
+        .gte("expense_date", monthStart)
+        .lte("expense_date", monthEnd)
+
+      const monthRevenue = monthlySales?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
+      const monthExpenseTotal = monthlyExpenses?.reduce((sum, expense) => sum + (expense.amount || 0), 0) || 0
       const monthProfit = monthRevenue - monthExpenseTotal
-      const monthMargin = monthRevenue > 0 ? Math.round((monthProfit / monthRevenue) * 100) : 0
+      const monthMargin = monthRevenue > 0 ? Math.round((monthProfit / monthRevenue) * 100 * 10) / 10 : 0
 
       cashFlow.push({
         month: monthName,
@@ -281,9 +329,10 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     }
 
     if (lowStockItems.length > 0) {
+      const productList = lowStockItems.map((item) => item.name).join(", ")
       recommendations.push({
         title: "Réapprovisionner le Stock",
-        description: `${lowStockItems.length} produit(s) ont un stock faible et nécessitent un réapprovisionnement.`,
+        description: `${lowStockItems.length} produit(s) ont un stock faible et nécessitent un réapprovisionnement: ${productList}`,
         priority: "high" as const,
       })
     }
@@ -304,6 +353,31 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       })
     }
 
+    const stockAlerts = lowStockItems.map((item) => ({
+      name: item.name,
+      currentStock: item.currentStock,
+      status: item.currentStock === 0 ? ("critical" as const) : ("low" as const),
+    }))
+
+    const { data: stockMovements } = await supabase
+      .from("stock_movements")
+      .select(`
+        quantity,
+        movement_date,
+        movement_type,
+        products!inner(name)
+      `)
+      .order("movement_date", { ascending: false })
+      .limit(10)
+
+    const recentStockMovements =
+      stockMovements?.map((movement: any) => ({
+        product: movement.products?.name || "Produit Inconnu",
+        type: movement.movement_type === "sale" ? "Vente" : "Achat",
+        quantity: movement.movement_type === "sale" ? -Math.abs(movement.quantity) : Math.abs(movement.quantity),
+        date: new Date(movement.movement_date).toLocaleDateString("fr-FR"),
+      })) || []
+
     return {
       totalRevenue,
       netProfit,
@@ -319,13 +393,8 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       expenseBreakdown,
       cashFlow,
       lowStockItems,
-      recentStockMovements: [
-        { product: "Panneau Solaire 300W", type: "Vente", quantity: -5, date: "Aujourd'hui" },
-        { product: "Batterie 12V", type: "Achat", quantity: 20, date: "Hier" },
-        { product: "Onduleur 2000W", type: "Vente", quantity: -2, date: "Il y a 2 jours" },
-        { product: "Régulateur MPPT", type: "Vente", quantity: -3, date: "Il y a 3 jours" },
-        { product: "Kit Solaire Complet", type: "Achat", quantity: 10, date: "Il y a 4 jours" },
-      ],
+      stockAlerts, // Add stockAlerts to match lowStockItems
+      recentStockMovements,
       topProducts, // Use real data instead of hardcoded
       topClients, // Use real data instead of hardcoded
       salesTarget: {
@@ -339,6 +408,12 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         percentage: Math.min(Math.round((newClientsThisMonth / 10) * 100), 100),
       },
       recommendations,
+      inventoryValueByPricing: {
+        purchasePrice: inventoryValuePurchase,
+        retailPrice1: inventoryValueRetail1,
+        retailPrice2: inventoryValueRetail2,
+        wholesalePrice: inventoryValueWholesale,
+      },
     }
   } catch (error) {
     console.error("Error fetching analytics data:", error)
@@ -359,6 +434,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       expenseBreakdown: [],
       cashFlow: [],
       lowStockItems: [],
+      stockAlerts: [],
       recentStockMovements: [],
       topProducts: [],
       topClients: [],
@@ -371,6 +447,12 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
           priority: "high",
         },
       ],
+      inventoryValueByPricing: {
+        purchasePrice: 0,
+        retailPrice1: 0,
+        retailPrice2: 0,
+        wholesalePrice: 0,
+      },
     }
   }
 }

@@ -13,13 +13,35 @@ import {
 } from "@/lib/utils/margin-permissions"
 import { getCurrentUserRole as getCurrentUserRoleServer } from "@/lib/auth/rbac"
 
-export default async function ReportsPage() {
+export default async function ReportsPage({
+  searchParams,
+}: {
+  searchParams: { period?: string }
+}) {
   const userRole = await getCurrentUserRoleServer()
 
-  // Get date range for last 6 months
   const now = new Date()
-  const startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1).toISOString().split("T")[0]
-  const endDate = now.toISOString().split("T")[0]
+  let startDate: string
+  let endDate: string = now.toISOString().split("T")[0]
+
+  const period = searchParams.period || "12-months"
+
+  switch (period) {
+    case "current-month":
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0]
+      break
+    case "last-month":
+      startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split("T")[0]
+      endDate = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split("T")[0]
+      break
+    case "6-months":
+      startDate = new Date(now.getFullYear(), now.getMonth() - 6, 1).toISOString().split("T")[0]
+      break
+    case "12-months":
+    default:
+      startDate = new Date(now.getFullYear(), now.getMonth() - 12, 1).toISOString().split("T")[0]
+      break
+  }
 
   // Fetch analytics data
   const analytics = await getAnalyticsDataServer(startDate, endDate)
@@ -61,6 +83,7 @@ export default async function ReportsPage() {
         initialPriceSuggestions={priceSuggestions}
         initialMarginByProduct={marginByProduct}
         userRole={userRole}
+        initialPeriod={period}
       />
     </Suspense>
   )

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -36,6 +37,7 @@ interface ReportsClientProps {
     sales_count: number
   }>
   userRole: UserRole | null
+  initialPeriod: string // Add initialPeriod prop
 }
 
 export function ReportsClient({
@@ -44,8 +46,10 @@ export function ReportsClient({
   initialPriceSuggestions,
   initialMarginByProduct,
   userRole,
+  initialPeriod, // Receive initialPeriod
 }: ReportsClientProps) {
-  const [period, setPeriod] = useState<string>("all")
+  const router = useRouter()
+  const [period, setPeriod] = useState<string>(initialPeriod) // Initialize with initialPeriod
   const [priceSuggestions, setPriceSuggestions] = useState(initialPriceSuggestions)
 
   const analytics = {
@@ -61,6 +65,18 @@ export function ReportsClient({
       newClients: { current: 0, target: 0, percentage: 0 },
     },
     recommendations: initialAnalytics?.recommendations ?? [],
+    inventoryValueByPricing: initialAnalytics?.inventoryValueByPricing ?? {
+      purchasePrice: 0,
+      retailPrice1: 0,
+      retailPrice2: 0,
+      wholesalePrice: 0,
+    },
+    inventoryTurnover: initialAnalytics?.inventoryTurnover ?? 0,
+    outOfStockItems: initialAnalytics?.outOfStockItems ?? 0,
+    recentStockMovements: initialAnalytics?.recentStockMovements ?? [],
+    revenueBreakdown: initialAnalytics?.revenueBreakdown ?? [],
+    expenseBreakdown: initialAnalytics?.expenseBreakdown ?? [],
+    cashFlow: initialAnalytics?.cashFlow ?? [],
   }
 
   const marginSummary = initialMarginSummary
@@ -75,10 +91,15 @@ export function ReportsClient({
     console.log("[v0] Refresh suggestions with target margin:", targetMargin)
   }
 
+  const handlePeriodChange = (newPeriod: string) => {
+    // Handle period change with router navigation
+    setPeriod(newPeriod)
+    router.push(`/reports?period=${newPeriod}`)
+  }
+
   const profitMargin =
     analytics.totalRevenue > 0 ? ((analytics.netProfit / analytics.totalRevenue) * 100).toFixed(1) : "0"
-  const expenseRatio =
-    analytics.totalRevenue > 0 ? ((analytics.totalExpenses / analytics.totalRevenue) * 100).toFixed(1) : "0"
+  const isNegativeMargin = Number(profitMargin) < 0
 
   const periodLabel =
     period === "all"
@@ -136,13 +157,15 @@ export function ReportsClient({
               <Printer className="h-4 w-4 mr-2" />
               Imprimer
             </Button>
-            <Select value={period} onValueChange={setPeriod}>
+            <Select value={period} onValueChange={handlePeriodChange}>
+              {" "}
+              // Use handlePeriodChange instead of setPeriod
               <SelectTrigger className="w-48 no-print">
                 <SelectValue placeholder="Sélectionner une période" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">6 derniers mois</SelectItem>
                 <SelectItem value="12-months">12 derniers mois</SelectItem>
+                <SelectItem value="6-months">6 derniers mois</SelectItem>
                 <SelectItem value="current-month">Mois actuel</SelectItem>
                 <SelectItem value="last-month">Mois dernier</SelectItem>
               </SelectContent>
@@ -183,7 +206,9 @@ export function ReportsClient({
                   <BarChart3 className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">
+                  <div className={`text-2xl font-bold ${isNegativeMargin ? "text-red-600" : "text-blue-600"}`}>
+                    {" "}
+                    // Handle negative profit display
                     {(analytics.netProfit ?? 0).toLocaleString()} CFA
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">Marge: {profitMargin}%</p>
@@ -199,7 +224,7 @@ export function ReportsClient({
                   <div className="text-2xl font-bold text-orange-600">
                     {(analytics.totalExpenses ?? 0).toLocaleString()} CFA
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">{expenseRatio}% du CA</p>
+                  <p className="text-xs text-muted-foreground mt-1">{profitMargin}% du CA</p>
                 </CardContent>
               </Card>
 
@@ -227,12 +252,16 @@ export function ReportsClient({
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Marge Bénéficiaire</span>
-                      <span className="text-sm font-medium text-green-600">{profitMargin}%</span>
+                      <span className={`text-sm font-medium ${isNegativeMargin ? "text-red-600" : "text-green-600"}`}>
+                        {" "}
+                        // Show red for negative margin
+                        {profitMargin}%
+                      </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className="bg-green-500 h-2 rounded-full"
-                        style={{ width: `${Math.min(Number(profitMargin), 100)}%` }}
+                        className={`h-2 rounded-full ${isNegativeMargin ? "bg-red-500" : "bg-green-500"}`} // Show red bar for negative margin
+                        style={{ width: `${Math.min(Math.abs(Number(profitMargin)), 100)}%` }}
                       ></div>
                     </div>
                   </div>
@@ -240,12 +269,12 @@ export function ReportsClient({
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Ratio Dépenses/CA</span>
-                      <span className="text-sm font-medium text-amber-600">{expenseRatio}%</span>
+                      <span className="text-sm font-medium text-amber-600">{profitMargin}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-amber-500 h-2 rounded-full"
-                        style={{ width: `${Math.min(Number(expenseRatio), 100)}%` }}
+                        style={{ width: `${Math.min(Number(profitMargin), 100)}%` }}
                       ></div>
                     </div>
                   </div>
@@ -373,7 +402,9 @@ export function ReportsClient({
                   <Package className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">0 CFA</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {(analytics.inventoryValueByPricing.purchasePrice ?? 0).toLocaleString()} CFA
+                  </div>
                 </CardContent>
               </Card>
 
@@ -383,7 +414,9 @@ export function ReportsClient({
                   <Package className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-600">0 CFA</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {(analytics.inventoryValueByPricing.retailPrice1 ?? 0).toLocaleString()} CFA
+                  </div>
                 </CardContent>
               </Card>
 
@@ -393,7 +426,9 @@ export function ReportsClient({
                   <Package className="h-4 w-4 text-purple-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-purple-600">0 CFA</div>
+                  <div className="text-2xl font-bold text-purple-600">
+                    {(analytics.inventoryValueByPricing.retailPrice2 ?? 0).toLocaleString()} CFA
+                  </div>
                 </CardContent>
               </Card>
 
@@ -403,7 +438,9 @@ export function ReportsClient({
                   <Package className="h-4 w-4 text-orange-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-orange-600">0 CFA</div>
+                  <div className="text-2xl font-bold text-orange-600">
+                    {(analytics.inventoryValueByPricing.wholesalePrice ?? 0).toLocaleString()} CFA
+                  </div>
                 </CardContent>
               </Card>
             </div>
@@ -418,30 +455,38 @@ export function ReportsClient({
                   <div className="space-y-3">
                     <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
                       <span className="text-sm font-medium">Valeur Stock (Prix Achat)</span>
-                      <span className="text-lg font-bold text-blue-600">0 CFA</span>
+                      <span className="text-lg font-bold text-blue-600">
+                        {(analytics.inventoryValueByPricing.purchasePrice ?? 0).toLocaleString()} CFA
+                      </span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
                       <span className="text-sm font-medium">Valeur Stock (Prix Détail 1)</span>
-                      <span className="text-lg font-bold text-green-600">0 CFA</span>
+                      <span className="text-lg font-bold text-green-600">
+                        {(analytics.inventoryValueByPricing.retailPrice1 ?? 0).toLocaleString()} CFA
+                      </span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
                       <span className="text-sm font-medium">Valeur Stock (Prix Détail 2)</span>
-                      <span className="text-lg font-bold text-purple-600">0 CFA</span>
+                      <span className="text-lg font-bold text-purple-600">
+                        {(analytics.inventoryValueByPricing.retailPrice2 ?? 0).toLocaleString()} CFA
+                      </span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
                       <span className="text-sm font-medium">Valeur Stock (Prix Gros)</span>
-                      <span className="text-lg font-bold text-orange-600">0 CFA</span>
+                      <span className="text-lg font-bold text-orange-600">
+                        {(analytics.inventoryValueByPricing.wholesalePrice ?? 0).toLocaleString()} CFA
+                      </span>
                     </div>
                   </div>
 
                   <div className="pt-4 border-t space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Rotation Stock (mois)</span>
-                      <span className="text-sm font-medium">0.1x</span>
+                      <span className="text-sm font-medium">{analytics.inventoryTurnover}x</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Produits en Rupture</span>
-                      <span className="text-sm font-medium text-red-600">0</span>
+                      <span className="text-sm font-medium text-red-600">{analytics.outOfStockItems}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -454,27 +499,30 @@ export function ReportsClient({
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-3">
-                    {[
-                      { product: "MANA Original", date: "15/09/2025", quantity: -4, value: 400 },
-                      { product: "MANA Original", date: "15/09/2025", quantity: -3, value: 300 },
-                      { product: "Panneau Solaire de 35W", date: "15/09/2025", quantity: -25, value: 2500 },
-                      { product: "Panneau Solaire de 55W", date: "15/09/2025", quantity: -25, value: 2500 },
-                      { product: "888AH BELTA", date: "15/09/2025", quantity: -20, value: 2000 },
-                    ].map((movement, index) => (
+                    {analytics.recentStockMovements.slice(0, 5).map((movement, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-2 border-l-4 border-l-red-500 bg-red-50 rounded"
+                        className={`flex items-center justify-between p-2 border-l-4 ${
+                          movement.quantity < 0 ? "border-l-red-500 bg-red-50" : "border-l-green-500 bg-green-50"
+                        } rounded`}
                       >
                         <div>
                           <p className="text-sm font-medium">{movement.product}</p>
                           <p className="text-xs text-muted-foreground">{movement.date}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold text-red-600">{movement.quantity}</p>
-                          <p className="text-xs text-muted-foreground">{(movement.value ?? 0).toLocaleString()} CFA</p>
+                          <p
+                            className={`text-sm font-bold ${movement.quantity < 0 ? "text-red-600" : "text-green-600"}`}
+                          >
+                            {movement.quantity}
+                          </p>
+                          <p className="text-xs text-muted-foreground">{movement.type}</p>
                         </div>
                       </div>
                     ))}
+                    {analytics.recentStockMovements.length === 0 && (
+                      <p className="text-sm text-muted-foreground text-center py-4">Aucun mouvement récent</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -489,15 +537,18 @@ export function ReportsClient({
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
-                    <span className="text-sm font-medium">Ventes Directes</span>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-green-600">
-                        {(analytics.totalRevenue ?? 0).toLocaleString()} CFA
-                      </p>
-                      <p className="text-xs text-muted-foreground">100% du total</p>
+                  {analytics.revenueBreakdown.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
+                      <span className="text-sm font-medium">{item.category}</span>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-green-600">{(item.amount ?? 0).toLocaleString()} CFA</p>
+                        <p className="text-xs text-muted-foreground">{item.percentage}% du total</p>
+                      </div>
                     </div>
-                  </div>
+                  ))}
+                  {analytics.revenueBreakdown.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">Aucune donnée de revenus</p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -508,9 +559,22 @@ export function ReportsClient({
                 <p className="text-sm text-muted-foreground">Répartition par catégorie</p>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground text-center py-8">
-                  Données de dépenses par catégorie à venir
-                </p>
+                <div className="space-y-4">
+                  {analytics.expenseBreakdown.map((item, index) => (
+                    <div key={index} className="flex justify-between items-center p-4 bg-orange-50 rounded-lg">
+                      <span className="text-sm font-medium">{item.category}</span>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-orange-600">{(item.amount ?? 0).toLocaleString()} CFA</p>
+                        <p className="text-xs text-muted-foreground">{item.percentage}% du total</p>
+                      </div>
+                    </div>
+                  ))}
+                  {analytics.expenseBreakdown.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-8">
+                      Aucune donnée de dépenses pour cette période
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
@@ -532,28 +596,35 @@ export function ReportsClient({
                       </tr>
                     </thead>
                     <tbody>
-                      {[
-                        { month: "2025-05", revenue: 551000, expenses: 0, profit: 551000, margin: 100 },
-                        { month: "2025-06", revenue: 1385000, expenses: 35000, profit: 1350000, margin: 97.5 },
-                      ].map((row, index) => (
+                      {analytics.cashFlow.map((row, index) => (
                         <tr key={index} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4 text-sm">{row.month}</td>
                           <td className="py-3 px-4 text-sm text-right text-green-600 font-medium">
-                            +{(row.revenue ?? 0).toLocaleString()} CFA
+                            {row.revenue > 0 ? `+${(row.revenue ?? 0).toLocaleString()}` : "0"} CFA
                           </td>
                           <td className="py-3 px-4 text-sm text-right text-red-600">
                             {row.expenses > 0 ? `-${(row.expenses ?? 0).toLocaleString()}` : "0"} CFA
                           </td>
-                          <td className="py-3 px-4 text-sm text-right text-blue-600 font-medium">
-                            +{(row.profit ?? 0).toLocaleString()} CFA
+                          <td
+                            className={`py-3 px-4 text-sm text-right font-medium ${row.profit >= 0 ? "text-blue-600" : "text-red-600"}`}
+                          >
+                            {row.profit >= 0 ? "+" : ""}
+                            {(row.profit ?? 0).toLocaleString()} CFA
                           </td>
                           <td className="py-3 px-4 text-right">
-                            <Badge variant="default" className="bg-orange-500">
+                            <Badge variant="default" className={row.margin >= 0 ? "bg-orange-500" : "bg-red-500"}>
                               {row.margin.toFixed(1)}%
                             </Badge>
                           </td>
                         </tr>
                       ))}
+                      {analytics.cashFlow.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
+                            Aucune donnée de flux de trésorerie
+                          </td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
