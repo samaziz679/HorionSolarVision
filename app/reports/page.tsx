@@ -1,4 +1,3 @@
-"use client"
 import { Card, CardContent } from "@/components/ui/card"
 import { Suspense } from "react"
 import { ReportsClient } from "@/components/reports/reports-client"
