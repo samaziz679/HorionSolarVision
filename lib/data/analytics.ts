@@ -88,32 +88,22 @@ export interface AnalyticsData {
   }>
 }
 
-export async function getAnalyticsData(period?: string): Promise<AnalyticsData> {
+export async function getAnalyticsData(startDate?: string, endDate?: string): Promise<AnalyticsData> {
   const supabase = createClient()
 
   try {
     const currentDate = new Date()
-    let startDate: Date
-    let endDate: Date
     let periodLabel: string
 
-    if (period === "current-month") {
+    if (!startDate || !endDate) {
+      // Default: show all data (last 6 months)
       const currentMonth = currentDate.getMonth() + 1
       const currentYear = currentDate.getFullYear()
-      startDate = new Date(currentYear, currentMonth - 1, 1)
-      endDate = new Date(currentYear, currentMonth, 0)
-      periodLabel = currentDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-    } else if (period === "last-month") {
-      const lastMonth = currentDate.getMonth() === 0 ? 12 : currentDate.getMonth()
-      const lastYear = currentDate.getMonth() === 0 ? currentDate.getFullYear() - 1 : currentDate.getFullYear()
-      startDate = new Date(lastYear, lastMonth - 1, 1)
-      endDate = new Date(lastYear, lastMonth, 0)
-      periodLabel = new Date(lastYear, lastMonth - 1).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })
-    } else {
-      // Default: show all data (last 6 months)
-      startDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 5, 1)
-      endDate = currentDate
+      startDate = new Date(currentYear, currentMonth - 6, 1).toISOString().split("T")[0]
+      endDate = currentDate.toISOString().split("T")[0]
       periodLabel = "6 derniers mois"
+    } else {
+      periodLabel = "Période personnalisée"
     }
 
     const { data: currentSales, error: salesError } = await supabase
@@ -126,16 +116,18 @@ export async function getAnalyticsData(period?: string): Promise<AnalyticsData> 
         product_id,
         products!inner(name)
       `)
-      .gte("sale_date", startDate.toISOString().split("T")[0])
-      .lte("sale_date", endDate.toISOString().split("T")[0])
+      .gte("sale_date", startDate)
+      .lte("sale_date", endDate)
 
     if (salesError) {
       console.error("Sales query error:", salesError)
     }
 
     // Get previous period for comparison
-    const prevStartDate = new Date(startDate.getTime() - (endDate.getTime() - startDate.getTime()))
-    const prevEndDate = startDate
+    const startDateObj = new Date(startDate)
+    const endDateObj = new Date(endDate)
+    const prevStartDate = new Date(startDateObj.getTime() - (endDateObj.getTime() - startDateObj.getTime()))
+    const prevEndDate = startDateObj
 
     const { data: prevSales } = await supabase
       .from("sales")
@@ -146,8 +138,8 @@ export async function getAnalyticsData(period?: string): Promise<AnalyticsData> 
     const { data: currentExpenses, error: expensesError } = await supabase
       .from("expenses")
       .select("amount, category, expense_date")
-      .gte("expense_date", startDate.toISOString().split("T")[0])
-      .lte("expense_date", endDate.toISOString().split("T")[0])
+      .gte("expense_date", startDate)
+      .lte("expense_date", endDate)
 
     if (expensesError) {
       console.error("Expenses query error:", expensesError)
@@ -156,8 +148,8 @@ export async function getAnalyticsData(period?: string): Promise<AnalyticsData> 
     const { data: currentPurchases } = await supabase
       .from("purchases")
       .select("total, purchase_date")
-      .gte("purchase_date", startDate.toISOString().split("T")[0])
-      .lte("purchase_date", endDate.toISOString().split("T")[0])
+      .gte("purchase_date", startDate)
+      .lte("purchase_date", endDate)
 
     const { data: clients } = await supabase.from("clients").select(`
         id, 
@@ -204,7 +196,7 @@ export async function getAnalyticsData(period?: string): Promise<AnalyticsData> 
     const newClientsThisMonth =
       clients?.filter((client) => {
         const createdDate = new Date(client.created_at)
-        return createdDate >= startDate && createdDate <= endDate
+        return createdDate >= startDateObj && createdDate <= endDateObj
       }).length || 0
 
     const expenseCategories: Record<string, number> = {}

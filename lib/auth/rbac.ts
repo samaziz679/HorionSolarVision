@@ -84,6 +84,11 @@ export async function getCurrentUserProfile(): Promise<UserProfile | null> {
   }
 }
 
+export async function getCurrentUserRole(): Promise<UserRole | null> {
+  const profile = await getCurrentUserProfile()
+  return profile?.role || null
+}
+
 export async function hasPermission(userRole: UserRole, module: string, action?: string): Promise<boolean> {
   const permissions = ROLE_PERMISSIONS[userRole]
 
