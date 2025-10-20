@@ -48,9 +48,23 @@ export function ReportsClient({
   const [period, setPeriod] = useState<string>("all")
   const [priceSuggestions, setPriceSuggestions] = useState(initialPriceSuggestions)
 
-  const analytics = initialAnalytics
+  const analytics = {
+    totalRevenue: initialAnalytics?.totalRevenue ?? 0,
+    totalExpenses: initialAnalytics?.totalExpenses ?? 0,
+    netProfit: initialAnalytics?.netProfit ?? 0,
+    activeClients: initialAnalytics?.activeClients ?? 0,
+    stockAlerts: initialAnalytics?.stockAlerts ?? [],
+    topProducts: initialAnalytics?.topProducts ?? [],
+    topClients: initialAnalytics?.topClients ?? [],
+    monthlyObjectives: initialAnalytics?.monthlyObjectives ?? {
+      revenue: { current: 0, target: 0, percentage: 0 },
+      newClients: { current: 0, target: 0, percentage: 0 },
+    },
+    recommendations: initialAnalytics?.recommendations ?? [],
+  }
+
   const marginSummary = initialMarginSummary
-  const marginByProduct = initialMarginByProduct
+  const marginByProduct = initialMarginByProduct ?? []
 
   const handlePrint = () => {
     window.print()
