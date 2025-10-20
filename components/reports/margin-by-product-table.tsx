@@ -41,9 +41,9 @@ export function MarginByProductTable({ data }: MarginByProductTableProps) {
             {data.map((product) => (
               <TableRow key={product.product_id}>
                 <TableCell className="font-medium">{product.product_name}</TableCell>
-                <TableCell className="text-right">{product.total_sales.toLocaleString()} CFA</TableCell>
+                <TableCell className="text-right">{(product.total_sales ?? 0).toLocaleString()} CFA</TableCell>
                 <TableCell className="text-right font-medium text-green-600">
-                  {product.total_margin.toLocaleString()} CFA
+                  {(product.total_margin ?? 0).toLocaleString()} CFA
                 </TableCell>
                 <TableCell className="text-right">
                   <Badge

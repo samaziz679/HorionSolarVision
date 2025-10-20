@@ -170,7 +170,9 @@ export function ReportsClient({
                   <TrendingUp className="h-4 w-4 text-green-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-green-600">{analytics.totalRevenue.toLocaleString()} CFA</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {(analytics.totalRevenue ?? 0).toLocaleString()} CFA
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">+0% vs mois dernier</p>
                 </CardContent>
               </Card>
@@ -181,7 +183,9 @@ export function ReportsClient({
                   <BarChart3 className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">{analytics.netProfit.toLocaleString()} CFA</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {(analytics.netProfit ?? 0).toLocaleString()} CFA
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">Marge: {profitMargin}%</p>
                 </CardContent>
               </Card>
@@ -193,7 +197,7 @@ export function ReportsClient({
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-orange-600">
-                    {analytics.totalExpenses.toLocaleString()} CFA
+                    {(analytics.totalExpenses ?? 0).toLocaleString()} CFA
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">{expenseRatio}% du CA</p>
                 </CardContent>
@@ -304,7 +308,7 @@ export function ReportsClient({
                           <span className="text-sm font-medium">{client.name}</span>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold">{client.totalSpent.toLocaleString()} CFA</p>
+                          <p className="text-sm font-bold">{(client.totalSpent ?? 0).toLocaleString()} CFA</p>
                           <p className="text-xs text-muted-foreground">{client.orderCount} commandes</p>
                         </div>
                       </div>
@@ -467,7 +471,7 @@ export function ReportsClient({
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-bold text-red-600">{movement.quantity}</p>
-                          <p className="text-xs text-muted-foreground">{movement.value.toLocaleString()} CFA</p>
+                          <p className="text-xs text-muted-foreground">{(movement.value ?? 0).toLocaleString()} CFA</p>
                         </div>
                       </div>
                     ))}
@@ -488,7 +492,9 @@ export function ReportsClient({
                   <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg">
                     <span className="text-sm font-medium">Ventes Directes</span>
                     <div className="text-right">
-                      <p className="text-lg font-bold text-green-600">{analytics.totalRevenue.toLocaleString()} CFA</p>
+                      <p className="text-lg font-bold text-green-600">
+                        {(analytics.totalRevenue ?? 0).toLocaleString()} CFA
+                      </p>
                       <p className="text-xs text-muted-foreground">100% du total</p>
                     </div>
                   </div>
@@ -533,13 +539,13 @@ export function ReportsClient({
                         <tr key={index} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4 text-sm">{row.month}</td>
                           <td className="py-3 px-4 text-sm text-right text-green-600 font-medium">
-                            +{row.revenue.toLocaleString()} CFA
+                            +{(row.revenue ?? 0).toLocaleString()} CFA
                           </td>
                           <td className="py-3 px-4 text-sm text-right text-red-600">
-                            {row.expenses > 0 ? `-${row.expenses.toLocaleString()}` : "0"} CFA
+                            {row.expenses > 0 ? `-${(row.expenses ?? 0).toLocaleString()}` : "0"} CFA
                           </td>
                           <td className="py-3 px-4 text-sm text-right text-blue-600 font-medium">
-                            +{row.profit.toLocaleString()} CFA
+                            +{(row.profit ?? 0).toLocaleString()} CFA
                           </td>
                           <td className="py-3 px-4 text-right">
                             <Badge variant="default" className="bg-orange-500">

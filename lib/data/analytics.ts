@@ -137,7 +137,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
 
     const { data: currentExpenses, error: expensesError } = await supabase
       .from("expenses")
-      .select("amount, category, expense_date")
+      .select("amount, expense_date")
       .gte("expense_date", startDate)
       .lte("expense_date", endDate)
 
@@ -201,7 +201,8 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
 
     const expenseCategories: Record<string, number> = {}
     currentExpenses?.forEach((expense) => {
-      const category = expense.category || "Autres"
+      // Since we don't have category names, group all as "Dépenses Générales"
+      const category = "Dépenses Générales"
       expenseCategories[category] = (expenseCategories[category] || 0) + (expense.amount || 0)
     })
 

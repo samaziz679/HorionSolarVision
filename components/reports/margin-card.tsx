@@ -38,17 +38,17 @@ export function MarginCard({ marginSummary, period }: MarginCardProps) {
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Chiffre d'Affaires</p>
-            <p className="text-2xl font-bold text-green-600">{marginSummary.total_sales.toLocaleString()} CFA</p>
+            <p className="text-2xl font-bold text-green-600">{(marginSummary.total_sales ?? 0).toLocaleString()} CFA</p>
           </div>
           <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Coût d'Achat</p>
-            <p className="text-2xl font-bold text-orange-600">{marginSummary.total_cost.toLocaleString()} CFA</p>
+            <p className="text-2xl font-bold text-orange-600">{(marginSummary.total_cost ?? 0).toLocaleString()} CFA</p>
           </div>
         </div>
 
         <div className="space-y-1">
           <p className="text-sm text-muted-foreground">Marge Brute Totale</p>
-          <p className="text-3xl font-bold text-blue-600">{marginSummary.total_margin.toLocaleString()} CFA</p>
+          <p className="text-3xl font-bold text-blue-600">{(marginSummary.total_margin ?? 0).toLocaleString()} CFA</p>
         </div>
 
         <div className="space-y-2">

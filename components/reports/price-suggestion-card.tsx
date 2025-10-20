@@ -68,16 +68,16 @@ export function PriceSuggestionCard({ suggestions, onRefresh }: PriceSuggestionC
                 <TableRow key={suggestion.product_id}>
                   <TableCell className="font-medium">{suggestion.product_name}</TableCell>
                   <TableCell className="text-right text-muted-foreground">
-                    {suggestion.current_purchase_price.toLocaleString()} CFA
+                    {(suggestion.current_purchase_price ?? 0).toLocaleString()} CFA
                   </TableCell>
                   <TableCell className="text-right font-medium text-green-600">
-                    {suggestion.suggested_price_detail1.toLocaleString()} CFA
+                    {(suggestion.suggested_price_detail1 ?? 0).toLocaleString()} CFA
                   </TableCell>
                   <TableCell className="text-right font-medium text-blue-600">
-                    {suggestion.suggested_price_detail2.toLocaleString()} CFA
+                    {(suggestion.suggested_price_detail2 ?? 0).toLocaleString()} CFA
                   </TableCell>
                   <TableCell className="text-right font-medium text-orange-600">
-                    {suggestion.suggested_price_gros.toLocaleString()} CFA
+                    {(suggestion.suggested_price_gros ?? 0).toLocaleString()} CFA
                   </TableCell>
                 </TableRow>
               ))}
