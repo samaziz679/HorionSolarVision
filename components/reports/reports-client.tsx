@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Calendar, Printer, TrendingUp, TrendingDown, Package, BarChart3, Users } from "lucide-react"
+import { Calendar, Printer, TrendingUp, TrendingDown, Package, BarChart3, DollarSign } from "lucide-react"
 import type { AnalyticsData } from "@/lib/data/analytics-client"
 import {
   Breadcrumb,
@@ -37,7 +37,7 @@ interface ReportsClientProps {
     sales_count: number
   }>
   userRole: UserRole | null
-  initialPeriod: string // Add initialPeriod prop
+  initialPeriod: string
 }
 
 export function ReportsClient({
@@ -46,14 +46,16 @@ export function ReportsClient({
   initialPriceSuggestions,
   initialMarginByProduct,
   userRole,
-  initialPeriod, // Receive initialPeriod
+  initialPeriod,
 }: ReportsClientProps) {
   const router = useRouter()
-  const [period, setPeriod] = useState<string>(initialPeriod) // Initialize with initialPeriod
+  const [period, setPeriod] = useState<string>(initialPeriod)
   const [priceSuggestions, setPriceSuggestions] = useState(initialPriceSuggestions)
 
   const analytics = {
     totalRevenue: initialAnalytics?.totalRevenue ?? 0,
+    totalCOGS: initialAnalytics?.totalCOGS ?? 0, // Added COGS
+    grossProfit: initialAnalytics?.grossProfit ?? 0, // Added gross profit
     totalExpenses: initialAnalytics?.totalExpenses ?? 0,
     netProfit: initialAnalytics?.netProfit ?? 0,
     activeClients: initialAnalytics?.activeClients ?? 0,
@@ -87,19 +89,19 @@ export function ReportsClient({
   }
 
   const handleRefreshSuggestions = async (targetMargin: number) => {
-    // For now, just keep the existing suggestions
     console.log("[v0] Refresh suggestions with target margin:", targetMargin)
   }
 
   const handlePeriodChange = (newPeriod: string) => {
-    // Handle period change with router navigation
     setPeriod(newPeriod)
     router.push(`/reports?period=${newPeriod}`)
   }
 
-  const profitMargin =
-    analytics.totalRevenue > 0 ? ((analytics.netProfit / analytics.totalRevenue) * 100).toFixed(1) : "0"
-  const isNegativeMargin = Number(profitMargin) < 0
+  const grossMargin =
+    analytics.totalRevenue > 0 ? ((analytics.grossProfit / analytics.totalRevenue) * 100).toFixed(1) : "0"
+  const netMargin = analytics.totalRevenue > 0 ? ((analytics.netProfit / analytics.totalRevenue) * 100).toFixed(1) : "0"
+  const isNegativeNetMargin = Number(netMargin) < 0
+  const isNegativeGrossMargin = Number(grossMargin) < 0
 
   const expenseRatio =
     analytics.totalRevenue > 0 ? ((analytics.totalExpenses / analytics.totalRevenue) * 100).toFixed(1) : "0"
@@ -197,26 +199,26 @@ export function ReportsClient({
                   <div className="text-2xl font-bold text-green-600">
                     {(analytics.totalRevenue ?? 0).toLocaleString()} CFA
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">+0% vs mois dernier</p>
+                  <p className="text-xs text-muted-foreground mt-1">Revenus totaux</p>
                 </CardContent>
               </Card>
 
-              <Card className="border-l-4 border-l-blue-500">
+              <Card className="border-l-4 border-l-cyan-500">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Bénéfice Net</CardTitle>
-                  <BarChart3 className="h-4 w-4 text-blue-600" />
+                  <CardTitle className="text-sm font-medium">Marge Brute</CardTitle>
+                  <DollarSign className="h-4 w-4 text-cyan-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className={`text-2xl font-bold ${isNegativeMargin ? "text-red-600" : "text-blue-600"}`}>
-                    {(analytics.netProfit ?? 0).toLocaleString()} CFA
+                  <div className={`text-2xl font-bold ${isNegativeGrossMargin ? "text-red-600" : "text-cyan-600"}`}>
+                    {(analytics.grossProfit ?? 0).toLocaleString()} CFA
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">Marge: {profitMargin}%</p>
+                  <p className="text-xs text-muted-foreground mt-1">Marge: {grossMargin}%</p>
                 </CardContent>
               </Card>
 
               <Card className="border-l-4 border-l-orange-500">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Dépenses Totales</CardTitle>
+                  <CardTitle className="text-sm font-medium">Dépenses</CardTitle>
                   <TrendingDown className="h-4 w-4 text-orange-600" />
                 </CardHeader>
                 <CardContent>
@@ -227,17 +229,85 @@ export function ReportsClient({
                 </CardContent>
               </Card>
 
-              <Card className="border-l-4 border-l-purple-500">
+              <Card className="border-l-4 border-l-blue-500">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Clients Actifs</CardTitle>
-                  <Users className="h-4 w-4 text-purple-600" />
+                  <CardTitle className="text-sm font-medium">Bénéfice Net</CardTitle>
+                  <BarChart3 className="h-4 w-4 text-blue-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-purple-600">{analytics.activeClients}</div>
-                  <p className="text-xs text-muted-foreground mt-1">+0% ce mois</p>
+                  <div className={`text-2xl font-bold ${isNegativeNetMargin ? "text-red-600" : "text-blue-600"}`}>
+                    {(analytics.netProfit ?? 0).toLocaleString()} CFA
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Marge: {netMargin}%</p>
                 </CardContent>
               </Card>
             </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center">
+                  <DollarSign className="h-5 w-5 mr-2" />
+                  Analyse des Coûts et Marges
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">Décomposition détaillée de la rentabilité</p>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center p-4 bg-green-50 rounded-lg border-l-4 border-l-green-500">
+                    <span className="text-sm font-medium">Chiffre d'Affaires</span>
+                    <span className="text-lg font-bold text-green-600">
+                      {(analytics.totalRevenue ?? 0).toLocaleString()} CFA
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center p-4 bg-red-50 rounded-lg border-l-4 border-l-red-500">
+                    <div>
+                      <span className="text-sm font-medium">Coût des Marchandises Vendues (COGS)</span>
+                      <p className="text-xs text-muted-foreground">Prix d'achat des produits vendus</p>
+                    </div>
+                    <span className="text-lg font-bold text-red-600">
+                      -{(analytics.totalCOGS ?? 0).toLocaleString()} CFA
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center p-4 bg-cyan-50 rounded-lg border-l-4 border-l-cyan-500">
+                    <div>
+                      <span className="text-sm font-medium">Marge Brute</span>
+                      <p className="text-xs text-muted-foreground">Revenus - COGS</p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-lg font-bold ${isNegativeGrossMargin ? "text-red-600" : "text-cyan-600"}`}>
+                        {(analytics.grossProfit ?? 0).toLocaleString()} CFA
+                      </span>
+                      <p className="text-xs text-muted-foreground">{grossMargin}% du CA</p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center p-4 bg-orange-50 rounded-lg border-l-4 border-l-orange-500">
+                    <div>
+                      <span className="text-sm font-medium">Dépenses d'Exploitation</span>
+                      <p className="text-xs text-muted-foreground">Frais généraux et opérationnels</p>
+                    </div>
+                    <span className="text-lg font-bold text-orange-600">
+                      -{(analytics.totalExpenses ?? 0).toLocaleString()} CFA
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg border-l-4 border-l-blue-500">
+                    <div>
+                      <span className="text-sm font-medium">Bénéfice Net</span>
+                      <p className="text-xs text-muted-foreground">Marge Brute - Dépenses</p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-lg font-bold ${isNegativeNetMargin ? "text-red-600" : "text-blue-600"}`}>
+                        {(analytics.netProfit ?? 0).toLocaleString()} CFA
+                      </span>
+                      <p className="text-xs text-muted-foreground">{netMargin}% du CA</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
@@ -250,15 +320,17 @@ export function ReportsClient({
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Marge Bénéficiaire</span>
-                      <span className={`text-sm font-medium ${isNegativeMargin ? "text-red-600" : "text-green-600"}`}>
-                        {profitMargin}%
+                      <span className="text-sm text-muted-foreground">Marge Brute</span>
+                      <span
+                        className={`text-sm font-medium ${isNegativeGrossMargin ? "text-red-600" : "text-cyan-600"}`}
+                      >
+                        {grossMargin}%
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full ${isNegativeMargin ? "bg-red-500" : "bg-green-500"}`}
-                        style={{ width: `${Math.min(Math.abs(Number(profitMargin)), 100)}%` }}
+                        className={`h-2 rounded-full ${isNegativeGrossMargin ? "bg-red-500" : "bg-cyan-500"}`}
+                        style={{ width: `${Math.min(Math.abs(Number(grossMargin)), 100)}%` }}
                       ></div>
                     </div>
                   </div>
@@ -278,11 +350,16 @@ export function ReportsClient({
 
                   <div className="space-y-2">
                     <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Croissance CA</span>
-                      <span className="text-sm font-medium">0%</span>
+                      <span className="text-sm text-muted-foreground">Marge Nette</span>
+                      <span className={`text-sm font-medium ${isNegativeNetMargin ? "text-red-600" : "text-blue-600"}`}>
+                        {netMargin}%
+                      </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div className="bg-blue-500 h-2 rounded-full" style={{ width: "0%" }}></div>
+                      <div
+                        className={`h-2 rounded-full ${isNegativeNetMargin ? "bg-red-500" : "bg-blue-500"}`}
+                        style={{ width: `${Math.min(Math.abs(Number(netMargin)), 100)}%` }}
+                      ></div>
                     </div>
                   </div>
                 </CardContent>

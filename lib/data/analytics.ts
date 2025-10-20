@@ -3,8 +3,10 @@ import { createClient } from "@/lib/supabase/server"
 export interface AnalyticsData {
   // Financial KPIs
   totalRevenue: number
+  grossProfit: number // Added gross profit
   netProfit: number
   totalExpenses: number
+  totalCOGS: number // Added COGS
   revenueGrowth: number
 
   // Customer metrics
@@ -128,7 +130,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         client_id, 
         quantity,
         product_id,
-        products!inner(name)
+        products!inner(name, prix_achat)
       `)
       .gte("sale_date", startDate)
       .lte("sale_date", endDate)
@@ -185,8 +187,16 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     const totalRevenue = currentSales?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
     const prevRevenue = prevSales?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
     const totalExpenses = currentExpenses?.reduce((sum, expense) => sum + (expense.amount || 0), 0) || 0
-    const totalCOGS = currentPurchases?.reduce((sum, purchase) => sum + (purchase.total || 0), 0) || 0
-    const netProfit = totalRevenue - totalExpenses // Fix profit calculation
+
+    const totalCOGS =
+      currentSales?.reduce((sum, sale) => {
+        const purchasePrice = sale.products?.prix_achat || 0
+        const quantity = sale.quantity || 0
+        return sum + purchasePrice * quantity
+      }, 0) || 0
+
+    const grossProfit = totalRevenue - totalCOGS
+    const netProfit = grossProfit - totalExpenses
 
     const revenueGrowth = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0
 
@@ -380,8 +390,10 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
 
     return {
       totalRevenue,
+      grossProfit, // Added gross profit to return
       netProfit,
       totalExpenses,
+      totalCOGS, // Added COGS to return
       revenueGrowth: Math.round(revenueGrowth * 10) / 10,
       activeClients,
       clientGrowth: newClientsThisMonth,
@@ -421,8 +433,10 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     // Return safe default data in case of error
     return {
       totalRevenue: 0,
+      grossProfit: 0, // Added to default data
       netProfit: 0,
       totalExpenses: 0,
+      totalCOGS: 0, // Added to default data
       revenueGrowth: 0,
       activeClients: 0,
       clientGrowth: 0,
