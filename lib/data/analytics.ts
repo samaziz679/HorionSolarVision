@@ -191,7 +191,9 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         reference_id,
         quantity,
         unit_price,
-        movement_type
+        movement_type,
+        movement_date,
+        products!inner(name)
       `)
       .eq("movement_type", "sale")
       .gte("movement_date", startDate)
@@ -411,8 +413,8 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     }))
 
     const recentStockMovements =
-      stockMovements?.map((movement: any) => ({
-        product: movement.reference_id || "Produit Inconnu",
+      stockMovements?.slice(0, 10).map((movement: any) => ({
+        product: movement.products?.name || "Produit Inconnu",
         type: movement.movement_type === "sale" ? "Vente" : "Achat",
         quantity: movement.movement_type === "sale" ? -Math.abs(movement.quantity) : Math.abs(movement.quantity),
         date: new Date(movement.movement_date).toLocaleDateString("fr-FR"),
