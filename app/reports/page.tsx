@@ -30,15 +30,99 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import Link from "next/link"
+import { MarginCard } from "@/components/reports/margin-card"
+import { PriceSuggestionCard } from "@/components/reports/price-suggestion-card"
+import { MarginByProductTable } from "@/components/reports/margin-by-product-table"
+import {
+  getMarginSummary,
+  generatePriceSuggestions,
+  getMarginByProduct,
+  canViewMargins,
+  canViewPriceSuggestions,
+  type MarginSummary,
+  type PriceSuggestion,
+} from "@/lib/data/margin-analytics"
+import { getCurrentUserProfile, type UserRole } from "@/lib/auth/rbac-client"
 
 export default function ReportsPage() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<string>("all")
+  const [marginSummary, setMarginSummary] = useState<MarginSummary | null>(null)
+  const [priceSuggestions, setPriceSuggestions] = useState<PriceSuggestion[]>([])
+  const [marginByProduct, setMarginByProduct] = useState<
+    Array<{
+      product_id: string
+      product_name: string
+      total_sales: number
+      total_margin: number
+      average_margin_percentage: number
+      sales_count: number
+    }>
+  >([])
+  const [userRole, setUserRole] = useState<UserRole | null>(null)
 
   const handlePrint = () => {
     window.print()
   }
+
+  useEffect(() => {
+    const fetchUserRole = async () => {
+      const profile = await getCurrentUserProfile()
+      if (profile) {
+        setUserRole(profile.role)
+      }
+    }
+    fetchUserRole()
+  }, [])
+
+  useEffect(() => {
+    const fetchMarginData = async () => {
+      if (!userRole) return
+
+      const now = new Date()
+      const currentYear = now.getFullYear()
+      const currentMonth = now.getMonth()
+
+      let startDate: string | undefined
+      let endDate: string | undefined
+
+      switch (period) {
+        case "current-month":
+          startDate = new Date(currentYear, currentMonth, 1).toISOString().split("T")[0]
+          endDate = new Date(currentYear, currentMonth + 1, 0).toISOString().split("T")[0]
+          break
+        case "last-month":
+          startDate = new Date(currentYear, currentMonth - 1, 1).toISOString().split("T")[0]
+          endDate = new Date(currentYear, currentMonth, 0).toISOString().split("T")[0]
+          break
+        case "12-months":
+          startDate = new Date(currentYear, currentMonth - 12, 1).toISOString().split("T")[0]
+          endDate = now.toISOString().split("T")[0]
+          break
+        case "all":
+        default:
+          startDate = new Date(currentYear, currentMonth - 6, 1).toISOString().split("T")[0]
+          endDate = now.toISOString().split("T")[0]
+          break
+      }
+
+      if (canViewMargins(userRole)) {
+        const summary = await getMarginSummary(startDate, endDate)
+        setMarginSummary(summary)
+
+        const productMargins = await getMarginByProduct(startDate, endDate)
+        setMarginByProduct(productMargins)
+      }
+
+      if (canViewPriceSuggestions(userRole)) {
+        const suggestions = await generatePriceSuggestions(30)
+        setPriceSuggestions(suggestions)
+      }
+    }
+
+    fetchMarginData()
+  }, [period, userRole])
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -66,7 +150,6 @@ export default function ReportsPage() {
             break
           case "all":
           default:
-            // Last 6 months
             startDate = new Date(currentYear, currentMonth - 6, 1).toISOString().split("T")[0]
             endDate = now.toISOString().split("T")[0]
             break
@@ -83,6 +166,11 @@ export default function ReportsPage() {
 
     fetchAnalytics()
   }, [period])
+
+  const handleRefreshSuggestions = async (targetMargin: number) => {
+    const suggestions = await generatePriceSuggestions(targetMargin)
+    setPriceSuggestions(suggestions)
+  }
 
   if (loading || !analytics) {
     return (
@@ -124,6 +212,15 @@ export default function ReportsPage() {
     analytics.totalRevenue > 0 ? ((analytics.netProfit / analytics.totalRevenue) * 100).toFixed(1) : "0"
   const expenseRatio =
     analytics.totalRevenue > 0 ? ((analytics.totalExpenses / analytics.totalRevenue) * 100).toFixed(1) : "0"
+
+  const periodLabel =
+    period === "all"
+      ? "6 derniers mois"
+      : period === "12-months"
+        ? "12 derniers mois"
+        : period === "current-month"
+          ? "Mois actuel"
+          : "Mois dernier"
 
   return (
     <>
@@ -185,16 +282,7 @@ export default function ReportsPage() {
             </Select>
             <div className="flex items-center space-x-2 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              <span>
-                Période:{" "}
-                {period === "all"
-                  ? "6 derniers mois"
-                  : period === "12-months"
-                    ? "12 derniers mois"
-                    : period === "current-month"
-                      ? "août 2025"
-                      : "juillet 2025"}
-              </span>
+              <span>Période: {periodLabel}</span>
             </div>
           </div>
         </div>
@@ -473,6 +561,10 @@ export default function ReportsPage() {
           </TabsContent>
 
           <TabsContent value="financial" className="space-y-6 tabs-content">
+            {userRole && canViewMargins(userRole) && marginSummary && (
+              <MarginCard marginSummary={marginSummary} period={periodLabel} />
+            )}
+
             <div className="grid gap-4 md:grid-cols-2">
               <Card>
                 <CardHeader>
@@ -512,6 +604,14 @@ export default function ReportsPage() {
                 </CardContent>
               </Card>
             </div>
+
+            {userRole && canViewMargins(userRole) && marginByProduct.length > 0 && (
+              <MarginByProductTable data={marginByProduct} />
+            )}
+
+            {userRole && canViewPriceSuggestions(userRole) && priceSuggestions.length > 0 && (
+              <PriceSuggestionCard suggestions={priceSuggestions} onRefresh={handleRefreshSuggestions} />
+            )}
 
             <Card>
               <CardHeader>
