@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Calendar, Printer, TrendingUp, TrendingDown, Package, AlertTriangle, BarChart3, Users } from "lucide-react"
+import { Calendar, Printer, TrendingUp, TrendingDown, Package, BarChart3, Users } from "lucide-react"
 import type { AnalyticsData } from "@/lib/data/analytics-client"
 import {
   Breadcrumb,
@@ -101,6 +101,9 @@ export function ReportsClient({
     analytics.totalRevenue > 0 ? ((analytics.netProfit / analytics.totalRevenue) * 100).toFixed(1) : "0"
   const isNegativeMargin = Number(profitMargin) < 0
 
+  const expenseRatio =
+    analytics.totalRevenue > 0 ? ((analytics.totalExpenses / analytics.totalRevenue) * 100).toFixed(1) : "0"
+
   const periodLabel =
     period === "all"
       ? "6 derniers mois"
@@ -158,8 +161,6 @@ export function ReportsClient({
               Imprimer
             </Button>
             <Select value={period} onValueChange={handlePeriodChange}>
-              {" "}
-              // Use handlePeriodChange instead of setPeriod
               <SelectTrigger className="w-48 no-print">
                 <SelectValue placeholder="Sélectionner une période" />
               </SelectTrigger>
@@ -207,8 +208,6 @@ export function ReportsClient({
                 </CardHeader>
                 <CardContent>
                   <div className={`text-2xl font-bold ${isNegativeMargin ? "text-red-600" : "text-blue-600"}`}>
-                    {" "}
-                    // Handle negative profit display
                     {(analytics.netProfit ?? 0).toLocaleString()} CFA
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">Marge: {profitMargin}%</p>
@@ -224,7 +223,7 @@ export function ReportsClient({
                   <div className="text-2xl font-bold text-orange-600">
                     {(analytics.totalExpenses ?? 0).toLocaleString()} CFA
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">{profitMargin}% du CA</p>
+                  <p className="text-xs text-muted-foreground mt-1">{expenseRatio}% du CA</p>
                 </CardContent>
               </Card>
 
@@ -253,14 +252,12 @@ export function ReportsClient({
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Marge Bénéficiaire</span>
                       <span className={`text-sm font-medium ${isNegativeMargin ? "text-red-600" : "text-green-600"}`}>
-                        {" "}
-                        // Show red for negative margin
                         {profitMargin}%
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
-                        className={`h-2 rounded-full ${isNegativeMargin ? "bg-red-500" : "bg-green-500"}`} // Show red bar for negative margin
+                        className={`h-2 rounded-full ${isNegativeMargin ? "bg-red-500" : "bg-green-500"}`}
                         style={{ width: `${Math.min(Math.abs(Number(profitMargin)), 100)}%` }}
                       ></div>
                     </div>
@@ -269,12 +266,12 @@ export function ReportsClient({
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Ratio Dépenses/CA</span>
-                      <span className="text-sm font-medium text-amber-600">{profitMargin}%</span>
+                      <span className="text-sm font-medium text-amber-600">{expenseRatio}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div
                         className="bg-amber-500 h-2 rounded-full"
-                        style={{ width: `${Math.min(Number(profitMargin), 100)}%` }}
+                        style={{ width: `${Math.min(Number(expenseRatio), 100)}%` }}
                       ></div>
                     </div>
                   </div>
@@ -293,10 +290,7 @@ export function ReportsClient({
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
-                    <AlertTriangle className="h-5 w-5 mr-2 text-amber-500" />
-                    Alertes Stock
-                  </CardTitle>
+                  <CardTitle className="text-lg">Alertes Stock</CardTitle>
                   <p className="text-sm text-muted-foreground">Produits nécessitant attention</p>
                 </CardHeader>
                 <CardContent>
