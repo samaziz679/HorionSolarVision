@@ -661,6 +661,7 @@ export function ReportsClient({
                       <tr className="border-b">
                         <th className="text-left py-2 px-4 text-sm font-medium">Mois</th>
                         <th className="text-right py-2 px-4 text-sm font-medium">Revenus</th>
+                        <th className="text-right py-2 px-4 text-sm font-medium">COGS</th>
                         <th className="text-right py-2 px-4 text-sm font-medium">Dépenses</th>
                         <th className="text-right py-2 px-4 text-sm font-medium">Bénéfice Net</th>
                         <th className="text-right py-2 px-4 text-sm font-medium">Marge</th>
@@ -674,6 +675,9 @@ export function ReportsClient({
                             {row.revenue > 0 ? `+${(row.revenue ?? 0).toLocaleString()}` : "0"} CFA
                           </td>
                           <td className="py-3 px-4 text-sm text-right text-red-600">
+                            {row.cogs > 0 ? `-${(row.cogs ?? 0).toLocaleString()}` : "0"} CFA
+                          </td>
+                          <td className="py-3 px-4 text-sm text-right text-orange-600">
                             {row.expenses > 0 ? `-${(row.expenses ?? 0).toLocaleString()}` : "0"} CFA
                           </td>
                           <td
@@ -691,7 +695,7 @@ export function ReportsClient({
                       ))}
                       {analytics.cashFlow.length === 0 && (
                         <tr>
-                          <td colSpan={5} className="py-8 text-center text-sm text-muted-foreground">
+                          <td colSpan={6} className="py-8 text-center text-sm text-muted-foreground">
                             Aucune donnée de flux de trésorerie
                           </td>
                         </tr>

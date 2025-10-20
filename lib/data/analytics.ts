@@ -37,8 +37,9 @@ export interface AnalyticsData {
   cashFlow: Array<{
     month: string
     revenue: number
+    cogs: number // Added COGS to cash flow data
     expenses: number
-    profit: number
+    profit: number // Now using net profit (after COGS and expenses)
     margin: number
   }>
 
@@ -130,6 +131,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         client_id, 
         quantity,
         product_id,
+        id,
         products!inner(name, prix_achat)
       `)
       .gte("sale_date", startDate)
@@ -139,7 +141,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       console.error("Sales query error:", salesError)
     }
 
-    // Get previous period for comparison
+    // Fetch previous period for comparison
     const startDateObj = new Date(startDate)
     const endDateObj = new Date(endDate)
     const prevStartDate = new Date(startDateObj.getTime() - (endDateObj.getTime() - startDateObj.getTime()))
@@ -183,19 +185,40 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       console.error("Inventory query error:", inventoryError)
     }
 
+    const { data: stockMovements } = await supabase
+      .from("stock_movements")
+      .select(`
+        reference_id,
+        quantity,
+        unit_price,
+        movement_type
+      `)
+      .eq("movement_type", "sale")
+      .gte("movement_date", startDate)
+      .lte("movement_date", endDate)
+
     // Calculate financial metrics
     const totalRevenue = currentSales?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
     const prevRevenue = prevSales?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
     const totalExpenses = currentExpenses?.reduce((sum, expense) => sum + (expense.amount || 0), 0) || 0
 
     const totalCOGS =
-      currentSales?.reduce((sum, sale) => {
-        const purchasePrice = sale.products?.prix_achat || 0
-        const quantity = sale.quantity || 0
-        return sum + purchasePrice * quantity
+      stockMovements?.reduce((sum, movement) => {
+        const unitCost = movement.unit_price || 0
+        const quantity = Math.abs(movement.quantity || 0)
+        return sum + unitCost * quantity
       }, 0) || 0
 
-    const grossProfit = totalRevenue - totalCOGS
+    const fallbackCOGS =
+      totalCOGS === 0
+        ? currentSales?.reduce((sum, sale) => {
+            const purchasePrice = sale.products?.prix_achat || 0
+            const quantity = sale.quantity || 0
+            return sum + purchasePrice * quantity
+          }, 0) || 0
+        : totalCOGS
+
+    const grossProfit = totalRevenue - fallbackCOGS
     const netProfit = grossProfit - totalExpenses
 
     const revenueGrowth = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0
@@ -265,9 +288,16 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       // Fetch real monthly sales
       const { data: monthlySales } = await supabase
         .from("sales")
-        .select("total")
+        .select("total, id")
         .gte("sale_date", monthStart)
         .lte("sale_date", monthEnd)
+
+      const { data: monthlyStockMovements } = await supabase
+        .from("stock_movements")
+        .select("quantity, unit_price")
+        .eq("movement_type", "sale")
+        .gte("movement_date", monthStart)
+        .lte("movement_date", monthEnd)
 
       // Fetch real monthly expenses
       const { data: monthlyExpenses } = await supabase
@@ -277,15 +307,26 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         .lte("expense_date", monthEnd)
 
       const monthRevenue = monthlySales?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
+
+      const monthCOGS =
+        monthlyStockMovements?.reduce((sum, movement) => {
+          const unitCost = movement.unit_price || 0
+          const quantity = Math.abs(movement.quantity || 0)
+          return sum + unitCost * quantity
+        }, 0) || 0
+
       const monthExpenseTotal = monthlyExpenses?.reduce((sum, expense) => sum + (expense.amount || 0), 0) || 0
-      const monthProfit = monthRevenue - monthExpenseTotal
-      const monthMargin = monthRevenue > 0 ? Math.round((monthProfit / monthRevenue) * 100 * 10) / 10 : 0
+
+      const monthGrossProfit = monthRevenue - monthCOGS
+      const monthNetProfit = monthGrossProfit - monthExpenseTotal
+      const monthMargin = monthRevenue > 0 ? Math.round((monthNetProfit / monthRevenue) * 100 * 10) / 10 : 0
 
       cashFlow.push({
         month: monthName,
         revenue: monthRevenue,
+        cogs: monthCOGS, // Added COGS to cash flow data
         expenses: monthExpenseTotal,
-        profit: monthProfit,
+        profit: monthNetProfit, // Now using net profit (after COGS and expenses)
         margin: monthMargin,
       })
     }
@@ -326,7 +367,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       .sort((a, b) => b.totalSales - a.totalSales)
       .slice(0, 5)
 
-    const inventoryTurnover = inventoryValue > 0 ? Math.round((totalCOGS / inventoryValue) * 12 * 10) / 10 : 0
+    const inventoryTurnover = inventoryValue > 0 ? Math.round((fallbackCOGS / inventoryValue) * 12 * 10) / 10 : 0
 
     const recommendations = []
 
@@ -369,20 +410,9 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       status: item.currentStock === 0 ? ("critical" as const) : ("low" as const),
     }))
 
-    const { data: stockMovements } = await supabase
-      .from("stock_movements")
-      .select(`
-        quantity,
-        movement_date,
-        movement_type,
-        products!inner(name)
-      `)
-      .order("movement_date", { ascending: false })
-      .limit(10)
-
     const recentStockMovements =
       stockMovements?.map((movement: any) => ({
-        product: movement.products?.name || "Produit Inconnu",
+        product: movement.reference_id || "Produit Inconnu",
         type: movement.movement_type === "sale" ? "Vente" : "Achat",
         quantity: movement.movement_type === "sale" ? -Math.abs(movement.quantity) : Math.abs(movement.quantity),
         date: new Date(movement.movement_date).toLocaleDateString("fr-FR"),
@@ -390,25 +420,25 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
 
     return {
       totalRevenue,
-      grossProfit, // Added gross profit to return
+      grossProfit,
       netProfit,
       totalExpenses,
-      totalCOGS, // Added COGS to return
+      totalCOGS: fallbackCOGS, // Use fallback COGS that includes lot-specific prices
       revenueGrowth: Math.round(revenueGrowth * 10) / 10,
       activeClients,
       clientGrowth: newClientsThisMonth,
       inventoryValue,
       inventoryTurnover,
       outOfStockItems,
-      currentPeriod: periodLabel, // Use dynamic period label
+      currentPeriod: periodLabel,
       revenueBreakdown: [{ category: "Ventes Directes", amount: totalRevenue, percentage: 100 }],
       expenseBreakdown,
       cashFlow,
       lowStockItems,
-      stockAlerts, // Add stockAlerts to match lowStockItems
+      stockAlerts,
       recentStockMovements,
-      topProducts, // Use real data instead of hardcoded
-      topClients, // Use real data instead of hardcoded
+      topProducts,
+      topClients,
       salesTarget: {
         target: 2000000,
         achieved: totalRevenue,
@@ -433,10 +463,10 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
     // Return safe default data in case of error
     return {
       totalRevenue: 0,
-      grossProfit: 0, // Added to default data
+      grossProfit: 0,
       netProfit: 0,
       totalExpenses: 0,
-      totalCOGS: 0, // Added to default data
+      totalCOGS: 0,
       revenueGrowth: 0,
       activeClients: 0,
       clientGrowth: 0,
