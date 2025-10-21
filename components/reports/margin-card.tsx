@@ -1,7 +1,7 @@
 "use client"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
 import { Percent } from "lucide-react"
 import type { MarginSummary } from "@/lib/data/margin-analytics"
 
@@ -16,14 +16,34 @@ export function MarginCard({ marginSummary, period }: MarginCardProps) {
       ? "text-green-600"
       : marginSummary.average_margin_percentage >= 20
         ? "text-yellow-600"
-        : "text-red-600"
+        : marginSummary.average_margin_percentage >= 10
+          ? "text-orange-600"
+          : "text-red-600"
 
   const progressColor =
     marginSummary.average_margin_percentage >= 30
       ? "bg-green-500"
       : marginSummary.average_margin_percentage >= 20
         ? "bg-yellow-500"
-        : "bg-red-500"
+        : marginSummary.average_margin_percentage >= 10
+          ? "bg-orange-500"
+          : "bg-red-500"
+
+  const performanceLabel =
+    marginSummary.average_margin_percentage >= 30
+      ? "Excellent"
+      : marginSummary.average_margin_percentage >= 20
+        ? "Bon"
+        : marginSummary.average_margin_percentage >= 10
+          ? "Moyen"
+          : "Faible"
+
+  const performanceVariant =
+    marginSummary.average_margin_percentage >= 30
+      ? "default"
+      : marginSummary.average_margin_percentage >= 20
+        ? "secondary"
+        : "destructive"
 
   return (
     <Card className="border-l-4 border-l-green-500">
@@ -58,7 +78,15 @@ export function MarginCard({ marginSummary, period }: MarginCardProps) {
               {marginSummary.average_margin_percentage.toFixed(1)}%
             </span>
           </div>
-          <Progress value={Math.min(marginSummary.average_margin_percentage, 100)} className={`h-3 ${progressColor}`} />
+          <div className="relative">
+            <div className="w-full bg-gray-200 rounded-full h-3">
+              <div
+                className={`h-3 rounded-full transition-all ${progressColor}`}
+                style={{ width: `${Math.min(Math.max(marginSummary.average_margin_percentage, 0), 100)}%` }}
+              />
+            </div>
+            <div className="absolute top-0 left-[30%] w-0.5 h-3 bg-gray-400" title="Objectif: 30%" />
+          </div>
           <p className="text-xs text-muted-foreground">
             {marginSummary.sales_count} vente{marginSummary.sales_count > 1 ? "s" : ""} analysée
             {marginSummary.sales_count > 1 ? "s" : ""}
@@ -72,13 +100,9 @@ export function MarginCard({ marginSummary, period }: MarginCardProps) {
           </div>
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Performance</span>
-            <span className={marginColor}>
-              {marginSummary.average_margin_percentage >= 30
-                ? "Excellent"
-                : marginSummary.average_margin_percentage >= 20
-                  ? "Bon"
-                  : "À améliorer"}
-            </span>
+            <Badge variant={performanceVariant} className={marginColor}>
+              {performanceLabel}
+            </Badge>
           </div>
         </div>
       </CardContent>

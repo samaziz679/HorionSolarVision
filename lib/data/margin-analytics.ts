@@ -197,17 +197,13 @@ export async function getMarginSummary(startDate?: string, endDate?: string): Pr
   const totalCost = salesWithMargins.reduce((sum, sale) => sum + (sale.purchase_price || 0) * sale.quantity, 0)
   const totalMargin = salesWithMargins.reduce((sum, sale) => sum + (sale.gross_margin || 0), 0)
 
-  const salesWithMarginData = salesWithMargins.filter((sale) => sale.margin_percentage !== null)
-  const averageMarginPercentage =
-    salesWithMarginData.length > 0
-      ? salesWithMarginData.reduce((sum, sale) => sum + (sale.margin_percentage || 0), 0) / salesWithMarginData.length
-      : 0
+  const overallMarginPercentage = totalSales > 0 ? (totalMargin / totalSales) * 100 : 0
 
   return {
     total_sales: totalSales,
     total_cost: totalCost,
     total_margin: totalMargin,
-    average_margin_percentage: averageMarginPercentage,
+    average_margin_percentage: overallMarginPercentage, // Now represents overall margin, not average per sale
     sales_count: salesWithMargins.length,
   }
 }
@@ -228,15 +224,19 @@ export async function generatePriceSuggestions(targetMargin = 30): Promise<Price
 
   const suggestions: PriceSuggestion[] = (products || []).map((product) => {
     const purchasePrice = product.prix_achat || 0
-    const marginMultiplier = 1 + targetMargin / 100
+
+    // For 30% margin: if cost is 100, price should be 100/(1-0.3) = 142.86
+    // This gives margin of (142.86-100)/142.86 = 30%
+    const marginDivisor = 1 - targetMargin / 100
+    const basePrice = marginDivisor > 0 ? purchasePrice / marginDivisor : purchasePrice
 
     return {
       product_id: product.id,
       product_name: product.name,
       current_purchase_price: purchasePrice,
-      suggested_price_detail1: Math.round(purchasePrice * marginMultiplier),
-      suggested_price_detail2: Math.round(purchasePrice * marginMultiplier * 0.95), // 5% less than detail 1
-      suggested_price_gros: Math.round(purchasePrice * marginMultiplier * 0.85), // 15% less than detail 1
+      suggested_price_detail1: Math.round(basePrice),
+      suggested_price_detail2: Math.round(basePrice * 0.95), // 5% less than detail 1
+      suggested_price_gros: Math.round(basePrice * 0.85), // 15% less than detail 1
       target_margin: targetMargin,
     }
   })
