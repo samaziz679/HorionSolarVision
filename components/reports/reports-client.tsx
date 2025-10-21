@@ -90,22 +90,31 @@ export function ReportsClient({
   }
 
   const handleRefreshSuggestions = async (targetMargin: number) => {
-    console.log("[v0] Refresh suggestions with target margin:", targetMargin)
+    console.log("[v0] ReportsClient: handleRefreshSuggestions called with target margin:", targetMargin)
     setIsRecalculating(true)
 
     try {
-      const response = await fetch(`/api/analytics/price-suggestions?targetMargin=${targetMargin}&period=${period}`)
+      const url = `/api/analytics/price-suggestions?targetMargin=${targetMargin}&period=${period}`
+      console.log("[v0] ReportsClient: Fetching from URL:", url)
+
+      const response = await fetch(url)
+      console.log("[v0] ReportsClient: Response status:", response.status)
+
       if (!response.ok) {
         throw new Error("Failed to fetch price suggestions")
       }
 
       const data = await response.json()
+      console.log("[v0] ReportsClient: Received data:", data)
+      console.log("[v0] ReportsClient: Number of suggestions:", data.suggestions?.length)
+
       setPriceSuggestions(data.suggestions || [])
-      console.log("[v0] Price suggestions updated:", data.suggestions?.length)
+      console.log("[v0] ReportsClient: State updated with new suggestions")
     } catch (error) {
-      console.error("[v0] Error refreshing price suggestions:", error)
+      console.error("[v0] ReportsClient: Error refreshing price suggestions:", error)
     } finally {
       setIsRecalculating(false)
+      console.log("[v0] ReportsClient: Recalculation complete")
     }
   }
 

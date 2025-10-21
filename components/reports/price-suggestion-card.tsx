@@ -19,8 +19,15 @@ export function PriceSuggestionCard({ suggestions, onRefresh, isRecalculating = 
   const [targetMargin, setTargetMargin] = useState(30)
 
   const handleRecalculate = () => {
+    console.log("[v0] PriceSuggestionCard: Recalculate button clicked")
+    console.log("[v0] PriceSuggestionCard: Target margin:", targetMargin)
+    console.log("[v0] PriceSuggestionCard: Is recalculating:", isRecalculating)
+
     if (targetMargin > 0 && targetMargin <= 200) {
+      console.log("[v0] PriceSuggestionCard: Calling onRefresh with target margin:", targetMargin)
       onRefresh(targetMargin)
+    } else {
+      console.log("[v0] PriceSuggestionCard: Invalid target margin, not calling onRefresh")
     }
   }
 
