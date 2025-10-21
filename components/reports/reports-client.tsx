@@ -7,7 +7,17 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { Calendar, Printer, TrendingUp, TrendingDown, Package, BarChart3, DollarSign } from "lucide-react"
+import {
+  Calendar,
+  Printer,
+  TrendingUp,
+  TrendingDown,
+  Package,
+  BarChart3,
+  DollarSign,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react"
 import type { AnalyticsData } from "@/lib/data/analytics-client"
 import {
   Breadcrumb,
@@ -53,6 +63,8 @@ export function ReportsClient({
   const [period, setPeriod] = useState<string>(initialPeriod)
   const [priceSuggestions, setPriceSuggestions] = useState(initialPriceSuggestions)
   const [isRecalculating, setIsRecalculating] = useState(false)
+  const [cashFlowPage, setCashFlowPage] = useState(1)
+  const cashFlowItemsPerPage = 6
 
   const analytics = {
     totalRevenue: initialAnalytics?.totalRevenue ?? 0,
@@ -141,6 +153,27 @@ export function ReportsClient({
         : period === "current-month"
           ? "Mois actuel"
           : "Mois dernier"
+
+  const totalCashFlowPages = Math.ceil(analytics.cashFlow.length / cashFlowItemsPerPage)
+  const startCashFlowIndex = (cashFlowPage - 1) * cashFlowItemsPerPage
+  const endCashFlowIndex = startCashFlowIndex + cashFlowItemsPerPage
+  const paginatedCashFlow = analytics.cashFlow.slice(startCashFlowIndex, endCashFlowIndex)
+
+  const totalRevenue = analytics.cashFlow.reduce((sum, row) => sum + (row.revenue || 0), 0)
+  const totalCOGS = analytics.cashFlow.reduce((sum, row) => sum + (row.cogs || 0), 0)
+  const totalExpenses = analytics.cashFlow.reduce((sum, row) => sum + (row.expenses || 0), 0)
+  const totalProfit = analytics.cashFlow.reduce((sum, row) => sum + (row.profit || 0), 0)
+  const averageMargin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : "0"
+
+  const midPoint = Math.floor(analytics.cashFlow.length / 2)
+  const firstHalfRevenue = analytics.cashFlow.slice(0, midPoint).reduce((sum, row) => sum + (row.revenue || 0), 0)
+  const secondHalfRevenue = analytics.cashFlow.slice(midPoint).reduce((sum, row) => sum + (row.revenue || 0), 0)
+  const revenueTrend =
+    secondHalfRevenue > firstHalfRevenue ? "up" : secondHalfRevenue < firstHalfRevenue ? "down" : "stable"
+
+  const firstHalfProfit = analytics.cashFlow.slice(0, midPoint).reduce((sum, row) => sum + (row.profit || 0), 0)
+  const secondHalfProfit = analytics.cashFlow.slice(midPoint).reduce((sum, row) => sum + (row.profit || 0), 0)
+  const profitTrend = secondHalfProfit > firstHalfProfit ? "up" : secondHalfProfit < firstHalfProfit ? "down" : "stable"
 
   return (
     <>
@@ -339,7 +372,7 @@ export function ReportsClient({
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg flex items-center">
+                  <CardTitle className="text-lg">
                     <BarChart3 className="h-5 w-5 mr-2" />
                     Santé Financière
                   </CardTitle>
@@ -537,7 +570,7 @@ export function ReportsClient({
               <Card className="border-l-4 border-l-orange-500">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Valeur Stock (Prix Gros)</CardTitle>
-                  <Package className="h-4 w-4 text-orange-600" />
+                  <Package className="h-4 w-4 text-orange-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-orange-600">
@@ -634,6 +667,68 @@ export function ReportsClient({
           </TabsContent>
 
           <TabsContent value="performance" className="space-y-6 tabs-content">
+            <div className="grid gap-4 md:grid-cols-4">
+              <Card className="border-l-4 border-l-green-500">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Revenus Totaux</CardTitle>
+                  {revenueTrend === "up" ? (
+                    <TrendingUp className="h-4 w-4 text-green-600" />
+                  ) : revenueTrend === "down" ? (
+                    <TrendingDown className="h-4 w-4 text-red-600" />
+                  ) : (
+                    <DollarSign className="h-4 w-4 text-gray-600" />
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-green-600">{totalRevenue.toLocaleString()} CFA</div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {revenueTrend === "up" ? "En hausse" : revenueTrend === "down" ? "En baisse" : "Stable"}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-l-4 border-l-red-500">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Coûts Totaux</CardTitle>
+                  <TrendingDown className="h-4 w-4 text-red-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">{totalCOGS.toLocaleString()} CFA</div>
+                  <p className="text-xs text-muted-foreground mt-1">COGS</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-l-4 border-l-orange-500">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Dépenses Totales</CardTitle>
+                  <TrendingDown className="h-4 w-4 text-orange-600" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">{totalExpenses.toLocaleString()} CFA</div>
+                  <p className="text-xs text-muted-foreground mt-1">Frais d'exploitation</p>
+                </CardContent>
+              </Card>
+
+              <Card className="border-l-4 border-l-blue-500">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Bénéfice Total</CardTitle>
+                  {profitTrend === "up" ? (
+                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                  ) : profitTrend === "down" ? (
+                    <TrendingDown className="h-4 w-4 text-red-600" />
+                  ) : (
+                    <BarChart3 className="h-4 w-4 text-gray-600" />
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className={`text-2xl font-bold ${totalProfit >= 0 ? "text-blue-600" : "text-red-600"}`}>
+                    {totalProfit.toLocaleString()} CFA
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Marge: {averageMargin}%</p>
+                </CardContent>
+              </Card>
+            </div>
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Analyse des Revenus</CardTitle>
@@ -701,7 +796,7 @@ export function ReportsClient({
                       </tr>
                     </thead>
                     <tbody>
-                      {analytics.cashFlow.map((row, index) => (
+                      {paginatedCashFlow.map((row, index) => (
                         <tr key={index} className="border-b hover:bg-gray-50">
                           <td className="py-3 px-4 text-sm">{row.month}</td>
                           <td className="py-3 px-4 text-sm text-right text-green-600 font-medium">
@@ -736,6 +831,38 @@ export function ReportsClient({
                     </tbody>
                   </table>
                 </div>
+
+                {analytics.cashFlow.length > cashFlowItemsPerPage && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      Affichage de {startCashFlowIndex + 1} à {Math.min(endCashFlowIndex, analytics.cashFlow.length)}{" "}
+                      sur {analytics.cashFlow.length} mois
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCashFlowPage((p) => Math.max(1, p - 1))}
+                        disabled={cashFlowPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Précédent
+                      </Button>
+                      <div className="text-sm">
+                        Page {cashFlowPage} sur {totalCashFlowPages}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCashFlowPage((p) => Math.min(totalCashFlowPages, p + 1))}
+                        disabled={cashFlowPage === totalCashFlowPages}
+                      >
+                        Suivant
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
