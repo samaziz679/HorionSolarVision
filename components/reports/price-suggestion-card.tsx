@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Lightbulb } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Lightbulb, ChevronLeft, ChevronRight } from "lucide-react"
 import type { PriceSuggestion } from "@/lib/data/margin-analytics"
 
 interface PriceSuggestionCardProps {
@@ -16,6 +17,8 @@ interface PriceSuggestionCardProps {
 
 export function PriceSuggestionCard({ suggestions, onRefresh, isRecalculating = false }: PriceSuggestionCardProps) {
   const [targetMargin, setTargetMargin] = useState(30)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 10
 
   const recalculatedSuggestions = useMemo(() => {
     return suggestions.map((suggestion) => {
@@ -35,6 +38,19 @@ export function PriceSuggestionCard({ suggestions, onRefresh, isRecalculating = 
       }
     })
   }, [suggestions, targetMargin])
+
+  const totalPages = Math.ceil(recalculatedSuggestions.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const endIndex = startIndex + itemsPerPage
+  const currentSuggestions = recalculatedSuggestions.slice(startIndex, endIndex)
+
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(1, prev - 1))
+  }
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+  }
 
   return (
     <Card>
@@ -76,7 +92,7 @@ export function PriceSuggestionCard({ suggestions, onRefresh, isRecalculating = 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {recalculatedSuggestions.slice(0, 10).map((suggestion) => (
+              {currentSuggestions.map((suggestion) => (
                 <TableRow key={suggestion.product_id}>
                   <TableCell className="font-medium">{suggestion.product_name}</TableCell>
                   <TableCell className="text-right text-muted-foreground">
@@ -97,10 +113,38 @@ export function PriceSuggestionCard({ suggestions, onRefresh, isRecalculating = 
           </Table>
         </div>
 
-        {recalculatedSuggestions.length > 10 && (
-          <p className="text-sm text-muted-foreground text-center">
-            Affichage de 10 sur {recalculatedSuggestions.length} produits
-          </p>
+        {recalculatedSuggestions.length > itemsPerPage && (
+          <div className="flex items-center justify-between pt-4 border-t">
+            <p className="text-sm text-muted-foreground">
+              Affichage de {startIndex + 1} à {Math.min(endIndex, recalculatedSuggestions.length)} sur{" "}
+              {recalculatedSuggestions.length} produits
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handlePreviousPage}
+                disabled={currentPage === 1}
+                className="gap-1 bg-transparent"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Précédent
+              </Button>
+              <span className="text-sm text-muted-foreground px-2">
+                Page {currentPage} sur {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+                className="gap-1 bg-transparent"
+              >
+                Suivant
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         )}
       </CardContent>
     </Card>
