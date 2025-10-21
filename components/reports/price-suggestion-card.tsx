@@ -1,35 +1,40 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { Lightbulb, Calculator } from "lucide-react"
+import { Lightbulb } from "lucide-react"
 import type { PriceSuggestion } from "@/lib/data/margin-analytics"
 
 interface PriceSuggestionCardProps {
   suggestions: PriceSuggestion[]
-  onRefresh: (targetMargin: number) => void
+  onRefresh?: (targetMargin: number) => void
   isRecalculating?: boolean
 }
 
 export function PriceSuggestionCard({ suggestions, onRefresh, isRecalculating = false }: PriceSuggestionCardProps) {
   const [targetMargin, setTargetMargin] = useState(30)
 
-  const handleRecalculate = () => {
-    console.log("[v0] PriceSuggestionCard: Recalculate button clicked")
-    console.log("[v0] PriceSuggestionCard: Target margin:", targetMargin)
-    console.log("[v0] PriceSuggestionCard: Is recalculating:", isRecalculating)
+  const recalculatedSuggestions = useMemo(() => {
+    return suggestions.map((suggestion) => {
+      const purchasePrice = suggestion.current_purchase_price ?? 0
+      const marginDecimal = targetMargin / 100
 
-    if (targetMargin > 0 && targetMargin <= 200) {
-      console.log("[v0] PriceSuggestionCard: Calling onRefresh with target margin:", targetMargin)
-      onRefresh(targetMargin)
-    } else {
-      console.log("[v0] PriceSuggestionCard: Invalid target margin, not calling onRefresh")
-    }
-  }
+      // Calculate suggested prices using the formula: price = cost / (1 - margin%)
+      const suggestedPriceDetail1 = purchasePrice > 0 ? Math.round(purchasePrice / (1 - marginDecimal)) : 0
+      const suggestedPriceDetail2 = purchasePrice > 0 ? Math.round(purchasePrice / (1 - marginDecimal)) : 0
+      const suggestedPriceGros = purchasePrice > 0 ? Math.round(purchasePrice / (1 - marginDecimal)) : 0
+
+      return {
+        ...suggestion,
+        suggested_price_detail1: suggestedPriceDetail1,
+        suggested_price_detail2: suggestedPriceDetail2,
+        suggested_price_gros: suggestedPriceGros,
+      }
+    })
+  }, [suggestions, targetMargin])
 
   return (
     <Card>
@@ -52,13 +57,11 @@ export function PriceSuggestionCard({ suggestions, onRefresh, isRecalculating = 
               value={targetMargin}
               onChange={(e) => setTargetMargin(Number(e.target.value))}
               className="mt-1"
-              disabled={isRecalculating}
             />
           </div>
-          <Button onClick={handleRecalculate} size="sm" disabled={isRecalculating}>
-            <Calculator className="h-4 w-4 mr-2" />
-            {isRecalculating ? "Calcul..." : "Recalculer"}
-          </Button>
+          <div className="text-sm text-muted-foreground px-4 py-2 bg-green-50 rounded border border-green-200">
+            Prix mis à jour automatiquement
+          </div>
         </div>
 
         <div className="max-h-96 overflow-y-auto">
@@ -73,7 +76,7 @@ export function PriceSuggestionCard({ suggestions, onRefresh, isRecalculating = 
               </TableRow>
             </TableHeader>
             <TableBody>
-              {suggestions.slice(0, 10).map((suggestion) => (
+              {recalculatedSuggestions.slice(0, 10).map((suggestion) => (
                 <TableRow key={suggestion.product_id}>
                   <TableCell className="font-medium">{suggestion.product_name}</TableCell>
                   <TableCell className="text-right text-muted-foreground">
@@ -94,8 +97,10 @@ export function PriceSuggestionCard({ suggestions, onRefresh, isRecalculating = 
           </Table>
         </div>
 
-        {suggestions.length > 10 && (
-          <p className="text-sm text-muted-foreground text-center">Affichage de 10 sur {suggestions.length} produits</p>
+        {recalculatedSuggestions.length > 10 && (
+          <p className="text-sm text-muted-foreground text-center">
+            Affichage de 10 sur {recalculatedSuggestions.length} produits
+          </p>
         )}
       </CardContent>
     </Card>
