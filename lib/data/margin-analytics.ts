@@ -37,6 +37,7 @@ export async function calculateSaleMargin(
   salePrice: number,
   productId: string,
   quantity = 1,
+  saleId?: string, // Added saleId to look up actual lot-specific cost
 ): Promise<{
   purchasePrice: number | null
   grossMargin: number | null
@@ -44,7 +45,29 @@ export async function calculateSaleMargin(
 }> {
   const supabase = createClient()
 
-  // Get the most recent purchase price for this product
+  if (saleId) {
+    const { data: stockMovement } = await supabase
+      .from("stock_movements")
+      .select("unit_price, quantity")
+      .eq("reference_type", "sale")
+      .eq("reference_id", saleId)
+      .eq("movement_type", "sale")
+      .single()
+
+    if (stockMovement && stockMovement.unit_price) {
+      const purchasePrice = stockMovement.unit_price
+      const totalCost = purchasePrice * Math.abs(quantity)
+      const grossMargin = salePrice - totalCost
+      const marginPercentage = totalCost > 0 ? (grossMargin / totalCost) * 100 : 0
+
+      return {
+        purchasePrice,
+        grossMargin,
+        marginPercentage,
+      }
+    }
+  }
+
   const { data: recentPurchase } = await supabase
     .from("purchases")
     .select("unit_price")
@@ -67,8 +90,9 @@ export async function calculateSaleMargin(
       }
     }
 
-    const grossMargin = salePrice - purchasePrice * quantity
-    const marginPercentage = ((salePrice - purchasePrice * quantity) / (purchasePrice * quantity)) * 100
+    const totalCost = purchasePrice * quantity
+    const grossMargin = salePrice - totalCost
+    const marginPercentage = totalCost > 0 ? (grossMargin / totalCost) * 100 : 0
 
     return {
       purchasePrice,
@@ -78,8 +102,9 @@ export async function calculateSaleMargin(
   }
 
   const purchasePrice = recentPurchase.unit_price
-  const grossMargin = salePrice - purchasePrice * quantity
-  const marginPercentage = ((salePrice - purchasePrice * quantity) / (purchasePrice * quantity)) * 100
+  const totalCost = purchasePrice * quantity
+  const grossMargin = salePrice - totalCost
+  const marginPercentage = totalCost > 0 ? (grossMargin / totalCost) * 100 : 0
 
   return {
     purchasePrice,
@@ -136,13 +161,13 @@ export async function fetchSalesWithMargins(
     return []
   }
 
-  // Calculate margins for each sale
   const salesWithMargins = await Promise.all(
     (sales || []).map(async (sale: any) => {
       const { purchasePrice, grossMargin, marginPercentage } = await calculateSaleMargin(
         sale.total,
         sale.product_id,
         sale.quantity,
+        sale.id, // Pass sale ID to get lot-specific cost
       )
 
       return {
