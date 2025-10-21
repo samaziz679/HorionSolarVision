@@ -20,6 +20,7 @@ import Link from "next/link"
 import { MarginCard } from "@/components/reports/margin-card"
 import { PriceSuggestionCard } from "@/components/reports/price-suggestion-card"
 import { MarginByProductTable } from "@/components/reports/margin-by-product-table"
+import { InventoryProjectionCard } from "@/components/reports/inventory-projection-card"
 import type { MarginSummary, PriceSuggestion } from "@/lib/data/margin-analytics"
 import type { UserRole } from "@/lib/auth/rbac"
 import { canViewMargins, canViewPriceSuggestions } from "@/lib/utils/margin-permissions"
@@ -545,6 +546,8 @@ export function ReportsClient({
                 </CardContent>
               </Card>
             </div>
+
+            <InventoryProjectionCard currentValues={analytics.inventoryValueByPricing} />
 
             <div className="grid gap-6 md:grid-cols-2">
               <Card>
