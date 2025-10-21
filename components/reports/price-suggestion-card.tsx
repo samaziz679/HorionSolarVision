@@ -12,9 +12,10 @@ import type { PriceSuggestion } from "@/lib/data/margin-analytics"
 interface PriceSuggestionCardProps {
   suggestions: PriceSuggestion[]
   onRefresh: (targetMargin: number) => void
+  isRecalculating?: boolean
 }
 
-export function PriceSuggestionCard({ suggestions, onRefresh }: PriceSuggestionCardProps) {
+export function PriceSuggestionCard({ suggestions, onRefresh, isRecalculating = false }: PriceSuggestionCardProps) {
   const [targetMargin, setTargetMargin] = useState(30)
 
   const handleRecalculate = () => {
@@ -44,11 +45,12 @@ export function PriceSuggestionCard({ suggestions, onRefresh }: PriceSuggestionC
               value={targetMargin}
               onChange={(e) => setTargetMargin(Number(e.target.value))}
               className="mt-1"
+              disabled={isRecalculating}
             />
           </div>
-          <Button onClick={handleRecalculate} size="sm">
+          <Button onClick={handleRecalculate} size="sm" disabled={isRecalculating}>
             <Calculator className="h-4 w-4 mr-2" />
-            Recalculer
+            {isRecalculating ? "Calcul..." : "Recalculer"}
           </Button>
         </div>
 

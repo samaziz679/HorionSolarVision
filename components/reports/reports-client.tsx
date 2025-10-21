@@ -51,6 +51,7 @@ export function ReportsClient({
   const router = useRouter()
   const [period, setPeriod] = useState<string>(initialPeriod)
   const [priceSuggestions, setPriceSuggestions] = useState(initialPriceSuggestions)
+  const [isRecalculating, setIsRecalculating] = useState(false)
 
   const analytics = {
     totalRevenue: initialAnalytics?.totalRevenue ?? 0,
@@ -90,6 +91,22 @@ export function ReportsClient({
 
   const handleRefreshSuggestions = async (targetMargin: number) => {
     console.log("[v0] Refresh suggestions with target margin:", targetMargin)
+    setIsRecalculating(true)
+
+    try {
+      const response = await fetch(`/api/analytics/price-suggestions?targetMargin=${targetMargin}&period=${period}`)
+      if (!response.ok) {
+        throw new Error("Failed to fetch price suggestions")
+      }
+
+      const data = await response.json()
+      setPriceSuggestions(data.suggestions || [])
+      console.log("[v0] Price suggestions updated:", data.suggestions?.length)
+    } catch (error) {
+      console.error("[v0] Error refreshing price suggestions:", error)
+    } finally {
+      setIsRecalculating(false)
+    }
   }
 
   const handlePeriodChange = (newPeriod: string) => {
@@ -461,7 +478,11 @@ export function ReportsClient({
             )}
 
             {userRole && canViewPriceSuggestions(userRole) && priceSuggestions.length > 0 && (
-              <PriceSuggestionCard suggestions={priceSuggestions} onRefresh={handleRefreshSuggestions} />
+              <PriceSuggestionCard
+                suggestions={priceSuggestions}
+                onRefresh={handleRefreshSuggestions}
+                isRecalculating={isRecalculating}
+              />
             )}
           </TabsContent>
 

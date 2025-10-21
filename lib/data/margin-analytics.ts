@@ -244,6 +244,17 @@ export async function generatePriceSuggestions(targetMargin = 30): Promise<Price
   return suggestions
 }
 
+export const getPriceSuggestions = async (
+  supabase: any,
+  companyId: string,
+  period: string,
+  targetMargin: number,
+): Promise<PriceSuggestion[]> => {
+  // For now, we'll use the generatePriceSuggestions function
+  // In the future, we can add company and period filtering
+  return generatePriceSuggestions(targetMargin)
+}
+
 export async function getMarginByProduct(
   startDate?: string,
   endDate?: string,

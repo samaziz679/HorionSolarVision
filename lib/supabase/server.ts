@@ -27,5 +27,6 @@ export const createSupabaseServerClient = () => {
   )
 }
 
+export { createSupabaseServerClient as createServerClient }
 export const createClient = createSupabaseServerClient
 export const createSupabaseClient = createSupabaseServerClient
