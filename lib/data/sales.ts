@@ -19,7 +19,7 @@ export async function fetchSales(page = 1, limit = 10) {
       id,
       sale_date,
       total,
-      clients (id, name)
+      clients!sales_client_id_fkey (id, name)
     `,
     )
     .order("sale_date", { ascending: false })
