@@ -27,7 +27,7 @@ const defaultConfig = {
 
 export async function getCompanyConfig() {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: settings } = await supabase.from("company_settings").select("tagline, logo").maybeSingle()
 
     if (settings) {

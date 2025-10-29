@@ -4,7 +4,7 @@ import type { SaleWithDetails } from "@/lib/supabase/types"
 
 export async function fetchSales(page = 1, limit = 10) {
   noStore()
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   // Calculate offset for pagination
   const offset = (page - 1) * limit
@@ -53,7 +53,7 @@ export async function fetchSaleById(id: string) {
   noStore()
   if (!id) return null
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("sales")
     .select(

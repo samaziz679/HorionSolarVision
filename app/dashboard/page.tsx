@@ -6,8 +6,8 @@ import { getCompanyConfig } from "@/lib/config/company"
 import { formatMoney } from "@/lib/currency"
 
 export default async function DashboardPage() {
-  const cookieStore = cookies()
-  const company = getCompanyConfig()
+  const cookieStore = await cookies()
+  const company = await getCompanyConfig()
 
   const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
     cookies: {
