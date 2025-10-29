@@ -221,20 +221,16 @@ export async function activateUser(userId: string, email: string, fullName: stri
 }
 
 // Client-side functions
-export async function getCurrentUserProfileClient(): Promise<UserProfile | null> {
+export function getCurrentUserProfileClient(): Promise<UserProfile | null> {
   const supabase = createClient()
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = supabase.auth.getUser()
   if (!user) return null
 
   // First get the user role
-  const { data: roleData, error: roleError } = await supabase
-    .from("user_roles")
-    .select("*")
-    .eq("user_id", user.id)
-    .single()
+  const { data: roleData, error: roleError } = supabase.from("user_roles").select("*").eq("user_id", user.id).single()
 
   if (roleError) {
     console.error("[v0] Error fetching user role:", roleError)
@@ -242,7 +238,7 @@ export async function getCurrentUserProfileClient(): Promise<UserProfile | null>
   }
 
   // Then get the user profile
-  const { data: profileData, error: profileError } = await supabase
+  const { data: profileData, error: profileError } = supabase
     .from("user_profiles")
     .select("email, full_name, status")
     .eq("user_id", user.id)
@@ -278,7 +274,7 @@ export async function logAudit(
 
   const {
     data: { user },
-  } = await supabase.auth.getUser()
+  } = supabase.auth.getUser()
   if (!user) return
 
   await supabase.from("audit_logs").insert({

@@ -4,7 +4,7 @@ import type { Product } from "@/lib/supabase/types"
 
 export async function fetchProducts(page = 1, limit = 10) {
   noStore()
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   // Calculate offset for pagination
   const offset = (page - 1) * limit
@@ -54,7 +54,7 @@ export async function fetchProductById(id: string) {
   noStore()
   if (!id) return null
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from("products").select("*").eq("id", id).single()
 
   if (error) {
@@ -67,7 +67,7 @@ export async function fetchProductById(id: string) {
 
 export async function fetchProductsForForm() {
   noStore()
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("products")
     .select("id, name, prix_vente_detail_1, prix_vente_detail_2, prix_vente_gros")

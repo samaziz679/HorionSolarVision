@@ -8,7 +8,7 @@ export interface ExpenseCategory {
 }
 
 export async function fetchExpenseCategories(): Promise<ExpenseCategory[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from("expense_categories")
@@ -25,7 +25,7 @@ export async function fetchExpenseCategories(): Promise<ExpenseCategory[]> {
 }
 
 export async function createExpenseCategory(name_fr: string): Promise<ExpenseCategory | null> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from("expense_categories")

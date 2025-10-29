@@ -4,7 +4,7 @@ import type { PurchaseWithDetails } from "@/lib/supabase/types"
 
 export async function fetchPurchases() {
   noStore()
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("purchases")
     .select(
@@ -32,7 +32,7 @@ export async function fetchPurchaseById(id: string) {
   noStore()
   if (!id) return null
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from("purchases")
     .select(

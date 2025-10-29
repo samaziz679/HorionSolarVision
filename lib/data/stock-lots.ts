@@ -43,7 +43,7 @@ export async function fetchProductsWithBatches(
   hasNextPage: boolean
   hasPrevPage: boolean
 }> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const offset = (page - 1) * limit
 
   const { data: allProducts, error: productsError } = await supabase
@@ -174,7 +174,7 @@ export async function fetchProductsWithBatches(
 }
 
 export async function fetchStockLotsByProduct(productId: string): Promise<StockLot[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: stockLots, error } = await supabase
     .from("stock_lots")
@@ -192,7 +192,7 @@ export async function fetchStockLotsByProduct(productId: string): Promise<StockL
 }
 
 export async function fetchStockMovements(stockLotId?: string, limit = 50): Promise<any[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   let query = supabase
     .from("stock_movements")

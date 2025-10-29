@@ -4,7 +4,7 @@ import type { Supplier } from "@/lib/supabase/types"
 
 export async function fetchSuppliers() {
   noStore()
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from("suppliers").select("*").order("created_at", { ascending: false })
 
   if (error) {
@@ -19,7 +19,7 @@ export async function fetchSupplierById(id: string) {
   noStore()
   if (!id) return null
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from("suppliers").select("*").eq("id", id).single()
 
   if (error) {
@@ -32,7 +32,7 @@ export async function fetchSupplierById(id: string) {
 
 export async function fetchSuppliersForForm() {
   noStore()
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from("suppliers").select("id, name")
 
   if (error) {

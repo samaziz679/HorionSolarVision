@@ -4,7 +4,7 @@ import type { Expense } from "@/lib/supabase/types"
 
 export async function fetchExpenses(page = 1, limit = 10) {
   noStore()
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   const offset = (page - 1) * limit
 
@@ -41,7 +41,7 @@ export async function fetchExpenseById(id: string) {
   noStore()
   if (!id) return null
 
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase.from("expenses").select(`*`).eq("id", id).single()
 
   if (error) {
