@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from "@/lib/supabase/server"
 
 async function checkForAdminUsers() {
   try {
-    const supabase = createSupabaseServerClient(true) // Pass true for service role
+    const supabase = await createSupabaseServerClient(true) // Pass true for service role
 
     console.log("[v0] Checking for admin users...")
 

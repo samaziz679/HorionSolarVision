@@ -39,7 +39,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, RolePermissionConfig> = rolePerm
 
 // Server-side functions
 export async function getCurrentUserProfile(): Promise<UserProfile | null> {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   const {
     data: { user },
@@ -186,7 +186,7 @@ export async function getPendingUsers(): Promise<
 }
 
 export async function activateUser(userId: string, email: string, fullName: string, role: UserRole): Promise<boolean> {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   try {
     // Create user profile
