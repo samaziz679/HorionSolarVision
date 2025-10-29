@@ -132,7 +132,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         quantity,
         product_id,
         id,
-        products!inner(name, prix_achat)
+        products!sales_product_id_fkey(name, prix_achat)
       `)
       .gte("sale_date", startDate)
       .lte("sale_date", endDate)
@@ -173,7 +173,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         id, 
         name, 
         created_at,
-        sales!inner(total, sale_date)
+        sales!sales_client_id_fkey(total, sale_date)
       `)
 
     // Fetch inventory data
