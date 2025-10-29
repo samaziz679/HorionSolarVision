@@ -31,6 +31,7 @@ type SaleFormProps = {
 
 export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const [formState, setFormState] = useState({ success: false })
   const [selectedProduct, setSelectedProduct] = useState(sale?.product_id || "")
   const [selectedClient, setSelectedClient] = useState(sale?.client_id || "")
   const [quantity, setQuantity] = useState(sale?.quantity || 1)
@@ -114,11 +115,27 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
     formData.set("sale_date", saleDate)
     formData.set("notes", notes)
 
-    if (sale) {
-      await updateSale(sale.id, { success: false }, formData)
-    } else {
-      await createSale({ success: false }, formData)
+    try {
+      let result: any
+      if (sale) {
+        result = await updateSale(sale.id, formState, formData)
+      } else {
+        result = await createSale(formState, formData)
+      }
+
+      setFormState(result)
+
+      if (!result.success && result.message) {
+        console.error("[v0] Sale submission failed:", result.message)
+      }
+    } catch (error) {
+      console.error("[v0] Error submitting sale:", error)
+      setFormState({
+        success: false,
+        message: "An unexpected error occurred. Please try again.",
+      })
     }
+
     setIsLoading(false)
   }
 
@@ -154,6 +171,12 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-6">
+        {formState.message && !formState.success && (
+          <Alert variant="destructive">
+            <AlertDescription>{formState.message}</AlertDescription>
+          </Alert>
+        )}
+
         {voice.isSupported && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
             <div className="flex items-center justify-between">
@@ -223,7 +246,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               </SelectContent>
             </Select>
             <div id="client_id-error" aria-live="polite" aria-atomic="true">
-              {renderErrors([])}
+              {renderErrors((formState as any).errors?.client_id)}
             </div>
           </div>
           <div className="space-y-2">
@@ -238,7 +261,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
               aria-describedby="sale_date-error"
             />
             <div id="sale_date-error" aria-live="polite" aria-atomic="true">
-              {renderErrors([])}
+              {renderErrors((formState as any).errors?.sale_date)}
             </div>
           </div>
         </div>
@@ -262,7 +285,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
                 </SelectContent>
               </Select>
               <div id="product_id-error" aria-live="polite" aria-atomic="true">
-                {renderErrors([])}
+                {renderErrors((formState as any).errors?.product_id)}
               </div>
             </div>
             <div className="space-y-2">
@@ -277,7 +300,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
                 aria-describedby="quantity-error"
               />
               <div id="quantity-error" aria-live="polite" aria-atomic="true">
-                {renderErrors([])}
+                {renderErrors((formState as any).errors?.quantity)}
               </div>
             </div>
           </div>
@@ -320,7 +343,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
                 </SelectContent>
               </Select>
               <div id="price_plan-error" aria-live="polite" aria-atomic="true">
-                {renderErrors([])}
+                {renderErrors((formState as any).errors?.price_plan)}
               </div>
             </div>
             <div className="space-y-2">
@@ -335,7 +358,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
                 aria-describedby="unit_price-error"
               />
               <div id="unit_price-error" aria-live="polite" aria-atomic="true">
-                {renderErrors([])}
+                {renderErrors((formState as any).errors?.unit_price)}
               </div>
             </div>
           </div>
@@ -352,7 +375,7 @@ export default function SaleForm({ sale, products, clients }: SaleFormProps) {
             aria-describedby="notes-error"
           />
           <div id="notes-error" aria-live="polite" aria-atomic="true">
-            {renderErrors([])}
+            {renderErrors((formState as any).errors?.notes)}
           </div>
         </div>
 
