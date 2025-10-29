@@ -106,7 +106,7 @@ export interface AnalyticsData {
 }
 
 export async function getAnalyticsData(startDate?: string, endDate?: string): Promise<AnalyticsData> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   try {
     const currentDate = new Date()
