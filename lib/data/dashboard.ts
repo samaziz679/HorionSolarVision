@@ -4,7 +4,7 @@ import { unstable_noStore as noStore } from "next/cache"
 
 export async function getDashboardStats() {
   noStore()
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { count: totalSales, error: salesError } = await supabase
     .from("sales")
@@ -45,7 +45,7 @@ export async function getDashboardStats() {
 
 export async function getRecentSales() {
   noStore()
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data, error } = await supabase
     .from("sales")

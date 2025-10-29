@@ -37,13 +37,13 @@ export async function calculateSaleMargin(
   salePrice: number,
   productId: string,
   quantity = 1,
-  saleId?: string, // Added saleId to look up actual lot-specific cost
+  saleId?: string,
 ): Promise<{
   purchasePrice: number | null
   grossMargin: number | null
   marginPercentage: number | null
 }> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   if (saleId) {
     const { data: stockMovement } = await supabase
@@ -119,7 +119,7 @@ export async function fetchSalesWithMargins(
   productId?: string,
   clientId?: string,
 ): Promise<SaleWithMargin[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   let query = supabase
     .from("sales")
@@ -209,7 +209,7 @@ export async function getMarginSummary(startDate?: string, endDate?: string): Pr
 }
 
 export async function generatePriceSuggestions(targetMargin = 30): Promise<PriceSuggestion[]> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Get all products with their current purchase prices
   const { data: products, error } = await supabase

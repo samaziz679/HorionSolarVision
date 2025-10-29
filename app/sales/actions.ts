@@ -197,7 +197,7 @@ export async function createSale(prevState: State, formData: FormData) {
   }
 
   const total = validatedFields.data.quantity * validatedFields.data.unit_price
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: sale, error: saleError } = await supabase
     .from("sales")
@@ -265,7 +265,7 @@ export async function updateSale(id: string, prevState: State, formData: FormDat
   }
 
   const total = validatedFields.data.quantity * validatedFields.data.unit_price
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: originalSale, error: fetchError } = await supabase.from("sales").select("*").eq("id", id).single()
 
@@ -322,7 +322,7 @@ export async function deleteSale(id: string) {
     return { message: "Authentication error. Please sign in.", success: false }
   }
 
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const restoreResult = await restoreStockFromSale(supabase, id)
   if (!restoreResult.success) {
