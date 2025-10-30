@@ -9,18 +9,32 @@ export interface BankEntry {
   entry_date: string
   created_by: string | null
   notes: string | null
-  sale_id: string | null
 }
 
-export interface BankEntryWithSale extends BankEntry {
-  sales?: {
+export interface BankSalesReconciliation {
+  id: string
+  bank_entry_id: string
+  sale_id: string
+  reconciled_amount: number
+  created_at: string
+  created_by: string | null
+  notes: string | null
+}
+
+export interface BankEntryWithSales extends BankEntry {
+  reconciliations?: Array<{
     id: string
-    sale_date: string
-    total: number
-    clients?: {
-      name: string
+    reconciled_amount: number
+    sales: {
+      id: string
+      sale_date: string
+      total: number
+      clients?: {
+        name: string
+      }
     }
-  } | null
+  }>
+  total_reconciled?: number
 }
 
 export async function fetchBankEntries(page = 1, limit = 10) {
@@ -29,18 +43,21 @@ export async function fetchBankEntries(page = 1, limit = 10) {
 
   const offset = (page - 1) * limit
 
-  // Get total count
   const { count } = await supabase.from("bank_entries").select("*", { count: "exact", head: true })
 
   const { data, error } = await supabase
     .from("bank_entries")
     .select(`
       *,
-      sales (
+      reconciliations:bank_sales_reconciliation (
         id,
-        sale_date,
-        total,
-        clients!sales_client_id_fkey (name)
+        reconciled_amount,
+        sales (
+          id,
+          sale_date,
+          total,
+          clients!sales_client_id_fkey (name)
+        )
       )
     `)
     .order("entry_date", { ascending: false })
@@ -51,10 +68,16 @@ export async function fetchBankEntries(page = 1, limit = 10) {
     throw new Error("Failed to fetch bank entries.")
   }
 
+  const entriesWithTotals = data.map((entry: any) => ({
+    ...entry,
+    total_reconciled:
+      entry.reconciliations?.reduce((sum: number, rec: any) => sum + (rec.reconciled_amount || 0), 0) || 0,
+  }))
+
   const totalPages = Math.ceil((count || 0) / limit)
 
   return {
-    entries: data as BankEntryWithSale[],
+    entries: entriesWithTotals as BankEntryWithSales[],
     totalPages,
     currentPage: page,
     hasNextPage: page < totalPages,
@@ -68,15 +91,20 @@ export async function fetchBankEntryById(id: string) {
   if (!id) return null
 
   const supabase = await createSupabaseServerClient()
+
   const { data, error } = await supabase
     .from("bank_entries")
     .select(`
       *,
-      sales (
+      reconciliations:bank_sales_reconciliation (
         id,
-        sale_date,
-        total,
-        clients!sales_client_id_fkey (name)
+        reconciled_amount,
+        sales (
+          id,
+          sale_date,
+          total,
+          clients!sales_client_id_fkey (name)
+        )
       )
     `)
     .eq("id", id)
@@ -87,7 +115,11 @@ export async function fetchBankEntryById(id: string) {
     return null
   }
 
-  return data as BankEntryWithSale | null
+  return {
+    ...data,
+    total_reconciled:
+      data.reconciliations?.reduce((sum: number, rec: any) => sum + (rec.reconciled_amount || 0), 0) || 0,
+  } as BankEntryWithSales | null
 }
 
 export async function getBankSummary(startDate?: string, endDate?: string) {
@@ -127,19 +159,33 @@ export async function fetchUnreconciledBankInflows() {
   noStore()
   const supabase = await createSupabaseServerClient()
 
-  const { data, error } = await supabase
+  const { data: allInflows, error: inflowsError } = await supabase
     .from("bank_entries")
-    .select("*")
+    .select(`
+      *,
+      reconciliations:bank_sales_reconciliation (
+        reconciled_amount
+      )
+    `)
     .eq("account_type", "in")
-    .is("sale_id", null)
     .order("entry_date", { ascending: false })
 
-  if (error) {
-    console.error("Database Error:", error)
+  if (inflowsError) {
+    console.error("Database Error:", inflowsError)
     throw new Error("Failed to fetch unreconciled bank inflows.")
   }
 
-  return data as BankEntry[]
+  const unreconciledInflows = allInflows.filter((entry: any) => {
+    const totalReconciled =
+      entry.reconciliations?.reduce((sum: number, rec: any) => sum + (rec.reconciled_amount || 0), 0) || 0
+    return totalReconciled < entry.amount
+  })
+
+  return unreconciledInflows.map((entry: any) => ({
+    ...entry,
+    total_reconciled:
+      entry.reconciliations?.reduce((sum: number, rec: any) => sum + (rec.reconciled_amount || 0), 0) || 0,
+  })) as BankEntryWithSales[]
 }
 
 export async function fetchReconciledEntries(page = 1, limit = 10) {
@@ -147,23 +193,35 @@ export async function fetchReconciledEntries(page = 1, limit = 10) {
   const supabase = await createSupabaseServerClient()
   const offset = (page - 1) * limit
 
-  const { count } = await supabase
-    .from("bank_entries")
-    .select("*", { count: "exact", head: true })
-    .not("sale_id", "is", null)
+  const { data: reconciledIds } = await supabase.from("bank_sales_reconciliation").select("bank_entry_id")
+
+  if (!reconciledIds || reconciledIds.length === 0) {
+    return {
+      entries: [],
+      totalPages: 0,
+      currentPage: page,
+      totalCount: 0,
+    }
+  }
+
+  const uniqueIds = [...new Set(reconciledIds.map((r) => r.bank_entry_id))]
 
   const { data, error } = await supabase
     .from("bank_entries")
     .select(`
       *,
-      sales (
+      reconciliations:bank_sales_reconciliation (
         id,
-        sale_date,
-        total,
-        clients!sales_client_id_fkey (name)
+        reconciled_amount,
+        sales (
+          id,
+          sale_date,
+          total,
+          clients!sales_client_id_fkey (name)
+        )
       )
     `)
-    .not("sale_id", "is", null)
+    .in("id", uniqueIds)
     .order("entry_date", { ascending: false })
     .range(offset, offset + limit - 1)
 
@@ -172,12 +230,18 @@ export async function fetchReconciledEntries(page = 1, limit = 10) {
     throw new Error("Failed to fetch reconciled entries.")
   }
 
-  const totalPages = Math.ceil((count || 0) / limit)
+  const entriesWithTotals = data.map((entry: any) => ({
+    ...entry,
+    total_reconciled:
+      entry.reconciliations?.reduce((sum: number, rec: any) => sum + (rec.reconciled_amount || 0), 0) || 0,
+  }))
+
+  const totalPages = Math.ceil(uniqueIds.length / limit)
 
   return {
-    entries: data as BankEntryWithSale[],
+    entries: entriesWithTotals as BankEntryWithSales[],
     totalPages,
     currentPage: page,
-    totalCount: count || 0,
+    totalCount: uniqueIds.length,
   }
 }

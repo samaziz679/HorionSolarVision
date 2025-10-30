@@ -9,6 +9,13 @@ export interface SaleWithReconciliation {
   client_name: string
   is_reconciled: boolean
   bank_entry_id?: string | null
+  reconciled_amount?: number
+  bank_entries?: Array<{
+    id: string
+    entry_date: string
+    amount: number
+    description: string
+  }>
 }
 
 export async function fetchSales(page = 1, limit = 10) {
@@ -28,7 +35,10 @@ export async function fetchSales(page = 1, limit = 10) {
       id,
       sale_date,
       total,
-      clients!sales_client_id_fkey (id, name)
+      clients!sales_client_id_fkey (id, name),
+      reconciliations:bank_sales_reconciliation (
+        reconciled_amount
+      )
     `,
     )
     .order("sale_date", { ascending: false })
@@ -46,6 +56,7 @@ export async function fetchSales(page = 1, limit = 10) {
     date: sale.sale_date,
     total_amount: sale.total,
     client_name: sale.clients?.name || "N/A",
+    reconciled_amount: sale.reconciliations?.reduce((sum, rec) => sum + (rec.reconciled_amount || 0), 0) || 0,
   }))
 
   return {
@@ -69,7 +80,16 @@ export async function fetchSaleById(id: string) {
       `
       *,
       clients (*),
-      products (*)
+      products (*),
+      reconciliations:bank_sales_reconciliation (
+        reconciled_amount,
+        bank_entries:bank_entry_id (
+          id,
+          entry_date,
+          amount,
+          description
+        )
+      )
     `,
     )
     .eq("id", id)
@@ -87,14 +107,16 @@ export async function fetchUnreconciledSales() {
   noStore()
   const supabase = await createSupabaseServerClient()
 
-  // Get all sales
   const { data: salesData, error: salesError } = await supabase
     .from("sales")
     .select(`
       id,
       sale_date,
       total,
-      clients!sales_client_id_fkey (name)
+      clients!sales_client_id_fkey (name),
+      reconciliations:bank_sales_reconciliation (
+        reconciled_amount
+      )
     `)
     .order("sale_date", { ascending: false })
 
@@ -103,26 +125,19 @@ export async function fetchUnreconciledSales() {
     throw new Error("Failed to fetch sales.")
   }
 
-  // Get all bank entries with sale_id
-  const { data: bankEntries, error: bankError } = await supabase
-    .from("bank_entries")
-    .select("sale_id")
-    .not("sale_id", "is", null)
+  const unreconciledSales = salesData.filter((sale: any) => {
+    const totalReconciled =
+      sale.reconciliations?.reduce((sum: number, rec: any) => sum + (rec.reconciled_amount || 0), 0) || 0
+    return totalReconciled < sale.total
+  })
 
-  if (bankError) {
-    console.error("Database Error:", bankError)
-    throw new Error("Failed to fetch bank entries.")
-  }
-
-  // Filter out sales that are already linked to bank entries
-  const reconciledSaleIds = new Set(bankEntries.map((entry) => entry.sale_id))
-  const unreconciledSales = salesData.filter((sale) => !reconciledSaleIds.has(sale.id))
-
-  return unreconciledSales.map((sale) => ({
+  return unreconciledSales.map((sale: any) => ({
     id: sale.id,
     sale_date: sale.sale_date,
     total: sale.total,
     client_name: sale.clients?.name || "N/A",
+    reconciled_amount:
+      sale.reconciliations?.reduce((sum: number, rec: any) => sum + (rec.reconciled_amount || 0), 0) || 0,
   }))
 }
 
@@ -131,13 +146,20 @@ export async function getSaleReconciliationStatus(saleId: string) {
   const supabase = await createSupabaseServerClient()
 
   const { data, error } = await supabase
-    .from("bank_entries")
-    .select("id, entry_date, amount")
+    .from("bank_sales_reconciliation")
+    .select(`
+      id,
+      reconciled_amount,
+      bank_entries:bank_entry_id (
+        id,
+        entry_date,
+        amount,
+        description
+      )
+    `)
     .eq("sale_id", saleId)
-    .single()
 
-  if (error && error.code !== "PGRST116") {
-    // PGRST116 is "not found" error
+  if (error) {
     console.error("Database Error:", error)
     return null
   }

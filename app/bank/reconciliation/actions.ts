@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server"
 import { revalidatePath } from "next/cache"
 import { getAuthUser } from "@/lib/auth"
 
-export async function linkBankEntryToSale(bankEntryId: string, saleId: string) {
+export async function linkSalesToBankEntry(bankEntryId: string, salesData: Array<{ saleId: string; amount: number }>) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
@@ -12,35 +12,60 @@ export async function linkBankEntryToSale(bankEntryId: string, saleId: string) {
 
   const supabase = await createClient()
 
-  // Check if the bank entry is already linked
-  const { data: existingEntry } = await supabase.from("bank_entries").select("sale_id").eq("id", bankEntryId).single()
-
-  if (existingEntry?.sale_id) {
-    return { message: "This bank entry is already linked to a sale.", success: false }
+  // Validate that amounts are positive
+  if (salesData.some((sale) => sale.amount <= 0)) {
+    return { message: "All amounts must be positive.", success: false }
   }
 
-  // Check if the sale is already linked to another bank entry
-  const { data: existingSale } = await supabase.from("bank_entries").select("id").eq("sale_id", saleId).single()
+  // Get the bank entry to validate total amount
+  const { data: bankEntry, error: bankError } = await supabase
+    .from("bank_entries")
+    .select("amount")
+    .eq("id", bankEntryId)
+    .single()
 
-  if (existingSale) {
-    return { message: "This sale is already linked to another bank entry.", success: false }
+  if (bankError || !bankEntry) {
+    return { message: "Bank entry not found.", success: false }
   }
 
-  // Link the bank entry to the sale
-  const { error } = await supabase.from("bank_entries").update({ sale_id: saleId }).eq("id", bankEntryId)
+  // Calculate total reconciled amount for this bank entry
+  const { data: existingReconciliations } = await supabase
+    .from("bank_sales_reconciliation")
+    .select("reconciled_amount")
+    .eq("bank_entry_id", bankEntryId)
 
-  if (error) {
-    console.error("Database Error:", error)
-    return { message: "Database Error: Failed to link bank entry to sale.", success: false }
+  const existingTotal = existingReconciliations?.reduce((sum, rec) => sum + rec.reconciled_amount, 0) || 0
+  const newTotal = salesData.reduce((sum, sale) => sum + sale.amount, 0)
+
+  if (existingTotal + newTotal > bankEntry.amount) {
+    return {
+      message: `Total reconciled amount (${existingTotal + newTotal}) exceeds bank entry amount (${bankEntry.amount}).`,
+      success: false,
+    }
+  }
+
+  // Insert reconciliation records
+  const reconciliations = salesData.map((sale) => ({
+    bank_entry_id: bankEntryId,
+    sale_id: sale.saleId,
+    reconciled_amount: sale.amount,
+    created_by: user.id,
+  }))
+
+  const { error: insertError } = await supabase.from("bank_sales_reconciliation").insert(reconciliations)
+
+  if (insertError) {
+    console.error("Database Error:", insertError)
+    return { message: "Database Error: Failed to link sales to bank entry.", success: false }
   }
 
   revalidatePath("/bank/reconciliation")
   revalidatePath("/bank")
   revalidatePath("/sales")
-  return { message: "Bank entry linked to sale successfully.", success: true }
+  return { message: "Sales linked to bank entry successfully.", success: true }
 }
 
-export async function unlinkBankEntryFromSale(bankEntryId: string) {
+export async function unlinkSaleFromBankEntry(reconciliationId: string) {
   const user = await getAuthUser()
   if (!user) {
     return { message: "Authentication error. Please sign in.", success: false }
@@ -48,15 +73,15 @@ export async function unlinkBankEntryFromSale(bankEntryId: string) {
 
   const supabase = await createClient()
 
-  const { error } = await supabase.from("bank_entries").update({ sale_id: null }).eq("id", bankEntryId)
+  const { error } = await supabase.from("bank_sales_reconciliation").delete().eq("id", reconciliationId)
 
   if (error) {
     console.error("Database Error:", error)
-    return { message: "Database Error: Failed to unlink bank entry from sale.", success: false }
+    return { message: "Database Error: Failed to unlink sale from bank entry.", success: false }
   }
 
   revalidatePath("/bank/reconciliation")
   revalidatePath("/bank")
   revalidatePath("/sales")
-  return { message: "Bank entry unlinked from sale successfully.", success: true }
+  return { message: "Sale unlinked from bank entry successfully.", success: true }
 }
