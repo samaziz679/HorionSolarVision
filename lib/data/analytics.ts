@@ -220,7 +220,23 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
           }, 0) || 0
         : totalCOGS
 
-    const grossProfit = totalRevenue - fallbackCOGS
+    // Fetch bank entries data
+    const { data: bankEntries } = await supabase
+      .from("bank_entries")
+      .select("amount, account_type, entry_date")
+      .gte("entry_date", startDate)
+      .lte("entry_date", endDate)
+
+    const bankIn =
+      bankEntries
+        ?.filter((entry) => entry.account_type === "in")
+        .reduce((sum, entry) => sum + (entry.amount || 0), 0) || 0
+    const bankOut =
+      bankEntries
+        ?.filter((entry) => entry.account_type === "out")
+        .reduce((sum, entry) => sum + (entry.amount || 0), 0) || 0
+
+    const grossProfit = totalRevenue + bankIn - fallbackCOGS
     const netProfit = grossProfit - totalExpenses
 
     const revenueGrowth = prevRevenue > 0 ? ((totalRevenue - prevRevenue) / prevRevenue) * 100 : 0
@@ -268,24 +284,29 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       .gte("expense_date", startDate)
       .lte("expense_date", endDate)
 
-    const expenseByCat: Record<string, number> = {}
+    const expenseByCat: Record<string, number> = {
+      "Sorties Bancaires": bankOut,
+    }
     expenseCategories?.forEach((expense: any) => {
       const category = expense.expense_categories?.name_fr || "Dépenses Générales"
       expenseByCat[category] = (expenseByCat[category] || 0) + (expense.amount || 0)
     })
 
+    const totalExpensesWithBank = totalExpenses + bankOut
+
     const expenseBreakdown = Object.entries(expenseByCat).map(([category, amount]) => ({
       category,
       amount,
-      percentage: totalExpenses > 0 ? Math.round((amount / totalExpenses) * 100) : 0,
+      percentage: totalExpensesWithBank > 0 ? Math.round((amount / totalExpensesWithBank) * 100) : 0,
     }))
 
+    // Calculate cash flow
     const cashFlow = []
     for (let i = 11; i >= 0; i--) {
       const monthDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1)
       const monthStart = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1).toISOString().split("T")[0]
       const monthEnd = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).toISOString().split("T")[0]
-      const monthName = monthDate.toISOString().slice(0, 7) // YYYY-MM format
+      const monthName = monthDate.toISOString().slice(0, 7)
 
       // Fetch real monthly sales
       const { data: monthlySales } = await supabase
@@ -308,6 +329,22 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
         .gte("expense_date", monthStart)
         .lte("expense_date", monthEnd)
 
+      // Fetch monthly bank entries
+      const { data: monthlyBankEntries } = await supabase
+        .from("bank_entries")
+        .select("amount, account_type")
+        .gte("entry_date", monthStart)
+        .lte("entry_date", monthEnd)
+
+      const monthBankIn =
+        monthlyBankEntries
+          ?.filter((entry) => entry.account_type === "in")
+          .reduce((sum, entry) => sum + (entry.amount || 0), 0) || 0
+      const monthBankOut =
+        monthlyBankEntries
+          ?.filter((entry) => entry.account_type === "out")
+          .reduce((sum, entry) => sum + (entry.amount || 0), 0) || 0
+
       const monthRevenue = monthlySales?.reduce((sum, sale) => sum + (sale.total || 0), 0) || 0
 
       const monthCOGS =
@@ -319,16 +356,16 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
 
       const monthExpenseTotal = monthlyExpenses?.reduce((sum, expense) => sum + (expense.amount || 0), 0) || 0
 
-      const monthGrossProfit = monthRevenue - monthCOGS
-      const monthNetProfit = monthGrossProfit - monthExpenseTotal
+      const monthGrossProfit = monthRevenue + monthBankIn - monthCOGS
+      const monthNetProfit = monthGrossProfit - monthExpenseTotal - monthBankOut
       const monthMargin = monthRevenue > 0 ? Math.round((monthNetProfit / monthRevenue) * 100 * 10) / 10 : 0
 
       cashFlow.push({
         month: monthName,
-        revenue: monthRevenue,
-        cogs: monthCOGS, // Added COGS to cash flow data
-        expenses: monthExpenseTotal,
-        profit: monthNetProfit, // Now using net profit (after COGS and expenses)
+        revenue: monthRevenue + monthBankIn,
+        cogs: monthCOGS,
+        expenses: monthExpenseTotal + monthBankOut,
+        profit: monthNetProfit,
         margin: monthMargin,
       })
     }
@@ -421,10 +458,10 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       })) || []
 
     return {
-      totalRevenue,
+      totalRevenue: totalRevenue + bankIn,
       grossProfit,
       netProfit,
-      totalExpenses,
+      totalExpenses: totalExpensesWithBank,
       totalCOGS: fallbackCOGS, // Use fallback COGS that includes lot-specific prices
       revenueGrowth: Math.round(revenueGrowth * 10) / 10,
       activeClients,
@@ -433,7 +470,7 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       inventoryTurnover,
       outOfStockItems,
       currentPeriod: periodLabel,
-      revenueBreakdown: [{ category: "Ventes Directes", amount: totalRevenue, percentage: 100 }],
+      revenueBreakdown: [{ category: "Ventes Directes", amount: totalRevenue + bankIn, percentage: 100 }],
       expenseBreakdown,
       cashFlow,
       lowStockItems,
@@ -443,8 +480,8 @@ export async function getAnalyticsData(startDate?: string, endDate?: string): Pr
       topClients,
       salesTarget: {
         target: 2000000,
-        achieved: totalRevenue,
-        percentage: Math.min(Math.round((totalRevenue / 2000000) * 100), 100),
+        achieved: totalRevenue + bankIn,
+        percentage: Math.min(Math.round(((totalRevenue + bankIn) / 2000000) * 100), 100),
       },
       clientTarget: {
         target: 10,
