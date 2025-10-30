@@ -49,10 +49,10 @@ export async function fetchBankEntries(page = 1, limit = 10) {
     .from("bank_entries")
     .select(`
       *,
-      reconciliations:bank_sales_reconciliation!bank_sales_reconciliation_bank_entry_id_fkey (
+      reconciliations:bank_sales_reconciliation!bank_sales_reconciliation_bank_entry_fkey (
         id,
         reconciled_amount,
-        sales!bank_sales_reconciliation_sale_id_fkey (
+        sales!bank_sales_reconciliation_sale_fkey (
           id,
           sale_date,
           total,
@@ -96,10 +96,10 @@ export async function fetchBankEntryById(id: string) {
     .from("bank_entries")
     .select(`
       *,
-      reconciliations:bank_sales_reconciliation!bank_sales_reconciliation_bank_entry_id_fkey (
+      reconciliations:bank_sales_reconciliation!bank_sales_reconciliation_bank_entry_fkey (
         id,
         reconciled_amount,
-        sales!bank_sales_reconciliation_sale_id_fkey (
+        sales!bank_sales_reconciliation_sale_fkey (
           id,
           sale_date,
           total,
@@ -163,7 +163,7 @@ export async function fetchUnreconciledBankInflows() {
     .from("bank_entries")
     .select(`
       *,
-      reconciliations:bank_sales_reconciliation!bank_sales_reconciliation_bank_entry_id_fkey (
+      reconciliations:bank_sales_reconciliation!bank_sales_reconciliation_bank_entry_fkey (
         reconciled_amount
       )
     `)
@@ -217,10 +217,10 @@ export async function fetchReconciledEntries(page = 1, limit = 10) {
     .from("bank_entries")
     .select(`
       *,
-      reconciliations:bank_sales_reconciliation!bank_sales_reconciliation_bank_entry_id_fkey (
+      reconciliations:bank_sales_reconciliation!bank_sales_reconciliation_bank_entry_fkey (
         id,
         reconciled_amount,
-        sales!bank_sales_reconciliation_sale_id_fkey (
+        sales!bank_sales_reconciliation_sale_fkey (
           id,
           sale_date,
           total,
