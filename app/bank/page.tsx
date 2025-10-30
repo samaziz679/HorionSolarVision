@@ -1,7 +1,7 @@
 import { fetchBankEntries, getBankSummary } from "@/lib/data/bank-entries"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, Link2 } from "lucide-react"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -38,12 +38,20 @@ export default async function BankPage({
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-        <Button asChild size="sm" className="ml-auto gap-1">
-          <Link href="/bank/new">
-            Nouvelle Entrée
-            <PlusCircle className="h-4 w-4" />
-          </Link>
-        </Button>
+        <div className="ml-auto flex gap-2">
+          <Button asChild size="sm" variant="outline" className="gap-1 bg-transparent">
+            <Link href="/bank/reconciliation">
+              <Link2 className="h-4 w-4" />
+              Rapprochement
+            </Link>
+          </Button>
+          <Button asChild size="sm" className="gap-1">
+            <Link href="/bank/new">
+              Nouvelle Entrée
+              <PlusCircle className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}

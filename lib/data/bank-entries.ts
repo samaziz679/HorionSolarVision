@@ -9,6 +9,18 @@ export interface BankEntry {
   entry_date: string
   created_by: string | null
   notes: string | null
+  sale_id: string | null
+}
+
+export interface BankEntryWithSale extends BankEntry {
+  sales?: {
+    id: string
+    sale_date: string
+    total: number
+    clients?: {
+      name: string
+    }
+  } | null
 }
 
 export async function fetchBankEntries(page = 1, limit = 10) {
@@ -20,10 +32,17 @@ export async function fetchBankEntries(page = 1, limit = 10) {
   // Get total count
   const { count } = await supabase.from("bank_entries").select("*", { count: "exact", head: true })
 
-  // Get paginated data
   const { data, error } = await supabase
     .from("bank_entries")
-    .select("*")
+    .select(`
+      *,
+      sales (
+        id,
+        sale_date,
+        total,
+        clients!sales_client_id_fkey (name)
+      )
+    `)
     .order("entry_date", { ascending: false })
     .range(offset, offset + limit - 1)
 
@@ -35,7 +54,7 @@ export async function fetchBankEntries(page = 1, limit = 10) {
   const totalPages = Math.ceil((count || 0) / limit)
 
   return {
-    entries: data as BankEntry[],
+    entries: data as BankEntryWithSale[],
     totalPages,
     currentPage: page,
     hasNextPage: page < totalPages,
@@ -49,14 +68,26 @@ export async function fetchBankEntryById(id: string) {
   if (!id) return null
 
   const supabase = await createSupabaseServerClient()
-  const { data, error } = await supabase.from("bank_entries").select("*").eq("id", id).single()
+  const { data, error } = await supabase
+    .from("bank_entries")
+    .select(`
+      *,
+      sales (
+        id,
+        sale_date,
+        total,
+        clients!sales_client_id_fkey (name)
+      )
+    `)
+    .eq("id", id)
+    .single()
 
   if (error) {
     console.error("Database Error:", error)
     return null
   }
 
-  return data as BankEntry | null
+  return data as BankEntryWithSale | null
 }
 
 export async function getBankSummary(startDate?: string, endDate?: string) {
@@ -89,5 +120,64 @@ export async function getBankSummary(startDate?: string, endDate?: string) {
     totalIn,
     totalOut,
     balance: totalIn - totalOut,
+  }
+}
+
+export async function fetchUnreconciledBankInflows() {
+  noStore()
+  const supabase = await createSupabaseServerClient()
+
+  const { data, error } = await supabase
+    .from("bank_entries")
+    .select("*")
+    .eq("account_type", "in")
+    .is("sale_id", null)
+    .order("entry_date", { ascending: false })
+
+  if (error) {
+    console.error("Database Error:", error)
+    throw new Error("Failed to fetch unreconciled bank inflows.")
+  }
+
+  return data as BankEntry[]
+}
+
+export async function fetchReconciledEntries(page = 1, limit = 10) {
+  noStore()
+  const supabase = await createSupabaseServerClient()
+  const offset = (page - 1) * limit
+
+  const { count } = await supabase
+    .from("bank_entries")
+    .select("*", { count: "exact", head: true })
+    .not("sale_id", "is", null)
+
+  const { data, error } = await supabase
+    .from("bank_entries")
+    .select(`
+      *,
+      sales (
+        id,
+        sale_date,
+        total,
+        clients!sales_client_id_fkey (name)
+      )
+    `)
+    .not("sale_id", "is", null)
+    .order("entry_date", { ascending: false })
+    .range(offset, offset + limit - 1)
+
+  if (error) {
+    console.error("Database Error:", error)
+    throw new Error("Failed to fetch reconciled entries.")
+  }
+
+  const totalPages = Math.ceil((count || 0) / limit)
+
+  return {
+    entries: data as BankEntryWithSale[],
+    totalPages,
+    currentPage: page,
+    totalCount: count || 0,
   }
 }

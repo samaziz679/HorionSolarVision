@@ -2,15 +2,16 @@
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Pencil, Trash2, TrendingUp, TrendingDown, CheckCircle2 } from "lucide-react"
 import Link from "next/link"
 import { deleteBankEntry } from "@/app/bank/actions"
 import { useTransition } from "react"
 import { toast } from "sonner"
-import type { BankEntry } from "@/lib/data/bank-entries"
+import type { BankEntryWithSale } from "@/lib/data/bank-entries"
 
 interface BankEntryListProps {
-  entries: BankEntry[]
+  entries: BankEntryWithSale[]
 }
 
 export function BankEntryList({ entries }: BankEntryListProps) {
@@ -40,6 +41,7 @@ export function BankEntryList({ entries }: BankEntryListProps) {
           <TableHead>Type</TableHead>
           <TableHead>Date</TableHead>
           <TableHead>Description</TableHead>
+          <TableHead>Statut</TableHead>
           <TableHead className="text-right">Montant</TableHead>
           <TableHead className="text-right">Actions</TableHead>
         </TableRow>
@@ -68,6 +70,23 @@ export function BankEntryList({ entries }: BankEntryListProps) {
                 <div className="font-medium">{entry.description}</div>
                 {entry.notes && <div className="text-sm text-muted-foreground">{entry.notes}</div>}
               </div>
+            </TableCell>
+            <TableCell>
+              {entry.sale_id && entry.sales ? (
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <div className="text-sm">
+                    <div className="font-medium text-green-600">Rapproché</div>
+                    <div className="text-muted-foreground">{entry.sales.clients?.name}</div>
+                  </div>
+                </div>
+              ) : entry.account_type === "in" ? (
+                <Badge variant="outline" className="text-orange-600 border-orange-600">
+                  Non rapproché
+                </Badge>
+              ) : (
+                <span className="text-muted-foreground text-sm">-</span>
+              )}
             </TableCell>
             <TableCell className="text-right">
               <span
