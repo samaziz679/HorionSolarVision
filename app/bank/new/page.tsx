@@ -7,8 +7,16 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { BankEntryForm } from "@/components/bank/bank-entry-form"
+import { requireRole } from "@/lib/auth/rbac"
+import { redirect } from "next/navigation"
 
-export default function NewBankEntryPage() {
+export default async function NewBankEntryPage() {
+  try {
+    await requireRole(["admin", "finance"])
+  } catch (error) {
+    redirect("/dashboard")
+  }
+
   return (
     <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
       <Breadcrumb>

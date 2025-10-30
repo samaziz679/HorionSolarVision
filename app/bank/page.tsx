@@ -12,12 +12,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Wallet } from "lucide-react"
 import { BankEntryList } from "@/components/bank/bank-entry-list"
+import { requireRole } from "@/lib/auth/rbac"
+import { redirect } from "next/navigation"
 
 export default async function BankPage({
   searchParams,
 }: {
   searchParams: { page?: string }
 }) {
+  try {
+    await requireRole(["admin", "finance"])
+  } catch (error) {
+    redirect("/dashboard")
+  }
+
   const currentPage = Number(searchParams?.page) || 1
   const { entries, totalPages, hasNextPage, hasPrevPage } = await fetchBankEntries(currentPage, 10)
   const summary = await getBankSummary()

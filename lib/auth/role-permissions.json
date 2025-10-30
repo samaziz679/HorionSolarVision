@@ -12,7 +12,8 @@
       "settings",
       "admin",
       "solar-sizer",
-      "voice_assistant"
+      "voice_assistant",
+      "bank"
     ],
     "actions": ["create", "read", "update", "delete", "manage_users"]
   },
@@ -25,7 +26,7 @@
     "actions": ["create", "read", "update", "delete"]
   },
   "finance": {
-    "modules": ["dashboard", "expenses", "reports", "sales", "purchases", "voice_assistant"],
+    "modules": ["dashboard", "expenses", "reports", "sales", "purchases", "voice_assistant", "bank"],
     "actions": ["create", "read", "update", "delete"]
   },
   "visitor": {

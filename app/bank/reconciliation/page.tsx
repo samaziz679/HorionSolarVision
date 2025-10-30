@@ -5,8 +5,16 @@ import { Button } from "@/components/ui/button"
 import { ReconciliationClient } from "@/components/bank/reconciliation-client"
 import { fetchUnreconciledSales } from "@/lib/data/sales"
 import { fetchUnreconciledBankInflows, fetchReconciledEntries } from "@/lib/data/bank-entries"
+import { requireRole } from "@/lib/auth/rbac"
+import { redirect } from "next/navigation"
 
 export default async function ReconciliationPage() {
+  try {
+    await requireRole(["admin", "finance"])
+  } catch (error) {
+    redirect("/dashboard")
+  }
+
   const [unreconciledSales, unreconciledBankInflows, reconciledData] = await Promise.all([
     fetchUnreconciledSales(),
     fetchUnreconciledBankInflows(),

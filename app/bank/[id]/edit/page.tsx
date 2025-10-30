@@ -9,12 +9,20 @@ import {
 import { BankEntryForm } from "@/components/bank/bank-entry-form"
 import { fetchBankEntryById } from "@/lib/data/bank-entries"
 import { notFound } from "next/navigation"
+import { requireRole } from "@/lib/auth/rbac"
+import { redirect } from "next/navigation"
 
 export default async function EditBankEntryPage({
   params,
 }: {
   params: { id: string }
 }) {
+  try {
+    await requireRole(["admin", "finance"])
+  } catch (error) {
+    redirect("/dashboard")
+  }
+
   const entry = await fetchBankEntryById(params.id)
 
   if (!entry) {
