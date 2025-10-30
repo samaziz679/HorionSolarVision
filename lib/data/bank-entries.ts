@@ -49,10 +49,10 @@ export async function fetchBankEntries(page = 1, limit = 10) {
     .from("bank_entries")
     .select(`
       *,
-      reconciliations:bank_sales_reconciliation (
+      reconciliations:bank_sales_reconciliation!bank_sales_reconciliation_bank_entry_id_fkey (
         id,
         reconciled_amount,
-        sales (
+        sales!bank_sales_reconciliation_sale_id_fkey (
           id,
           sale_date,
           total,
@@ -96,10 +96,10 @@ export async function fetchBankEntryById(id: string) {
     .from("bank_entries")
     .select(`
       *,
-      reconciliations:bank_sales_reconciliation (
+      reconciliations:bank_sales_reconciliation!bank_sales_reconciliation_bank_entry_id_fkey (
         id,
         reconciled_amount,
-        sales (
+        sales!bank_sales_reconciliation_sale_id_fkey (
           id,
           sale_date,
           total,
@@ -163,7 +163,7 @@ export async function fetchUnreconciledBankInflows() {
     .from("bank_entries")
     .select(`
       *,
-      reconciliations:bank_sales_reconciliation (
+      reconciliations:bank_sales_reconciliation!bank_sales_reconciliation_bank_entry_id_fkey (
         reconciled_amount
       )
     `)
@@ -193,7 +193,14 @@ export async function fetchReconciledEntries(page = 1, limit = 10) {
   const supabase = await createSupabaseServerClient()
   const offset = (page - 1) * limit
 
-  const { data: reconciledIds } = await supabase.from("bank_sales_reconciliation").select("bank_entry_id")
+  const { data: reconciledIds, error: idsError } = await supabase
+    .from("bank_sales_reconciliation")
+    .select("bank_entry_id")
+
+  if (idsError) {
+    console.error("Database Error:", idsError)
+    throw new Error("Failed to fetch reconciled entry IDs.")
+  }
 
   if (!reconciledIds || reconciledIds.length === 0) {
     return {
@@ -210,10 +217,10 @@ export async function fetchReconciledEntries(page = 1, limit = 10) {
     .from("bank_entries")
     .select(`
       *,
-      reconciliations:bank_sales_reconciliation (
+      reconciliations:bank_sales_reconciliation!bank_sales_reconciliation_bank_entry_id_fkey (
         id,
         reconciled_amount,
-        sales (
+        sales!bank_sales_reconciliation_sale_id_fkey (
           id,
           sale_date,
           total,

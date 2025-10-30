@@ -16,6 +16,7 @@ import {
   Settings,
   Sun,
   Mic,
+  Landmark,
 } from "lucide-react"
 import { usePathname } from "next/navigation"
 import UserButton from "@/components/auth/user-button"
@@ -37,6 +38,7 @@ const ALL_NAVIGATION_ITEMS: NavigationItem[] = [
   { href: "/clients", label: "Clients", icon: Users, module: "clients" },
   { href: "/suppliers", label: "Fournisseurs", icon: Users, module: "suppliers" },
   { href: "/expenses", label: "Dépenses", icon: DollarSign, module: "expenses" },
+  { href: "/bank", label: "Banque", icon: Landmark, module: "bank" },
   { href: "/reports", label: "Rapports", icon: LineChart, module: "reports" },
   { href: "/solar-sizer", label: "Dimensionnement Solaire", icon: Sun, module: "dashboard" },
   { href: "/dashboard/voice-sales", label: "Assistant Vocal", icon: Mic, module: "voice_assistant" },
